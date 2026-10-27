@@ -1,435 +1,58 @@
-# Nava: SIAKAD Terpadu
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-Aplikasi web administrasi sekolah (SIAKAD Terpadu) yang dibangun dengan **Laravel** sebagai **fullstack**: backend (logika bisnis, routing, autentikasi, otorisasi) dan frontend (tampilan Blade) berada dalam satu repository dan satu aplikasi.
+<p align="center">
+<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+</p>
 
-Aplikasi ini mencakup empat modul di atas satu basis data terpadu:
+## About Laravel
 
-- **Presensi dan kehadiran**
-- **Akademik dan nilai**, dengan fokus pada pengelolaan nilai berbasis Tujuan Pembelajaran (TP) dan ekspor rapor otomatis (Rapor STS, Rapor Semester, serta rekap nilai/DKN)
-- **Kedisiplinan dan bimbingan konseling (BK)**
-- **Portal informasi** untuk orang tua dan siswa
+Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-Pengguna dibagi ke dalam lima peran dengan hak akses berbeda: **Admin**, **Guru**, **Wali Kelas**, **Orang Tua**, dan **Siswa**.
+- [Simple, fast routing engine](https://laravel.com/docs/routing).
+- [Powerful dependency injection container](https://laravel.com/docs/container).
+- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+- [Robust background job processing](https://laravel.com/docs/queues).
+- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-> Repository ini dikembangkan sebagai proyek Capstone Project. Konteks lengkap kebutuhan dan rancangan ada di dokumen proposal.
+Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
----
+## Learning Laravel
 
-## Daftar Isi
+Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-- [Fitur Utama](#fitur-utama)
-- [Teknologi](#teknologi)
-- [Arsitektur](#arsitektur)
-- [Struktur Direktori](#struktur-direktori)
-- [Persyaratan](#persyaratan)
-- [Instalasi dan Setup](#instalasi-dan-setup)
-- [Menjalankan Aplikasi](#menjalankan-aplikasi)
-- [Akun dan Peran](#akun-dan-peran)
-- [Menjalankan Pengujian](#menjalankan-pengujian)
-- [Alur Kerja Git](#alur-kerja-git)
-- [Troubleshooting](#troubleshooting)
-- [Tim Pengembang](#tim-pengembang)
+In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
----
+You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
 
-## Fitur Utama
+## Agentic Development
 
-| Modul | Fitur |
-|---|---|
-| Autentikasi dan hak akses | Login per peran, pembatasan menu dan halaman berdasarkan role |
-| Data master | Siswa, guru (ASN dan GTT), kelas, mata pelajaran, pembagian mengajar, wali kelas (impor CSV/Excel) |
-| Tujuan Pembelajaran | Guru menulis TP per mata pelajaran, kelas, dan semester (maksimal 10 TP per semester) |
-| Input nilai per TP | Tabel menyerupai lembar kerja, dukungan tempel dari Excel, penyimpanan otomatis, nilai SAS tercatat sebagai TP terakhir |
-| Periode dan penguncian | Admin membuka dan menutup periode STS/SAS per tingkat, nilai yang dikunci tidak dapat diubah guru |
-| Verifikasi | Wali kelas menyetujui atau meminta revisi nilai per mata pelajaran |
-| Rapor otomatis | Pembentukan Rapor STS dan Rapor Semester dari templat Blade, pratinjau, dan unduh PDF per siswa atau per kelas |
-| Ekspor | Rekap nilai (DKN) ke Excel, riwayat rapor yang dapat dicetak ulang |
-| Presensi | Pencatatan kehadiran harian dan rekap bulanan |
-| Kedisiplinan dan BK | Pencatatan pelanggaran, poin, dan catatan bimbingan konseling |
-| Portal | Halaman orang tua dan siswa untuk melihat nilai per TP, rapor digital, presensi, dan kedisiplinan |
-
----
-
-## Teknologi
-
-**Backend dan frontend (fullstack):**
-
-- PHP dan **Laravel** (routing, controller, validasi, autentikasi, otorisasi)
-- **Laravel Blade** sebagai templat antarmuka yang dirender di server
-- **JavaScript** ringan untuk interaksi tabel nilai (navigasi keyboard, tempel dari Excel, simpan otomatis)
-- **Vite** untuk bundling aset frontend (default Laravel)
-- **Tailwind CSS** / CSS sesuai konfigurasi proyek
-
-**Data dan pustaka pendukung:**
-
-- **MySQL** sebagai basis data relasional
-- **Eloquent ORM** dan migrasi Laravel
-- **laravel-dompdf** untuk membentuk PDF rapor dari templat Blade
-- **Laravel Excel** untuk ekspor rekap nilai (DKN) ke Excel
-- **PHPUnit** untuk pengujian unit dan fitur
-
----
-
-## Arsitektur
-
-Aplikasi berjalan sebagai satu aplikasi Laravel dengan pola **MVC**:
-
-```
-Browser  ──HTTPS──>  Laravel
-                     ├── Routes & Middleware (autentikasi, otorisasi role)
-                     ├── Controllers (logika per modul)
-                     ├── Services (perhitungan nilai rapor, pembentukan PDF)
-                     ├── Models (Eloquent)  ──>  MySQL
-                     └── Views (Blade)  ──>  HTML ke browser
-```
-
-Perhitungan nilai rapor dan pembentukan berkas PDF dilakukan di sisi server, sehingga hasil cetak konsisten dan peramban pengguna tetap ringan.
-
----
-
-## Struktur Direktori
-
-Struktur standar Laravel dengan beberapa tambahan berikut. Sesuaikan jika ada perbedaan di repository:
-
-```
-.
-├── app/
-│   ├── Http/Controllers/     # Controller per modul
-│   ├── Http/Middleware/      # Pengecekan peran dan akses
-│   ├── Models/               # Model Eloquent
-│   ├── Policies/             # Aturan hak akses per resource
-│   └── Services/             # Logika nilai dan rapor
-├── database/
-│   ├── migrations/           # Skema basis data
-│   └── seeders/              # Data awal (peran, akun contoh, data master)
-├── resources/
-│   ├── views/                # Templat Blade (termasuk templat rapor)
-│   ├── js/                   # JavaScript ringan untuk tabel nilai
-│   └── css/
-├── routes/
-│   └── web.php               # Rute aplikasi
-├── tests/                    # Pengujian PHPUnit
-└── .env.example              # Contoh konfigurasi lingkungan
-```
-
----
-
-## Persyaratan
-
-Pastikan perangkat sudah terpasang:
-
-- PHP 8.2 atau lebih baru, beserta ekstensi yang umum dipakai Laravel (`pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `fileinfo`, `gd`, `zip`)
-- [Composer](https://getcomposer.org/)
-- Node.js (disarankan versi LTS) dan npm
-- MySQL 8.0 atau MariaDB
-- Git
-
-**Pengguna Windows:** disarankan menjalankan proyek di **WSL2** (Ubuntu) agar perintah dan perilaku PHP, Composer, dan Node.js konsisten dengan lingkungan produksi.
-
----
-
-## Instalasi dan Setup
-
-### 1. Clone repository
+Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
 
 ```bash
-git clone https://github.com/theresiaherrich/Nava.git
-cd Nava
+composer require laravel/boost --dev
+
+php artisan boost:install
 ```
 
-### 2. Instal dependensi PHP
+Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
 
-```bash
-composer install
-```
+## Contributing
 
-### 3. Instal dependensi frontend
+Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-```bash
-npm install
-```
+## Code of Conduct
 
-### 4. Siapkan file lingkungan
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-```bash
-cp .env.example .env
-php artisan key:generate
-```
+## Security Vulnerabilities
 
-Di Windows PowerShell, gunakan `copy .env.example .env` jika `cp` tidak tersedia.
+If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
-### 5. Atur koneksi basis data
+## License
 
-Buka berkas `.env` lalu sesuaikan bagian database:
-
-```env
-APP_NAME=Nava
-APP_ENV=local
-APP_DEBUG=true
-APP_URL=http://localhost:8000
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=nava
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-Buat basis data kosong dengan nama yang sama seperti `DB_DATABASE`, misalnya:
-
-```sql
-CREATE DATABASE nava CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### 6. Jalankan migrasi dan data awal
-
-```bash
-php artisan migrate
-php artisan db:seed
-```
-
-Perintah `db:seed` membuat peran dan akun contoh untuk pengujian lokal. Jangan jalankan seeder ini di lingkungan produksi.
-
-### 7. Buat tautan penyimpanan (opsional, untuk berkas unggahan dan rapor)
-
-```bash
-php artisan storage:link
-```
-
----
-
-## Menjalankan Aplikasi
-
-Jalankan dua proses secara bersamaan di dua terminal terpisah:
-
-**Terminal 1: server Laravel**
-
-```bash
-php artisan serve
-```
-
-**Terminal 2: bundling frontend (mode pengembangan)**
-
-```bash
-npm run dev
-```
-
-Buka aplikasi di [http://localhost:8000](http://localhost:8000).
-
-Untuk build aset produksi:
-
-```bash
-npm run build
-```
-
----
-
-## Akun dan Peran
-
-| Peran | Akses utama |
-|---|---|
-| **Admin** | Data master, akun guru, pembagian mengajar, periode dan penguncian nilai, nilai ekstrakurikuler, pengaturan templat rapor |
-| **Guru** | Mengelola TP, input nilai per TP, melihat rekap kelas yang diampu, presensi |
-| **Wali Kelas** | Verifikasi nilai, rekap DKN kelas, cetak dan unduh rapor kelasnya, catatan kedisiplinan |
-| **Orang Tua** | Portal: nilai per TP, rapor digital, presensi, kedisiplinan anak (hanya lihat) |
-| **Siswa** | Portal: nilai per TP, unduh rapor, presensi, dan catatan kedisiplinan pribadi (hanya lihat) |
-
-Akun contoh untuk setiap peran dibuat oleh seeder. Ganti kata sandi akun contoh sebelum digunakan di lingkungan mana pun selain lokal.
-
----
-
-## Menjalankan Pengujian
-
-```bash
-php artisan test
-```
-
-Pengujian mencakup:
-
-- **Unit test:** fungsi perhitungan nilai rapor, aturan penguncian, dan batas 10 TP per semester
-- **Feature test:** autentikasi, hak akses per peran, alur input nilai, dan pembentukan rapor
-- **Black box test:** skenario pengujian fungsional sesuai dokumen proposal
-
----
-
-## Alur Kerja Git
-
-### Aturan dasar
-
-- Branch `main` hanya berisi kode yang sudah bebas bug dan siap dikumpulkan.
-- Jangan push langsung ke `main`, `dev`, `dev-backend`, maupun `dev-frontend`. Semua perubahan masuk lewat **pull request** (merge request).
-- Kerjakan setiap fitur atau perbaikan pada branch terpisah, misalnya `feature/input-nilai-tp` atau `fix/rapor-pdf`.
-- Setiap pull request wajib ditinjau minimal satu anggota lain sebelum digabungkan.
-
-### Alur branch dan merge request
-
-```
-main                 <- hanya kode yang sudah fix dan bebas bug
- └── dev             <- integrasi backend dan frontend
-      ├── dev-backend   <- pekerjaan backend (controller, model, migrasi, service)
-      │    └── feature/...
-      └── dev-frontend  <- pekerjaan frontend (Blade, JavaScript, CSS)
-           └── feature/...
-```
-
-Urutan kerjanya sebagai berikut:
-
-1. **Kerjakan fitur di branch sendiri**, dibuat dari `dev-backend` atau `dev-frontend` sesuai bidangnya:
-   ```bash
-   git checkout dev-backend
-   git pull origin dev-backend
-   git checkout -b feature/nama-fitur
-   ```
-2. **Buka merge request ke branch bidangnya**: fitur backend ke `dev-backend`, fitur frontend ke `dev-frontend`. Minta satu anggota meninjau.
-3. **Setelah bidangnya stabil, gabungkan ke `dev`**: buat merge request `dev-backend` → `dev` dan `dev-frontend` → `dev`.
-4. **Uji integrasi di `dev`**: jalankan `php artisan test`, lalu cek manual alur utama (login, input nilai, cetak rapor, portal). Perbaiki bug yang ditemukan lewat branch fitur baru, lalu ulangi langkah 1 sampai 3.
-5. **Merge ke `main` hanya jika sudah fix dan tidak ada bug yang diketahui**: buat merge request `dev` → `main`. Jangan buat merge request ini jika masih ada bug terbuka.
-
-Aturan tambahan:
-
-- Sebelum membuka merge request, ambil perubahan terbaru dari branch tujuan (`git pull origin <branch-tujuan>`) dan selesaikan konflik di branch fitur, bukan di branch tujuan.
-- Hapus branch fitur setelah merge request digabung.
-- Untuk mencegah push langsung ke branch penting, aktifkan **branch protection** di GitHub (Settings, Branches) dan wajibkan pull request serta peninjauan.
-- Pastikan `php artisan test` lulus sebelum membuat pull request.
-- Jangan commit berkas `.env`, `vendor/`, atau `node_modules/`. Berkas ini sudah diabaikan oleh `.gitignore`.
-
-### Menambahkan README ke repository
-
-Setelah clone, folder `Nava` akan terbentuk. Letakkan `README.md` di folder root, yaitu folder yang sejajar dengan `composer.json` dan `artisan`. Jika repository sudah punya `README.md`, timpa berkas lama dengan yang baru.
-
-```bash
-git clone https://github.com/theresiaherrich/Nava.git
-cd Nava
-
-# salin README.md ke folder Nava, lalu cek statusnya
-git status
-
-git checkout -b docs/readme
-git add README.md
-git commit -m "docs: tambah README proyek dengan setup dan panduan git"
-git push -u origin docs/readme
-```
-
-Setelah itu, buka GitHub, pilih **Compare & pull request**, lalu tujukan merge request ke `dev-backend` atau `dev-frontend` sesuai bidangnya. Ikuti [Alur branch dan merge request](#alur-branch-dan-merge-request) untuk langkah berikutnya.
-
-### Perintah git harian
-
-```bash
-# ambil perubahan terbaru dari branch bidangmu sebelum mulai bekerja
-git checkout dev-backend          # atau dev-frontend
-git pull origin dev-backend
-
-# buat branch baru untuk pekerjaanmu
-git checkout -b feature/nama-fitur
-
-# lihat berkas yang berubah
-git status
-git diff
-
-# masukkan perubahan ke staging, lalu commit
-git add nama-berkas.php        # atau git add . untuk semua berkas
-git commit -m "feat(nilai): tambah input nilai per TP"
-
-# kirim branch ke GitHub
-git push -u origin feature/nama-fitur
-
-# setelah branch lain digabung, perbarui branch kerjamu dari main
-git checkout main
-git pull origin main
-git checkout feature/nama-fitur
-git merge main                 # atau: git rebase main
-```
-
-Penjelasan singkat:
-
-- **`git clone`**: mengunduh seluruh repository ke komputer.
-- **`git pull`**: mengambil perubahan dari GitHub dan menggabungkannya ke branch lokal. Lakukan ini setiap kali mulai bekerja.
-- **`git add`**: memilih berkas yang akan di-commit (staging).
-- **`git commit`**: menyimpan snapshot perubahan beserta pesan penjelasan.
-- **`git push`**: mengirim commit lokal ke GitHub.
-
-### Cara menulis commit yang baik
-
-Commit yang baik adalah commit yang **kecil**, **fokus pada satu tujuan**, dan **pesannya menjelaskan apa yang berubah dan mengapa**.
-
-Gunakan format berikut (Conventional Commits):
-
-```
-<tipe>(<lingkup opsional>): <deskripsi singkat>
-
-<penjelasan opsional, jika perubahan perlu konteks>
-```
-
-Tipe yang disarankan:
-
-| Tipe | Kapan dipakai | Contoh |
-|---|---|---|
-| `feat` | Menambah fitur | `feat(rapor): tambah ekspor PDF per kelas` |
-| `fix` | Memperbaiki bug | `fix(nilai): cegah nilai TP tersimpan saat periode terkunci` |
-| `docs` | Mengubah dokumentasi | `docs: perbarui langkah setup di README` |
-| `refactor` | Mengubah struktur kode tanpa mengubah perilaku | `refactor(services): pisahkan perhitungan rata-rata TP` |
-| `test` | Menambah atau memperbaiki pengujian | `test(auth): tambah uji akses ditolak untuk role siswa` |
-| `style` | Format kode, spasi, titik koma (tanpa mengubah logika) | `style: rapikan indentasi view presensi` |
-| `chore` | Pekerjaan rutin, konfigurasi, dependensi | `chore: perbarui laravel-dompdf ke versi 3.1` |
-
-Aturan praktis:
-
-1. **Gunakan bahasa imperatif** dan kalimat pendek: "tambah", "perbaiki", "hapus", bukan "menambahkan" atau "sudah ditambahkan".
-2. **Batasi judul sekitar 50 sampai 72 karakter**, tanpa titik di akhir.
-3. **Satu commit, satu tujuan.** Jika pesanmu mengandung kata "dan", pertimbangkan untuk memecahnya menjadi dua commit.
-4. **Jelaskan alasannya di badan commit** bila perubahan tidak jelas dari kode saja.
-5. **Jangan commit kode yang rusak.** Jalankan `php artisan test` sebelum commit.
-6. **Jangan commit berkas rahasia** seperti `.env` atau kata sandi.
-
-Contoh perbandingan:
-
-| Kurang baik | Lebih baik |
-|---|---|
-| `update` | `fix(presensi): perbaiki rekap bulanan yang menghitung hari libur` |
-| `fix bug` | `fix(auth): arahkan siswa ke dashboard setelah login` |
-| `selesai semua` | `feat(nilai): tambah verifikasi nilai oleh wali kelas` |
-| `coba-coba rapor` | `refactor(rapor): gunakan templat Blade terpisah untuk STS dan Semester` |
-
-Contoh commit dengan badan penjelasan:
-
-```bash
-git commit -m "fix(nilai): hitung rata-rata TP dengan benar
-
-Sebelumnya nilai SAS ikut dihitung dua kali karena TP terakhir
-sudah tercatat sebagai SAS. Sekarang nilai SAS hanya dihitung
-sebagai TP terakhir."
-```
-
-### Ringkasan alur
-
-1. `git pull origin dev-backend` (atau `dev-frontend`) untuk mengambil kode terbaru.
-2. `git checkout -b feature/nama-fitur` untuk membuat branch.
-3. Kerjakan fitur, lalu jalankan `php artisan test`.
-4. `git add` dan `git commit` dengan pesan yang jelas.
-5. `git push -u origin feature/nama-fitur`.
-6. Buka merge request ke `dev-backend` atau `dev-frontend`, minta peninjauan.
-7. Setelah bidangnya stabil, merge ke `dev`. Uji integrasi di `dev`.
-8. Merge `dev` ke `main` hanya jika sudah fix dan tidak ada bug.
-
----
-
-## Troubleshooting
-
-**`No application encryption key has been specified`**
-Jalankan `php artisan key:generate`.
-
-**`SQLSTATE[HY000] [1049] Unknown database`**
-Basis data belum dibuat. Buat basis data sesuai `DB_DATABASE` di `.env`, lalu jalankan `php artisan migrate`.
-
-**Halaman tampil tanpa gaya (CSS hilang)**
-Jalankan `npm run dev` atau `npm run build`, lalu muat ulang halaman.
-
-**Perubahan konfigurasi `.env` tidak terbaca**
-Jalankan `php artisan config:clear`.
-
-**Gambar atau berkas rapor tidak tampil**
-Pastikan `php artisan storage:link` sudah dijalankan.
-
-**Ekstensi PHP tidak ditemukan saat `composer install`**
-Aktifkan ekstensi yang disebutkan pada bagian [Persyaratan](#persyaratan) di `php.ini`.
+The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

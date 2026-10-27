@@ -28,7 +28,6 @@ Pengguna dibagi ke dalam lima peran dengan hak akses berbeda: **Admin**, **Guru*
 - [Menjalankan Pengujian](#menjalankan-pengujian)
 - [Alur Kerja Git](#alur-kerja-git)
 - [Troubleshooting](#troubleshooting)
-- [Tim Pengembang](#tim-pengembang)
 
 ---
 

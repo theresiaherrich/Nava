@@ -257,9 +257,40 @@ Pengujian mencakup:
 
 ### Aturan dasar
 
-- Branch `main` berisi kode yang siap dipakai. Jangan langsung push ke `main`.
+- Branch `main` hanya berisi kode yang sudah bebas bug dan siap dikumpulkan.
+- Jangan push langsung ke `main`, `dev`, `dev-backend`, maupun `dev-frontend`. Semua perubahan masuk lewat **pull request** (merge request).
 - Kerjakan setiap fitur atau perbaikan pada branch terpisah, misalnya `feature/input-nilai-tp` atau `fix/rapor-pdf`.
-- Buka **pull request** ke `main` dan minta minimal satu anggota lain meninjau sebelum digabungkan.
+- Setiap pull request wajib ditinjau minimal satu anggota lain sebelum digabungkan.
+
+### Alur branch dan merge request
+
+```
+main                 <- hanya kode yang sudah fix dan bebas bug
+ └── dev             <- integrasi backend dan frontend
+      ├── dev-backend   <- pekerjaan backend (controller, model, migrasi, service)
+      │    └── feature/...
+      └── dev-frontend  <- pekerjaan frontend (Blade, JavaScript, CSS)
+           └── feature/...
+```
+
+Urutan kerjanya sebagai berikut:
+
+1. **Kerjakan fitur di branch sendiri**, dibuat dari `dev-backend` atau `dev-frontend` sesuai bidangnya:
+   ```bash
+   git checkout dev-backend
+   git pull origin dev-backend
+   git checkout -b feature/nama-fitur
+   ```
+2. **Buka merge request ke branch bidangnya**: fitur backend ke `dev-backend`, fitur frontend ke `dev-frontend`. Minta satu anggota meninjau.
+3. **Setelah bidangnya stabil, gabungkan ke `dev`**: buat merge request `dev-backend` → `dev` dan `dev-frontend` → `dev`.
+4. **Uji integrasi di `dev`**: jalankan `php artisan test`, lalu cek manual alur utama (login, input nilai, cetak rapor, portal). Perbaiki bug yang ditemukan lewat branch fitur baru, lalu ulangi langkah 1 sampai 3.
+5. **Merge ke `main` hanya jika sudah fix dan tidak ada bug yang diketahui**: buat merge request `dev` → `main`. Jangan buat merge request ini jika masih ada bug terbuka.
+
+Aturan tambahan:
+
+- Sebelum membuka merge request, ambil perubahan terbaru dari branch tujuan (`git pull origin <branch-tujuan>`) dan selesaikan konflik di branch fitur, bukan di branch tujuan.
+- Hapus branch fitur setelah merge request digabung.
+- Untuk mencegah push langsung ke branch penting, aktifkan **branch protection** di GitHub (Settings, Branches) dan wajibkan pull request serta peninjauan.
 - Pastikan `php artisan test` lulus sebelum membuat pull request.
 - Jangan commit berkas `.env`, `vendor/`, atau `node_modules/`. Berkas ini sudah diabaikan oleh `.gitignore`.
 
@@ -280,14 +311,14 @@ git commit -m "docs: tambah README proyek dengan setup dan panduan git"
 git push -u origin docs/readme
 ```
 
-Setelah itu, buka GitHub, pilih **Compare & pull request**, lalu gabungkan ke `main` setelah ditinjau.
+Setelah itu, buka GitHub, pilih **Compare & pull request**, lalu tujukan merge request ke `dev-backend` atau `dev-frontend` sesuai bidangnya. Ikuti [Alur branch dan merge request](#alur-branch-dan-merge-request) untuk langkah berikutnya.
 
 ### Perintah git harian
 
 ```bash
-# ambil perubahan terbaru dari GitHub sebelum mulai bekerja
-git checkout main
-git pull origin main
+# ambil perubahan terbaru dari branch bidangmu sebelum mulai bekerja
+git checkout dev-backend          # atau dev-frontend
+git pull origin dev-backend
 
 # buat branch baru untuk pekerjaanmu
 git checkout -b feature/nama-fitur
@@ -372,12 +403,14 @@ sebagai TP terakhir."
 
 ### Ringkasan alur
 
-1. `git pull origin main` untuk mengambil kode terbaru.
+1. `git pull origin dev-backend` (atau `dev-frontend`) untuk mengambil kode terbaru.
 2. `git checkout -b feature/nama-fitur` untuk membuat branch.
 3. Kerjakan fitur, lalu jalankan `php artisan test`.
 4. `git add` dan `git commit` dengan pesan yang jelas.
 5. `git push -u origin feature/nama-fitur`.
-6. Buka pull request di GitHub dan minta peninjauan.
+6. Buka merge request ke `dev-backend` atau `dev-frontend`, minta peninjauan.
+7. Setelah bidangnya stabil, merge ke `dev`. Uji integrasi di `dev`.
+8. Merge `dev` ke `main` hanya jika sudah fix dan tidak ada bug.
 
 ---
 

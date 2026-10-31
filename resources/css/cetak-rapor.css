@@ -1,0 +1,49 @@
+/* ==========================================================
+   Cetak & Ekspor Rapor: gaya saat dicetak
+   Tampilan layar memakai Tailwind. File ini hanya berlaku
+   saat tombol Cetak atau Ctrl+P dipakai.
+   ========================================================== */
+
+@media print {
+    @page {
+        size: A4;
+        margin: 12mm;
+    }
+
+    html,
+    body {
+        height: auto !important;
+        overflow: visible !important;
+        background: #fff !important;
+    }
+
+    /* Sembunyikan semua elemen, lalu tampilkan hanya kertas rapor */
+    body * {
+        visibility: hidden !important;
+    }
+
+    #cr-paper,
+    #cr-paper * {
+        visibility: visible !important;
+    }
+
+    /* Lepas batas tinggi dan scroll dari pembungkus pratinjau */
+    div:has(#cr-paper) {
+        max-height: none !important;
+        overflow: visible !important;
+        background: #fff !important;
+        padding: 0 !important;
+    }
+
+    #cr-paper {
+        position: absolute !important;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+}

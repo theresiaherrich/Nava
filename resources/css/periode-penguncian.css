@@ -1,0 +1,474 @@
+/*
+ * resources/css/periode-penguncian.css
+ * Styling khusus halaman Periode & Penguncian.
+ * Semua selector diawali .pk- dan berada di dalam .pk-page.
+ */
+
+.pk-page {
+    --pk-bg: #f5f5f5;
+    --pk-border: #e6e8ec;
+    --pk-border-soft: #f0f1f4;
+    --pk-navy: #142a4a;
+    --pk-text: #1f2937;
+    --pk-muted: #6b7a90;
+    --pk-blue: #0a84d6;
+    --pk-blue-soft: #e0f2fe;
+    --pk-ok: #15803d;
+    --pk-warn: #b45309;
+    --pk-font: "Instrument Sans", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    min-width: 0;
+    min-height: 100%;
+    padding: 10px;
+    background: var(--pk-bg);
+    color: var(--pk-text);
+    font-family: var(--pk-font);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.pk-page *,
+.pk-page *::before,
+.pk-page *::after {
+    box-sizing: border-box;
+}
+
+/* ---------- Header ---------- */
+
+.pk-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pk-eyebrow {
+    margin: 0 0 4px;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #0ea5e9;
+}
+
+.pk-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--pk-navy);
+}
+
+.pk-desc {
+    margin: 4px 0 0;
+    color: var(--pk-muted);
+}
+
+.pk-btn-outline {
+    padding: 8px 14px;
+    border: 1px solid var(--pk-border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--pk-text);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pk-btn-outline:hover {
+    background: #f9fafb;
+}
+
+.pk-btn-block {
+    width: 100%;
+}
+
+.pk-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    background: var(--pk-blue);
+    color: #fff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pk-btn-primary:hover:not(:disabled) {
+    background: #0873b8;
+}
+
+.pk-btn-primary:disabled {
+    background: #94a3b8;
+    cursor: default;
+}
+
+.pk-btn-outline:focus-visible,
+.pk-btn-primary:focus-visible,
+.pk-semester-tab:focus-visible,
+.pk-tingkat-tab:focus-visible {
+    outline: 2px solid var(--pk-blue);
+    outline-offset: 2px;
+}
+
+/* ---------- Tab semester ---------- */
+
+.pk-semester-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 14px;
+    border-bottom: 1px solid var(--pk-border);
+}
+
+.pk-semester-tab {
+    padding: 8px 0 10px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--pk-muted);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.pk-semester-tab.is-active {
+    border-bottom-color: var(--pk-blue);
+    color: var(--pk-blue);
+    font-weight: 600;
+}
+
+/* ---------- Layout dua kolom ---------- */
+
+.pk-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 290px;
+    align-items: start;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.pk-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--pk-border);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.pk-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--pk-border-soft);
+}
+
+.pk-card-head-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.pk-card-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pk-navy);
+}
+
+.pk-card-sub {
+    margin: 2px 0 0;
+    font-size: 10px;
+    color: #9aa6b5;
+}
+
+.pk-icon-box {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: var(--pk-muted);
+}
+
+.pk-icon-sas {
+    background: #fef3c7;
+    color: var(--pk-warn);
+}
+
+/* ---------- Badge ---------- */
+
+.pk-badge {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 9.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pk-badge-open,
+.pk-badge-ok {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: var(--pk-ok);
+}
+
+.pk-badge-muted {
+    border-color: #e2e8f0;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.pk-badge-proses {
+    border-color: #fed7aa;
+    background: #fff7ed;
+    color: var(--pk-warn);
+}
+
+/* ---------- Tab tingkat kelas ---------- */
+
+.pk-tingkat-tabs {
+    display: flex;
+    gap: 6px;
+    margin: 14px 16px 0;
+}
+
+.pk-tingkat-tab {
+    flex: 1;
+    padding: 8px 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: var(--pk-muted);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.pk-tingkat-tab.is-active {
+    background: var(--pk-blue-soft);
+    color: #0369a1;
+    font-weight: 600;
+}
+
+/* ---------- Panel kelengkapan per kelas ---------- */
+
+.pk-panel {
+    padding: 14px 16px 6px;
+}
+
+.pk-panel[hidden] {
+    display: none;
+}
+
+.pk-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    color: #3d4b5f;
+    font-size: 11px;
+}
+
+.pk-panel-head strong {
+    color: var(--pk-blue);
+    font-weight: 600;
+}
+
+.pk-kelas-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pk-kelas-row {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) 40px 72px;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+}
+
+.pk-kelas-kode {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--pk-navy);
+}
+
+.pk-track {
+    display: block;
+    height: 5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #eef1f5;
+}
+
+.pk-fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--pk-blue);
+    transition: width 0.3s ease;
+}
+
+.pk-persen {
+    font-size: 11px;
+    color: var(--pk-muted);
+    text-align: right;
+}
+
+.pk-kelas-row .pk-badge {
+    justify-self: start;
+}
+
+/* ---------- Footer card STS ---------- */
+
+.pk-card-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--pk-border-soft);
+    background: #fafbfc;
+}
+
+.pk-foot-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 10.5px;
+    color: var(--pk-muted);
+}
+
+#pk-btn-kunci.is-locked {
+    background: #94a3b8;
+}
+
+/* ---------- Card SAS ---------- */
+
+.pk-sas-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+}
+
+.pk-date-box {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 58px;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    background: #fffbeb;
+}
+
+.pk-date-day {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--pk-warn);
+    line-height: 1;
+}
+
+.pk-date-month {
+    margin-top: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--pk-warn);
+}
+
+.pk-sas-title {
+    margin: 0;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--pk-navy);
+}
+
+.pk-sas-desc {
+    margin: 3px 0 0;
+    font-size: 10.5px;
+    color: var(--pk-muted);
+}
+
+.pk-sas-foot {
+    padding: 0 16px 16px;
+}
+
+/* ---------- Feedback ---------- */
+
+.pk-feedback {
+    min-height: 1em;
+    margin: 12px 2px 0;
+    font-size: 11px;
+}
+
+.pk-feedback-info {
+    color: var(--pk-muted);
+}
+
+.pk-feedback-ok {
+    color: var(--pk-ok);
+}
+
+.pk-feedback-error {
+    color: #b42318;
+}
+
+/* ---------- Responsif ---------- */
+
+@media (max-width: 900px) {
+    .pk-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .pk-page {
+        padding: 8px;
+    }
+
+    .pk-title {
+        font-size: 20px;
+    }
+
+    .pk-kelas-row {
+        grid-template-columns: 48px minmax(0, 1fr) 36px;
+    }
+
+    .pk-kelas-row .pk-badge {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .pk-card-foot {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pk-btn-primary {
+        justify-content: center;
+    }
+}

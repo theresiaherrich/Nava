@@ -7,12 +7,34 @@ use App\Http\Controllers\RekapNilaiController;
 use App\Http\Controllers\PeriodePenguncianController;
 use App\Http\Controllers\PelengkapRaporController;
 use App\Http\Controllers\CetakRaporController;
+use App\Http\Controllers\PresensiController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
 Route::view('/test-sidebar', 'test-sidebar');
+
+// A1 - PRESENSI
+Route::prefix('presensi')->name('presensi.')->group(function () {
+    Route::view('/qr-code', 'presensi.qr-code.index')
+        ->name('qr-code');
+
+    Route::view('/manual', 'presensi.manual.index')
+        ->name('manual');
+
+    Route::view('/riwayat', 'presensi.riwayat.index')
+        ->name('riwayat');
+
+    Route::get('/kelola', [PresensiController::class, 'kelola'])
+        ->name('kelola');
+
+    Route::view('/scan', 'presensi.scan.index')
+        ->name('scan');
+
+    Route::view('/edit', 'presensi.edit.index')
+        ->name('edit');
+});
 
 // Halaman Input Nilai tanpa login
 Route::get('/input-nilai', [InputNilaiController::class, 'index'])

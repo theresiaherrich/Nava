@@ -7,6 +7,11 @@ use App\Http\Controllers\RekapNilaiController;
 use App\Http\Controllers\PeriodePenguncianController;
 use App\Http\Controllers\PelengkapRaporController;
 use App\Http\Controllers\CetakRaporController;
+use App\Http\Controllers\PortalDashboardController;
+use App\Http\Controllers\ProfilSiswaController;
+use App\Http\Controllers\RekapPresensiController;
+use App\Http\Controllers\AkademikNilaiController;
+use App\Http\Controllers\MinatBakatController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -14,44 +19,59 @@ Route::get('/', function () {
 
 Route::view('/test-sidebar', 'test-sidebar');
 
-// Halaman Input Nilai tanpa login
-Route::get('/input-nilai', [InputNilaiController::class, 'index'])
-    ->name('input-nilai.index');
+// // Halaman Input Nilai tanpa login
+// Route::get('/input-nilai', [InputNilaiController::class, 'index'])
+//     ->name('input-nilai.index');
 
-// Halaman Verifikasi Nilai tanpa login
-Route::prefix('verifikasi-nilai')
-    ->name('verifikasi-nilai.')
+// // Halaman Verifikasi Nilai tanpa login
+// Route::prefix('verifikasi-nilai')
+//     ->name('verifikasi-nilai.')
+//     ->group(function () {
+//         Route::get('/', [VerifikasiNilaiController::class, 'index'])->name('index');
+//         Route::get('/{mapel}', [VerifikasiNilaiController::class, 'show'])->name('show');
+//         Route::post('/{mapel}/revisi', [VerifikasiNilaiController::class, 'requestRevision'])->name('revisi');
+//         Route::post('/{mapel}/setujui', [VerifikasiNilaiController::class, 'approve'])->name('setujui');
+//     });
+
+// // Halaman Rekap Nilai
+// Route::get('/rekap-nilai', [RekapNilaiController::class, 'index'])
+//     ->name('rekap-nilai.index');
+
+// // Halaman Periode & Penguncian
+// Route::get('/periode-penguncian', [PeriodePenguncianController::class, 'index'])
+//     ->name('periode-penguncian.index');
+
+// Route::prefix('pelengkap-rapor')
+//     ->name('pelengkap-rapor.')
+//     ->group(function () {
+//         Route::get('/', [PelengkapRaporController::class, 'index'])->name('index');
+//         Route::post('/simpan', [PelengkapRaporController::class, 'simpan'])->name('simpan');
+//         Route::post('/siswa/{siswa}/catatan', [PelengkapRaporController::class, 'simpanCatatan'])->name('catatan');
+//     });
+
+// // Halaman Cetak & Ekspor Rapor
+// Route::prefix('cetak-rapor')
+//     ->name('cetak-rapor.')
+//     ->group(function () {
+//         Route::get('/', [CetakRaporController::class, 'index'])->name('index');
+//         Route::post('/kelas/unduh', [CetakRaporController::class, 'unduhKelas'])->name('kelas');
+//         Route::post('/siswa/{siswa}/unduh', [CetakRaporController::class, 'unduhSiswa'])->name('siswa');
+//         Route::get('/riwayat/{riwayat}/unduh', [CetakRaporController::class, 'unduhUlang'])->name('ulang');
+//     });
+
+// A4 - Portal Orang Tua (klik menu induk = Dashboard, dropdown = 4 halaman lain)
+Route::prefix('portal-orang-tua')
+    ->name('portal.')
     ->group(function () {
-        Route::get('/', [VerifikasiNilaiController::class, 'index'])->name('index');
-        Route::get('/{mapel}', [VerifikasiNilaiController::class, 'show'])->name('show');
-        Route::post('/{mapel}/revisi', [VerifikasiNilaiController::class, 'requestRevision'])->name('revisi');
-        Route::post('/{mapel}/setujui', [VerifikasiNilaiController::class, 'approve'])->name('setujui');
-    });
+        Route::get('/', [PortalDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/profil-siswa', [ProfilSiswaController::class, 'index'])->name('profil');
+        Route::get('/rekap-presensi', [RekapPresensiController::class, 'index'])->name('presensi');
+        Route::get('/akademik-nilai', [AkademikNilaiController::class, 'index'])->name('akademik');
+        Route::get('/minat-bakat-karir', [MinatBakatController::class, 'index'])->name('minat-bakat');
 
-// Halaman Rekap Nilai
-Route::get('/rekap-nilai', [RekapNilaiController::class, 'index'])
-    ->name('rekap-nilai.index');
-
-// Halaman Periode & Penguncian
-Route::get('/periode-penguncian', [PeriodePenguncianController::class, 'index'])
-    ->name('periode-penguncian.index');
-
-Route::prefix('pelengkap-rapor')
-    ->name('pelengkap-rapor.')
-    ->group(function () {
-        Route::get('/', [PelengkapRaporController::class, 'index'])->name('index');
-        Route::post('/simpan', [PelengkapRaporController::class, 'simpan'])->name('simpan');
-        Route::post('/siswa/{siswa}/catatan', [PelengkapRaporController::class, 'simpanCatatan'])->name('catatan');
-    });
-
-// Halaman Cetak & Ekspor Rapor
-Route::prefix('cetak-rapor')
-    ->name('cetak-rapor.')
-    ->group(function () {
-        Route::get('/', [CetakRaporController::class, 'index'])->name('index');
-        Route::post('/kelas/unduh', [CetakRaporController::class, 'unduhKelas'])->name('kelas');
-        Route::post('/siswa/{siswa}/unduh', [CetakRaporController::class, 'unduhSiswa'])->name('siswa');
-        Route::get('/riwayat/{riwayat}/unduh', [CetakRaporController::class, 'unduhUlang'])->name('ulang');
+        // Placeholder, nanti diganti dengan generator PDF sungguhan
+        Route::get('/rapor/unduh', [AkademikNilaiController::class, 'unduh'])->name('rapor.unduh');
+        Route::get('/presensi/unduh', [RekapPresensiController::class, 'unduh'])->name('presensi.unduh');
     });
 
 // Placeholder, nanti diganti dengan controller sungguhan

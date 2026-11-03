@@ -6,24 +6,33 @@
 @php
     // Menu default (Wali Kelas). Backend bisa mengirim $menu sendiri lewat <x-sidebar :menu="$menu" />
     $defaultMenu = [
+        // [
+        //     'code' => 'A1', 'label' => 'Presensi', 'icon' => 'calendar', 'href' => '#',
+        // ],
+        // [
+        //     'code' => 'A2', 'label' => 'Akademik', 'icon' => 'file', 'sub_title' => 'Wali Kelas',
+        //     'items' => [
+        //         ['label' => 'Dashboard Kelas',    'icon' => 'grid',    'route' => null],
+        //         ['label' => 'Verifikasi Nilai',   'icon' => 'check',   'route' => 'verifikasi-nilai.index', 'pattern' => 'verifikasi-nilai.*'],
+        //         ['label' => 'Pelengkap Rapor',    'icon' => 'pencil',  'route' => null],
+        //         ['label' => 'Rekap Nilai (DKN)',  'icon' => 'table',   'route' => 'rekap-nilai.index',      'pattern' => 'rekap-nilai.*'],
+        //         ['label' => 'Cetak Rapor',        'icon' => 'printer', 'route' => null],
+        //     ],
+        // ],
+        // [
+        //     'code' => 'A3', 'label' => 'BK', 'icon' => 'shield', 'href' => '#',
+        // ],
         [
-            'code' => 'A1', 'label' => 'Presensi', 'icon' => 'calendar', 'href' => '#',
-        ],
-        [
-            'code' => 'A2', 'label' => 'Akademik', 'icon' => 'file', 'sub_title' => 'Wali Kelas',
+            // A4: klik judul -> Dashboard Portal Orang Tua, sekaligus membuka dropdown
+
+            'code' => 'A4', 'label' => 'Portal Orang Tua', 'icon' => 'home', 'href' => '#', 'pattern' => 'portal.*',
             'items' => [
-                ['label' => 'Dashboard Kelas',    'icon' => 'grid',    'route' => null],
-                ['label' => 'Verifikasi Nilai',   'icon' => 'check',   'route' => 'verifikasi-nilai.index', 'pattern' => 'verifikasi-nilai.*'],
-                ['label' => 'Pelengkap Rapor',    'icon' => 'pencil',  'route' => null],
-                ['label' => 'Rekap Nilai (DKN)',  'icon' => 'table',   'route' => 'rekap-nilai.index',      'pattern' => 'rekap-nilai.*'],
-                ['label' => 'Cetak Rapor',        'icon' => 'printer', 'route' => null],
+                ['label' => 'Dashboard',           'icon' => 'grid',    'route' => 'portal.dashboard',   'pattern' => 'portal.dashboard'],
+                ['label' => 'Profil Siswa',        'icon' => 'id',      'route' => 'portal.profil',      'pattern' => 'portal.profil'],
+                ['label' => 'Rekap Presensi',      'icon' => 'calchk',  'route' => 'portal.presensi',    'pattern' => 'portal.presensi'],
+                ['label' => 'Akademik & Nilai',    'icon' => 'cap',     'route' => 'portal.akademik',    'pattern' => 'portal.akademik'],
+                ['label' => 'Minat-Bakat & Karir', 'icon' => 'compass', 'route' => 'portal.minat-bakat', 'pattern' => 'portal.minat-bakat'],
             ],
-        ],
-        [
-            'code' => 'A3', 'label' => 'BK', 'icon' => 'shield', 'href' => '#',
-        ],
-        [
-            'code' => 'A4', 'label' => 'Portal Orang Tua', 'icon' => 'home', 'href' => '#',
         ],
     ];
 
@@ -44,6 +53,10 @@
         'printer'  => '<path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>',
         'logout'   => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
         'chev'     => '<path d="m6 9 6 6 6-6"/>',
+        'id'       => '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M5.5 17c.5-2 2-3 3.5-3s3 1 3.5 3M15 9h3M15 13h3"/>',
+        'calchk'   => '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18m-11 5 2 2 4-4"/>',
+        'cap'      => '<path d="m22 9-10-5L2 9l10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5M22 9v6"/>',
+        'compass'  => '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
     ];
 
     $svg = fn (string $name, string $class = 'sb-icon') => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'.($icons[$name] ?? '').'</svg>';
@@ -62,19 +75,32 @@
             @foreach ($menu as $m)
                 @php
                     $items       = $m['items'] ?? [];
-                    $groupActive = collect($items)->contains(fn ($i) => $isActive($i['pattern'] ?? $i['route'] ?? null));
+                    $groupActive = $isActive($m['pattern'] ?? null)
+                        || collect($items)->contains(fn ($i) => $isActive($i['pattern'] ?? $i['route'] ?? null));
                 @endphp
 
                 <div class="sb-group {{ $groupActive ? 'is-open' : '' }}">
                     @if (count($items))
-                        <button type="button"
-                                class="sb-item sb-toggle {{ $groupActive ? 'is-active' : '' }}"
-                                aria-expanded="{{ $groupActive ? 'true' : 'false' }}">
-                            {!! $svg($m['icon']) !!}
-                            <span class="sb-item__code">{{ $m['code'] }}</span>
-                            <span class="sb-item__text">{{ $m['label'] }}</span>
-                            {!! $svg('chev', 'sb-chevron') !!}
-                        </button>
+                        @if (! empty($m['route']))
+                            {{-- Menu induk yang juga punya halaman sendiri (mis. Portal Orang Tua -> Dashboard) --}}
+                            <a href="{{ $resolve($m['route']) }}"
+                               class="sb-item sb-toggle {{ $groupActive ? 'is-active' : '' }}"
+                               aria-expanded="{{ $groupActive ? 'true' : 'false' }}">
+                                {!! $svg($m['icon']) !!}
+                                <span class="sb-item__code">{{ $m['code'] }}</span>
+                                <span class="sb-item__text">{{ $m['label'] }}</span>
+                                {!! $svg('chev', 'sb-chevron') !!}
+                            </a>
+                        @else
+                            <button type="button"
+                                    class="sb-item sb-toggle {{ $groupActive ? 'is-active' : '' }}"
+                                    aria-expanded="{{ $groupActive ? 'true' : 'false' }}">
+                                {!! $svg($m['icon']) !!}
+                                <span class="sb-item__code">{{ $m['code'] }}</span>
+                                <span class="sb-item__text">{{ $m['label'] }}</span>
+                                {!! $svg('chev', 'sb-chevron') !!}
+                            </button>
+                        @endif
 
                         <div class="sb-submenu">
                             @if (! empty($m['sub_title']))
@@ -142,6 +168,14 @@
         sb.addEventListener('click', function (e) {
             var btn = e.target.closest('.sb-toggle');
             if (!btn) return;
+
+            // Menu induk berupa link: pindah halaman dulu (submenu otomatis terbuka di halaman tujuan).
+            // Kalau sudah berada di halaman itu, klik hanya membuka/menutup dropdown.
+            if (btn.tagName === 'A') {
+                if (btn.pathname !== window.location.pathname) return;
+                e.preventDefault();
+            }
+
             var open = btn.parentNode.classList.toggle('is-open');
             btn.setAttribute('aria-expanded', open ? 'true' : 'false');
         });

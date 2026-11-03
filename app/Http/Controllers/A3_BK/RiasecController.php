@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\A3_BK\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

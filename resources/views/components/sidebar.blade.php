@@ -40,6 +40,17 @@
         [
             'code' => 'A1', 'label' => 'Presensi', 'icon' => 'calendar', 'sub_title' => 'Presensi', 'items' => $presensiItems,
             ],
+    'menu'         => null,
+    'academicYear' => '2026/2027 • Ganjil',
+])
+
+@php
+    // Menu default (Wali Kelas). Backend bisa mengirim $menu sendiri lewat <x-sidebar :menu="$menu" />
+    $defaultMenu = [
+        [
+            'code' => 'A1', 'label' => 'Presensi', 'icon' => 'calendar', 'href' => '#',
+        ],
+
         [
             'code' => 'A2', 'label' => 'Akademik', 'icon' => 'file', 'sub_title' => 'Wali Kelas',
             'items' => [

@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\GuruRequest;
+use App\Models\Guru;
+use App\Services\AuditService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class GuruController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $data = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
+
+        return response()->json(Guru::query()->when($data['q'] ?? null, fn ($q, $term) => $q->where('nama', 'like', '%'.$term.'%'))->orderBy('id')->paginate(20));
+    }
+
+    public function show(Guru $record): JsonResponse
+    {
+        return response()->json(['data' => $record]);
+    }
+
+    public function store(GuruRequest $request): JsonResponse
+    {
+        $record = DB::transaction(function () use ($request) {
+            $record = Guru::create($request->validated());
+            AuditService::record('create', 'guru', $record->id, null, $record->toArray());
+
+            return $record;
+        });
+
+        return response()->json(['data' => $record], 201);
+    }
+
+    public function update(GuruRequest $request, Guru $record): JsonResponse
+    {
+        $data = $request->validated();
+
+        $record = DB::transaction(function () use ($record, $data) {
+            $record = Guru::whereKey($record->id)->lockForUpdate()->firstOrFail();
+            $before = $record->toArray();
+            $record->update($data);
+            AuditService::record('update', 'guru', $record->id, $before, $record->toArray());
+
+            return $record;
+        });
+
+        return response()->json(['data' => $record]);
+    }
+}

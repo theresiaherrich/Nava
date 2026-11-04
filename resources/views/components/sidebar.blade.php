@@ -11,15 +11,10 @@
 
 <aside class="sb" id="app-sidebar">
     <!-- Brand Header -->
-    <a href="#" class="sb-brand">
-        <svg class="sb-brand__logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="32" height="32" rx="8" fill="white" fill-opacity="0.2"/>
-            <path d="M16 6L6 11L16 16L26 11L16 6Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M6 16L16 21L26 16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M6 21L16 26L26 21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="sb-brand__name">SIAKAD SMAN 1</span>
-    </a>
+<a href="#" class="sb-brand">
+    <img src="{{ asset('images/logo-sman1.png') }}" alt="Logo SMAN 1" class="sb-brand__logo">
+    <span class="sb-brand__name">SIAKAD SMAN 1</span>
+</a>
 
     <!-- Area Tengah: Menu Scrollable -->
     <div class="sb-scroll">

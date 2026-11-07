@@ -43,28 +43,23 @@
 .sb-brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;              /* dari 10px, logo portrait jadi tidak terlalu jauh dari teks */
     padding: 0 4px;
     color: inherit;
     text-decoration: none;
     border-radius: var(--sb-radius);
 }
-.sb-brand:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
 .sb-brand__logo {
     height: 36px;
     width: auto;
+    flex: none;
+    display: block;
     object-fit: contain;
 }
-.sb-brand__name { font-size: 12px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
 
-/* ---------- Area tengah ---------- */
 .sb-scroll {
-    flex: 1 1 auto;
-    min-height: 0;
-    margin-top: 24px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: none;
+    margin-top: 20px;      /* dari 24px, mengimbangi logo yang lebih tinggi */
 }
 .sb-scroll::-webkit-scrollbar { display: none; }
 

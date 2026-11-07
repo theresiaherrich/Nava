@@ -48,28 +48,32 @@
                                 </svg>
                                 <span class="sb-item__text">Dashboard BK</span>
                             </a>
-                            <a href="#" class="sb-sub">
+                                <a href="{{ url('/bk/riasec/rekap-view') }}"
+                                    class="sb-sub {{ request()->is('bk/riasec/rekap-view*') ? 'is-active' : '' }}">
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
                                 </svg>
                                 <span class="sb-item__text">Rekap Tes RIASEC</span>
                             </a>
-                            <a href="#" class="sb-sub">
+                            <a href="{{ url('/bk/pengajuan-view') }}"
+                                class="sb-sub {{ request()->is('bk/pengajuan-view*') ? 'is-active' : '' }}">
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                                     <polyline points="22,6 12,13 2,6"></polyline>
                                 </svg>
                                 <span class="sb-item__text">Pengajuan BK</span>
                             </a>
-                            <a href="#" class="sb-sub">
+                            <a href="{{ url('/bk/riwayat-bimbingan-view') }}"
+                                class="sb-sub {{ request()->is('bk/riwayat-bimbingan-view*') ? 'is-active' : '' }}">
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <polyline points="12 6 12 12 16 14"></polyline>
                                 </svg>
                                 <span class="sb-item__text">Riwayat Bimbingan</span>
                             </a>
-                            <a href="#" class="sb-sub">
+                            <a href="{{ url('/bk/profil-view') }}"
+                                class="sb-sub {{ request()->is('bk/profil-view*') ? 'is-active' : '' }}">
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="12" cy="7" r="4"></circle>

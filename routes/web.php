@@ -42,3 +42,17 @@ Route::get('/riasec/hasil-view/{idSesiTes?}', function ($idSesiTes = 1) {
 // ==========================================
 Route::get('/riasec/soal', [RiasecController::class, 'getSoal']);
 Route::post('/riasec/submit', [RiasecController::class, 'submit']);
+
+// A3 PHASE 2: student grade X only
+Route::middleware('auth')->prefix('a3/siswa/x')->name('a3.x.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\A3_BK\StudentXController::class, 'dashboard'])->name('dashboard');
+    Route::get('/tes', [\App\Http\Controllers\A3_BK\StudentXController::class, 'instructions'])->name('instructions');
+    Route::get('/soal', [\App\Http\Controllers\A3_BK\StudentXController::class, 'questions'])->name('questions');
+    Route::post('/soal', [\App\Http\Controllers\A3_BK\StudentXController::class, 'submit'])->name('submit');
+    Route::get('/hasil', [\App\Http\Controllers\A3_BK\StudentXController::class, 'latestResult'])->name('latest');
+    Route::get('/hasil/{sessionId}', [\App\Http\Controllers\A3_BK\StudentXController::class, 'result'])->whereNumber('sessionId')->name('result');
+    Route::get('/rekomendasi', [\App\Http\Controllers\A3_BK\StudentXController::class, 'recommendations'])->name('recommendations');
+    Route::get('/riwayat', [\App\Http\Controllers\A3_BK\StudentXController::class, 'history'])->name('history');
+    Route::get('/konseling', [\App\Http\Controllers\A3_BK\StudentXController::class, 'counseling'])->name('counseling');
+    Route::post('/konseling', [\App\Http\Controllers\A3_BK\StudentXController::class, 'storeCounseling'])->name('counseling.store');
+});

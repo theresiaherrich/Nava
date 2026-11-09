@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Siswa;
 use App\Models\User;
+use App\Models\QrSiswa;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class SiswaController extends Controller
 {
@@ -46,7 +48,7 @@ class SiswaController extends Controller
                 'role' => 'SISWA',
             ]);
 
-            return Siswa::create([
+            $siswa = Siswa::create([
                 'id_user' => $user->id_user,
                 'nis' => $validated['nis'],
                 'nisn' => $validated['nisn'] ?? null,
@@ -57,6 +59,13 @@ class SiswaController extends Controller
                 'urutan_masuk' => $validated['urutan_masuk'] ?? null,
                 'alamat' => $validated['alamat'] ?? null,
             ]);
+
+            QrSiswa::create([
+                'id_siswa' => $siswa->id_siswa,
+                'kode_qr' => (string) Str::uuid(),
+            ]);
+
+            return $siswa;
         });
 
         return response()->json([

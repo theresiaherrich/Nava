@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class BkDemoSeeder extends Seeder
 {
@@ -20,7 +21,7 @@ class BkDemoSeeder extends Seeder
             [
                 'password' => $password,
                 'must_change_password' => 0,
-                'role' => 'BK',
+                'role' => 'GURU',
             ]
         );
         $idUserGuru = DB::table('user')->where('username', 'rina.wulandari')->value('id_user');
@@ -38,9 +39,36 @@ class BkDemoSeeder extends Seeder
         );
         $idGuru = DB::table('guru')->where('id_user', $idUserGuru)->value('id_guru');
 
+        DB::table('guru_bk')->updateOrInsert(
+            ['id_guru' => $idGuru],
+            ['aktif' => true]
+        );
+
         // ==========================================
         // 2. DATA KELAS DEMO
         // ==========================================
+        $tahunAjaranList = ['2025/2026', '2026/2027'];
+        foreach ($tahunAjaranList as $tahunAjaran) {
+            DB::table('tahun_ajaran')->insertOrIgnore(['nama' => $tahunAjaran]);
+        }
+
+        $tahunAjaranIds = DB::table('tahun_ajaran')
+            ->whereIn('nama', $tahunAjaranList)
+            ->pluck('id_tahun_ajaran', 'nama');
+
+        foreach ($tahunAjaranIds as $idTahunAjaran) {
+            DB::table('semester')->insertOrIgnore([
+                ['id_tahun_ajaran' => $idTahunAjaran, 'nama' => 'GASAL'],
+            ]);
+        }
+
+        $semesterIds = DB::table('semester')
+            ->whereIn('id_tahun_ajaran', $tahunAjaranIds->values())
+            ->where('nama', 'GASAL')
+            ->pluck('id_semester', 'id_tahun_ajaran');
+        $idSemesterAktif = $semesterIds[$tahunAjaranIds['2026/2027']];
+        DB::table('semester')->where('id_semester', $idSemesterAktif)->update(['aktif' => true]);
+
         $kelasList = [
             ['nama' => 'X-3', 'tingkat' => 'X', 'fase' => 'E', 'tahun_ajaran' => '2025/2026'],
             ['nama' => 'X-B', 'tingkat' => 'X', 'fase' => 'E', 'tahun_ajaran' => '2026/2027'],
@@ -50,17 +78,24 @@ class BkDemoSeeder extends Seeder
         ];
 
         foreach ($kelasList as $k) {
+            $idTahunAjaran = $tahunAjaranIds[$k['tahun_ajaran']];
             DB::table('kelas')->updateOrInsert(
-                ['nama' => $k['nama'], 'tahun_ajaran' => $k['tahun_ajaran']],
+                ['nama' => $k['nama'], 'id_tahun_ajaran' => $idTahunAjaran],
                 ['tingkat' => $k['tingkat'], 'fase' => $k['fase']]
             );
         }
 
-        $idKelasX3 = DB::table('kelas')->where('nama', 'X-3')->where('tahun_ajaran', '2025/2026')->value('id_kelas');
-        $idKelasXB = DB::table('kelas')->where('nama', 'X-B')->value('id_kelas');
-        $idKelasXC = DB::table('kelas')->where('nama', 'X-C')->value('id_kelas');
-        $idKelasXIA = DB::table('kelas')->where('nama', 'XI-A')->value('id_kelas');
-        $idKelasXIC = DB::table('kelas')->where('nama', 'XI-C')->value('id_kelas');
+        $idKelasX3 = DB::table('kelas')->where('nama', 'X-3')
+            ->where('id_tahun_ajaran', $tahunAjaranIds['2025/2026'])->value('id_kelas');
+        $idKelasXB = DB::table('kelas')->where('nama', 'X-B')
+            ->where('id_tahun_ajaran', $tahunAjaranIds['2026/2027'])->value('id_kelas');
+        $idKelasXC = DB::table('kelas')->where('nama', 'X-C')
+            ->where('id_tahun_ajaran', $tahunAjaranIds['2026/2027'])->value('id_kelas');
+        $idKelasXIA = DB::table('kelas')->where('nama', 'XI-A')
+            ->where('id_tahun_ajaran', $tahunAjaranIds['2026/2027'])->value('id_kelas');
+        $idKelasXIC = DB::table('kelas')->where('nama', 'XI-C')
+            ->where('id_tahun_ajaran', $tahunAjaranIds['2026/2027'])->value('id_kelas');
+        $idSemesterNadia = $semesterIds[$tahunAjaranIds['2025/2026']];
 
         // ==========================================
         // 3. DATA SISWA UTAMA (Nadia Azzahra Putri)
@@ -90,49 +125,55 @@ class BkDemoSeeder extends Seeder
         $idSiswaNadia = DB::table('siswa')->where('nis', '2410073')->value('id_siswa');
 
         DB::table('riwayat_kelas')->updateOrInsert(
-            ['id_siswa' => $idSiswaNadia, 'id_kelas' => $idKelasX3],
-            ['id_guru' => $idGuru]
+            ['id_siswa' => $idSiswaNadia, 'id_semester' => $idSemesterNadia],
+            ['id_kelas' => $idKelasX3]
+        );
+        DB::table('riwayat_kelas')->updateOrInsert(
+            ['id_siswa' => $idSiswaNadia, 'id_semester' => $idSemesterAktif],
+            ['id_kelas' => $idKelasXB]
         );
         $idRiwayatNadia = DB::table('riwayat_kelas')
             ->where('id_siswa', $idSiswaNadia)
-            ->where('id_kelas', $idKelasX3)
+            ->where('id_semester', $idSemesterNadia)
             ->value('id_riwayat_kelas');
 
         // ==========================================
         // 4. HASIL TES RIASEC UNTUK NADIA (IAS)
         // ==========================================
-        DB::table('sesi_tes')->updateOrInsert(
-            ['id_riwayat_kelas' => $idRiwayatNadia, 'tingkat' => 'X'],
+        DB::table('periode_tes')->updateOrInsert(
+            ['id_semester' => $idSemesterNadia, 'tingkat' => 'X'],
             [
+                'nama' => 'Periode Tes RIASEC Demo',
+                'tanggal_mulai' => '2025-08-01',
+                'tanggal_selesai' => '2025-08-31',
+                'status' => 'aktif',
+            ]
+        );
+        foreach (['X', 'XI'] as $tingkat) {
+            DB::table('periode_tes')->updateOrInsert(
+                ['id_semester' => $idSemesterAktif, 'tingkat' => $tingkat],
+                [
+                    'nama' => 'Periode Tes RIASEC Demo',
+                    'tanggal_mulai' => '2026-08-01',
+                    'tanggal_selesai' => '2026-12-31',
+                    'status' => 'aktif',
+                ]
+            );
+        }
+
+        DB::table('sesi_tes')->updateOrInsert(
+            ['id_riwayat_kelas' => $idRiwayatNadia],
+            [
+                'skor_r' => 72,
+                'skor_i' => 91,
+                'skor_a' => 84,
+                'skor_s' => 76,
+                'skor_e' => 65,
+                'skor_c' => 58,
                 'kode_holland' => 'IAS',
-                'waktu_mulai' => '2025-08-18 08:00:00',
                 'waktu_selesai' => '2025-08-18 08:45:00',
             ]
         );
-        $idSesiNadia = DB::table('sesi_tes')->where('id_riwayat_kelas', $idRiwayatNadia)->value('id_sesi_tes');
-
-        // Ambil ID Dimensi RIASEC
-        $dimensiMap = DB::table('dimensi_riasec')->pluck('id_dimensi', 'kode');
-
-        // Skor Nadia sesuai Mockup Dashboard:
-        // R: 72%, I: 91%, A: 84%, S: 76%, E: 65%, C: 58%
-        $skorNadia = [
-            'R' => 72,
-            'I' => 91,
-            'A' => 84,
-            'S' => 76,
-            'E' => 65,
-            'C' => 58,
-        ];
-
-        foreach ($skorNadia as $kode => $skor) {
-            if (isset($dimensiMap[$kode])) {
-                DB::table('hasil_tes_riasec')->updateOrInsert(
-                    ['id_sesi_tes' => $idSesiNadia, 'id_dimensi' => $dimensiMap[$kode]],
-                    ['skor_mentah' => $skor, 'skor_normal' => $skor]
-                );
-            }
-        }
 
         // ==========================================
         // 5. SISWA LAIN & ANTREAN BIMBINGAN (Untuk Dashboard Bu Rina)
@@ -144,8 +185,11 @@ class BkDemoSeeder extends Seeder
                 'nama' => 'Alya Safitri',
                 'jk' => 'P',
                 'kelas_id' => $idKelasXB,
+                'semester_id' => $semesterIds[$tahunAjaranIds['2026/2027']],
                 'keluhan' => 'Konsultasi pilihan jurusan',
                 'status' => 'Menunggu',
+                'balasan_bk' => null,
+                'jadwal_bimbingan' => null,
                 'created_at' => now()->subMinutes(35),
             ],
             [
@@ -154,8 +198,11 @@ class BkDemoSeeder extends Seeder
                 'nama' => 'Bima Arya Nugraha',
                 'jk' => 'L',
                 'kelas_id' => $idKelasXC,
+                'semester_id' => $semesterIds[$tahunAjaranIds['2026/2027']],
                 'keluhan' => 'Motivasi belajar menurun',
                 'status' => 'Diproses',
+                'balasan_bk' => null,
+                'jadwal_bimbingan' => null,
                 'created_at' => now()->subHours(2),
             ],
             [
@@ -164,8 +211,11 @@ class BkDemoSeeder extends Seeder
                 'nama' => 'Citra Maharani',
                 'jk' => 'P',
                 'kelas_id' => $idKelasXIA,
+                'semester_id' => $semesterIds[$tahunAjaranIds['2026/2027']],
                 'keluhan' => 'Perencanaan studi lanjut',
                 'status' => 'Dijadwalkan',
+                'balasan_bk' => 'Sesi bimbingan telah dijadwalkan.',
+                'jadwal_bimbingan' => now()->addDay(),
                 'created_at' => now()->subDays(1),
             ],
             [
@@ -174,8 +224,11 @@ class BkDemoSeeder extends Seeder
                 'nama' => 'Farah Nabila',
                 'jk' => 'P',
                 'kelas_id' => $idKelasXIC,
+                'semester_id' => $semesterIds[$tahunAjaranIds['2026/2027']],
                 'keluhan' => 'Bimbingan karir lanjutan',
                 'status' => 'Selesai',
+                'balasan_bk' => 'Sesi bimbingan telah selesai.',
+                'jadwal_bimbingan' => null,
                 'created_at' => now()->subDays(2),
             ],
         ];
@@ -199,15 +252,31 @@ class BkDemoSeeder extends Seeder
             );
             $sId = DB::table('siswa')->where('nis', $item['nis'])->value('id_siswa');
 
+            $idRiwayatKelas = null;
             if ($item['kelas_id']) {
                 DB::table('riwayat_kelas')->updateOrInsert(
-                    ['id_siswa' => $sId, 'id_kelas' => $item['kelas_id']],
-                    ['id_guru' => $idGuru]
+                    ['id_siswa' => $sId, 'id_semester' => $item['semester_id']],
+                    ['id_kelas' => $item['kelas_id']]
                 );
+                $idRiwayatKelas = DB::table('riwayat_kelas')
+                    ->where('id_siswa', $sId)
+                    ->where('id_semester', $item['semester_id'])
+                    ->value('id_riwayat_kelas');
             }
 
-            // Insert Permintaan Konsultasi jika tabel ada
-            if (\Illuminate\Support\Facades\Schema::hasTable('permintaan_konsultasi')) {
+            if ($idRiwayatKelas && Schema::hasTable('pengajuan_bk')) {
+                DB::table('pengajuan_bk')->updateOrInsert(
+                    ['id_riwayat_kelas' => $idRiwayatKelas, 'topik' => $item['keluhan']],
+                    [
+                        'deskripsi' => $item['keluhan'],
+                        'status' => strtolower($item['status']),
+                        'id_guru' => $idGuru,
+                        'balasan_bk' => $item['balasan_bk'],
+                        'jadwal_bimbingan' => $item['jadwal_bimbingan'],
+                        'created_at' => $item['created_at'],
+                    ]
+                );
+            } elseif (Schema::hasTable('permintaan_konsultasi')) {
                 DB::table('permintaan_konsultasi')->updateOrInsert(
                     ['id_siswa' => $sId, 'catatan' => $item['keluhan']],
                     ['status' => $item['status'], 'created_at' => $item['created_at']]

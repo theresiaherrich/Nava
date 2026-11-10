@@ -9,15 +9,27 @@
     $isGuruBk = in_array(strtoupper($currentRole), ['BK', 'GURU']);
 @endphp
 
+<style>
+    /* Brand sidebar: sengaja ditaruh di sini agar tidak tergantung build/cache CSS */
+    .sb .sb-brand { font-size: 16px; display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0 4px; color: inherit; text-decoration: none; }
+    .sb .sb-brand__logo { height: 40px; width: auto; flex: none; display: block; object-fit: contain; }
+    .sb .sb-brand__text { min-width: 0; line-height: 1.1; }
+    .sb .sb-brand__title { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+    .sb .sb-brand__sub { margin: 1px 0 0; font-size: 10.5px; font-weight: 400; color: rgba(255,255,255,.92); white-space: nowrap; }
+</style>
+
 <aside class="sb" id="app-sidebar">
     <!-- Brand Header -->
-<a href="#" class="sb-brand">
-    <img src="{{ asset('images/logo-sman1.png') }}" alt="Logo SMAN 1" class="sb-brand__logo">
-    <span class="sb-brand__name">SIAKAD SMAN 1</span>
-</a>
+    <a href="{{ $isGuruBk ? route('bk.dashboard') : route('siswa.dashboard') }}" class="sb-brand">
+        <img src="{{ asset('images/logo-sman1.png') }}" alt="Logo SMAN 1" class="sb-brand__logo">
+        <div class="sb-brand__text">
+            <p class="sb-brand__title">SIAKAD</p>
+            <p class="sb-brand__sub">SMA Negeri 1 Malang</p>
+        </div>
+    </a>
 
     <!-- Area Tengah: Menu Scrollable -->
-    <div class="sb-scroll"> 
+    <div class="sb-scroll">
         <p class="sb-label">Menu Utama</p>
 
         <nav class="sb-nav" aria-label="Menu Utama">
@@ -28,7 +40,6 @@
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
-                    <span class="sb-item__code">A3</span>
                     <span class="sb-item__text">{{ $isGuruBk ? 'Bimbingan Konseling' : 'Peminatan & Konseling' }}</span>
                     <svg class="sb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="6 9 12 15 18 9"></polyline>
@@ -39,7 +50,7 @@
                     <nav class="sb-nav">
                         @if ($isGuruBk)
                             <!-- Menu Guru BK -->
-                            <a href="{{ route('bk.guru-dashboard') }}" class="sb-sub {{ request()->routeIs('bk.guru-dashboard') ? 'is-active' : '' }}">
+                            <a href="{{ route('bk.dashboard') }}" class="sb-sub {{ request()->routeIs('bk.dashboard') ? 'is-active' : '' }}">
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <rect x="3" y="3" width="7" height="7"></rect>
                                     <rect x="14" y="3" width="7" height="7"></rect>
@@ -48,32 +59,48 @@
                                 </svg>
                                 <span class="sb-item__text">Dashboard BK</span>
                             </a>
+<<<<<<< Updated upstream
                                 <a href="{{ url('/bk/riasec/rekap-view') }}"
                                     class="sb-sub {{ request()->is('bk/riasec/rekap-view*') ? 'is-active' : '' }}">
+=======
+                            <a href="{{ route('bk.rekap-tes') }}" class="sb-sub {{ request()->routeIs('bk.rekap-tes*') ? 'is-active' : '' }}">
+>>>>>>> Stashed changes
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
                                 </svg>
                                 <span class="sb-item__text">Rekap Tes RIASEC</span>
                             </a>
+<<<<<<< Updated upstream
                             <a href="{{ url('/bk/pengajuan-view') }}"
                                 class="sb-sub {{ request()->is('bk/pengajuan-view*') ? 'is-active' : '' }}">
+=======
+                            <a href="{{ route('bk.pengajuan') }}" class="sb-sub {{ request()->routeIs('bk.pengajuan*') ? 'is-active' : '' }}">
+>>>>>>> Stashed changes
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                                     <polyline points="22,6 12,13 2,6"></polyline>
                                 </svg>
                                 <span class="sb-item__text">Pengajuan BK</span>
                             </a>
+<<<<<<< Updated upstream
                             <a href="{{ url('/bk/riwayat-bimbingan-view') }}"
                                 class="sb-sub {{ request()->is('bk/riwayat-bimbingan-view*') ? 'is-active' : '' }}">
+=======
+                            <a href="{{ route('bk.riwayat') }}" class="sb-sub {{ request()->routeIs('bk.riwayat*') ? 'is-active' : '' }}">
+>>>>>>> Stashed changes
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <polyline points="12 6 12 12 16 14"></polyline>
                                 </svg>
                                 <span class="sb-item__text">Riwayat Bimbingan</span>
                             </a>
+<<<<<<< Updated upstream
                             <a href="{{ url('/bk/profil-view') }}"
                                 class="sb-sub {{ request()->is('bk/profil-view*') ? 'is-active' : '' }}">
+=======
+                            <a href="{{ route('bk.profil') }}" class="sb-sub {{ request()->routeIs('bk.profil*') ? 'is-active' : '' }}">
+>>>>>>> Stashed changes
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="12" cy="7" r="4"></circle>
@@ -89,14 +116,14 @@
                                 </svg>
                                 <span class="sb-item__text">Dashboard</span>
                             </a>
-                            <a href="{{ url('/riasec/tes-view') }}" class="sb-sub {{ request()->is('riasec/tes-view*') || request()->is('riasec/soal-view*') ? 'is-active' : '' }}">
+                            <a href="{{ route('siswa.tes.petunjuk') }}" class="sb-sub {{ request()->routeIs('siswa.tes*') ? 'is-active' : '' }}">
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
                                     <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
                                 </svg>
                                 <span class="sb-item__text">Tes RIASEC</span>
                             </a>
-                            <a href="{{ url('/riasec/hasil-view/1') }}" class="sb-sub {{ request()->is('riasec/hasil-view*') ? 'is-active' : '' }}">
+                            <a href="{{ route('siswa.hasil') }}" class="sb-sub {{ request()->routeIs('siswa.hasil*') ? 'is-active' : '' }}">
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="18" y1="20" x2="18" y2="10"></line>
                                     <line x1="12" y1="20" x2="12" y2="4"></line>
@@ -104,21 +131,21 @@
                                 </svg>
                                 <span class="sb-item__text">Hasil Tes</span>
                             </a>
-                            <a href="#" class="sb-sub">
+                            <a href="{{ route('siswa.mapel-pilihan') }}" class="sb-sub {{ request()->routeIs('siswa.mapel-pilihan*') ? 'is-active' : '' }}">
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
                                     <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
                                 </svg>
                                 <span class="sb-item__text">Rekomendasi Mapel</span>
                             </a>
-                            <a href="#" class="sb-sub">
+                            <a href="{{ route('siswa.riwayat-tes') }}" class="sb-sub {{ request()->routeIs('siswa.riwayat-tes*') ? 'is-active' : '' }}">
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <polyline points="12 6 12 12 16 14"></polyline>
                                 </svg>
                                 <span class="sb-item__text">Riwayat Tes</span>
                             </a>
-                            <a href="#" class="sb-sub">
+                            <a href="{{ route('siswa.pengajuan-bk') }}" class="sb-sub {{ request()->routeIs('siswa.pengajuan-bk*') ? 'is-active' : '' }}">
                                 <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                 </svg>
@@ -160,7 +187,7 @@
     </div>
 </aside>
 
-<div class="sb-overlay" id="sidebar-overlay"></div>
+<div class="sb-overlay" id="sidebar-overlay" hidden></div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -177,14 +204,13 @@
             });
         });
 
-        // Mobile drawer overlay
+        // Mobile drawer: overlay mengikuti status drawer (dibuka lewat tombol hamburger di header)
         var overlay = document.getElementById('sidebar-overlay');
         if (overlay) {
-            overlay.addEventListener('click', function () {
-                sb.classList.remove('is-open');
-                overlay.hidden = true;
-            });
+            var sync = function () { overlay.hidden = !sb.classList.contains('is-open'); };
+            new MutationObserver(sync).observe(sb, { attributes: true, attributeFilter: ['class'] });
+            overlay.addEventListener('click', function () { sb.classList.remove('is-open'); });
+            sync();
         }
     });
 </script>
-

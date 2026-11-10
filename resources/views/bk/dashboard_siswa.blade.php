@@ -2,14 +2,7 @@
 
     <!-- Breadcrumb & Header Greeting -->
     <div class="mb-6">
-        <div class="flex items-center gap-2 text-[10px] font-semibold text-blue-600 tracking-wider uppercase mb-1">
-            <span>SIAKAD</span>
-            <span>&gt;</span>
-            <span>MODUL A3</span>
-            <span>&gt;</span>
-            <span class="text-gray-400">DASHBOARD SISWA</span>
-        </div>
-        <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">MODUL A3 · PEMINATAN DAN KONSELING</p>
+        <x-page-label />
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Selamat pagi, Nadia</h1>

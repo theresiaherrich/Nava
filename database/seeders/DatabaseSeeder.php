@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -12,13 +11,18 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * NONAKTIF (data sudah ada di database nava melalui nava_2_data_awal.sql):
+     * - DimensiRiasecSeeder::class
+     * - SoalRiasecSeeder::class
+     *
+     * NONAKTIF (digantikan AkunContohSeeder):
+     * - BkDemoSeeder::class
+     *
+     * Untuk pengujian, jalankan: php artisan db:seed --class=AkunContohSeeder
      */
-public function run(): void
-{
-    $this->call([
-        DimensiRiasecSeeder::class,
-        SoalRiasecSeeder::class,
-        BkDemoSeeder::class,
-    ]);
+    public function run(): void
+    {
+        $this->call([]);
     }
 }

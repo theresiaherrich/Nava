@@ -2,14 +2,7 @@
 
     <!-- Breadcrumb & Header Greeting -->
     <div class="mb-6">
-        <div class="flex items-center gap-2 text-[10px] font-semibold text-blue-600 tracking-wider uppercase mb-1">
-            <span>SIAKAD</span>
-            <span>&gt;</span>
-            <span>MODUL A3</span>
-            <span>&gt;</span>
-            <span class="text-gray-400">DASHBOARD BK</span>
-        </div>
-        <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">MODUL A3 · BIMBINGAN DAN KONSELING</p>
+        <x-page-label />
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Selamat pagi, Bu Rina</h1>
@@ -41,7 +34,7 @@
         </div>
         <div class="flex items-center gap-3">
             <span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full">Aktif</span>
-            <a href="#" class="text-xs font-semibold text-sky-600 hover:underline flex items-center gap-1">
+            <a href="{{ route('bk.riwayat') }}" class="text-xs font-semibold text-sky-600 hover:underline flex items-center gap-1">
                 <span>Lihat riwayat</span>
                 <span>&gt;</span>
             </a>
@@ -276,12 +269,12 @@
                 <h2 class="text-sm font-bold text-slate-900">Antrean Bimbingan</h2>
                 <p class="text-xs text-gray-400">Pengajuan yang perlu ditindaklanjuti</p>
             </div>
-            <a href="#" class="text-xs font-semibold text-blue-600 hover:underline">Lihat semua</a>
+            <a href="{{ route('bk.pengajuan') }}" class="text-xs font-semibold text-blue-600 hover:underline">Lihat semua</a>
         </div>
 
         <div class="space-y-3">
             <!-- Antrean 1: Alya Safitri (Menunggu) -->
-            <div class="p-3.5 bg-gray-50/70 hover:bg-gray-100/70 rounded-xl flex items-center justify-between transition cursor-pointer">
+            <a href="{{ route('bk.pengajuan') }}" class="p-3.5 bg-gray-50/70 hover:bg-gray-100/70 rounded-xl flex items-center justify-between transition">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full bg-[#009bf2] text-white flex items-center justify-center text-xs font-bold">
                         AS
@@ -297,10 +290,10 @@
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                 </div>
-            </div>
+            </a>
 
             <!-- Antrean 2: Bima Arya Nugraha (Diproses) -->
-            <div class="p-3.5 bg-gray-50/70 hover:bg-gray-100/70 rounded-xl flex items-center justify-between transition cursor-pointer">
+            <a href="{{ route('bk.pengajuan') }}" class="p-3.5 bg-gray-50/70 hover:bg-gray-100/70 rounded-xl flex items-center justify-between transition">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full bg-[#009bf2] text-white flex items-center justify-center text-xs font-bold">
                         BA
@@ -316,10 +309,10 @@
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                 </div>
-            </div>
+            </a>
 
             <!-- Antrean 3: Citra Maharani (Dijadwalkan) -->
-            <div class="p-3.5 bg-gray-50/70 hover:bg-gray-100/70 rounded-xl flex items-center justify-between transition cursor-pointer">
+            <a href="{{ route('bk.pengajuan') }}" class="p-3.5 bg-gray-50/70 hover:bg-gray-100/70 rounded-xl flex items-center justify-between transition">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full bg-[#009bf2] text-white flex items-center justify-center text-xs font-bold">
                         CM
@@ -335,7 +328,7 @@
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 

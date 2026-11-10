@@ -40,6 +40,20 @@ Route::middleware(['auth', 'role:SISWA'])->prefix('siswa')->name('siswa.')->grou
     Route::post('/pengajuan-bk', [SiswaController::class, 'storePengajuanBk'])->name('pengajuan-bk.store');
 });
 
+// A3 PHASE 2: Route Siswa Kelas X (Integrasi dari Remote)
+Route::middleware('auth')->prefix('a3/siswa/x')->name('a3.x.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\A3_BK\StudentXController::class, 'dashboard'])->name('dashboard');
+    Route::get('/tes', [\App\Http\Controllers\A3_BK\StudentXController::class, 'instructions'])->name('instructions');
+    Route::get('/soal', [\App\Http\Controllers\A3_BK\StudentXController::class, 'questions'])->name('questions');
+    Route::post('/soal', [\App\Http\Controllers\A3_BK\StudentXController::class, 'submit'])->name('submit');
+    Route::get('/hasil', [\App\Http\Controllers\A3_BK\StudentXController::class, 'latestResult'])->name('latest');
+    Route::get('/hasil/{sessionId}', [\App\Http\Controllers\A3_BK\StudentXController::class, 'result'])->whereNumber('sessionId')->name('result');
+    Route::get('/rekomendasi', [\App\Http\Controllers\A3_BK\StudentXController::class, 'recommendations'])->name('recommendations');
+    Route::get('/riwayat', [\App\Http\Controllers\A3_BK\StudentXController::class, 'history'])->name('history');
+    Route::get('/konseling', [\App\Http\Controllers\A3_BK\StudentXController::class, 'counseling'])->name('counseling');
+    Route::post('/konseling', [\App\Http\Controllers\A3_BK\StudentXController::class, 'storeCounseling'])->name('counseling.store');
+});
+
 // ==========================================
 // 3. AREA GURU BK (role: GURU + ada di guru_bk)
 // ==========================================
@@ -68,24 +82,6 @@ Route::middleware(['auth', 'role:GURU'])->prefix('bk')->name('bk.')->group(funct
 // ==========================================
 // 4. AREA ADMINISTRATOR (role: ADMIN)
 // ==========================================
-<<<<<<< Updated upstream
-Route::get('/riasec/soal', [RiasecController::class, 'getSoal']);
-Route::post('/riasec/submit', [RiasecController::class, 'submit']);
-
-// A3 PHASE 2: student grade X only
-Route::middleware('auth')->prefix('a3/siswa/x')->name('a3.x.')->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\A3_BK\StudentXController::class, 'dashboard'])->name('dashboard');
-    Route::get('/tes', [\App\Http\Controllers\A3_BK\StudentXController::class, 'instructions'])->name('instructions');
-    Route::get('/soal', [\App\Http\Controllers\A3_BK\StudentXController::class, 'questions'])->name('questions');
-    Route::post('/soal', [\App\Http\Controllers\A3_BK\StudentXController::class, 'submit'])->name('submit');
-    Route::get('/hasil', [\App\Http\Controllers\A3_BK\StudentXController::class, 'latestResult'])->name('latest');
-    Route::get('/hasil/{sessionId}', [\App\Http\Controllers\A3_BK\StudentXController::class, 'result'])->whereNumber('sessionId')->name('result');
-    Route::get('/rekomendasi', [\App\Http\Controllers\A3_BK\StudentXController::class, 'recommendations'])->name('recommendations');
-    Route::get('/riwayat', [\App\Http\Controllers\A3_BK\StudentXController::class, 'history'])->name('history');
-    Route::get('/konseling', [\App\Http\Controllers\A3_BK\StudentXController::class, 'counseling'])->name('counseling');
-    Route::post('/konseling', [\App\Http\Controllers\A3_BK\StudentXController::class, 'storeCounseling'])->name('counseling.store');
-});
-=======
 Route::middleware(['auth', 'role:ADMIN'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
@@ -141,7 +137,3 @@ Route::middleware(['auth', 'role:ADMIN'])->prefix('admin')->name('admin.')->grou
     Route::put('/validasi/mapel/{id}', [AdminController::class, 'validasiMapel'])->name('validasi.mapel');
     Route::put('/validasi/prodi/{id}', [AdminController::class, 'validasiProdi'])->name('validasi.prodi');
 });
-
-// ==========================================
-// BACKWARD COMPAT — alias lama (hindari 404)
->>>>>>> Stashed changes

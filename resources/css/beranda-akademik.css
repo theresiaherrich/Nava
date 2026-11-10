@@ -1,0 +1,441 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+.ba-page {
+    min-height: 100vh;
+    background: #f6f8fb;
+    padding: 24px 28px;
+    font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+}
+.ba-page *,
+.ba-page *::before,
+.ba-page *::after {
+    box-sizing: border-box;
+}
+
+/* Header */
+.ba-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+.ba-eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    color: #0369a1;
+    margin: 0 0 4px;
+}
+.ba-title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    margin: 0;
+}
+.ba-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin: 4px 0 0;
+}
+.ba-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 11px;
+    color: #64748b;
+}
+.ba-date svg {
+    width: 13px;
+    height: 13px;
+    color: #64748b;
+}
+.ba-date strong {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+/* Kartu umum */
+.ba-card {
+    background: #fff;
+    border: 1px solid #e8edf3;
+    border-radius: 12px;
+    padding: 16px 18px;
+}
+
+/* Baris atas */
+.ba-top {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+    align-items: start;
+}
+.ba-profile {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.ba-profile-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.ba-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #0d9488;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.ba-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0;
+}
+.ba-nis {
+    font-size: 10px;
+    color: #64748b;
+    margin: 2px 0 0;
+}
+.ba-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.ba-tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 5px;
+}
+.ba-tag.is-blue {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+.ba-tag.is-teal {
+    background: #ccfbf1;
+    color: #0f766e;
+}
+.ba-wali {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #475569;
+    margin: 0;
+}
+.ba-wali svg {
+    width: 12px;
+    height: 12px;
+    color: #64748b;
+}
+
+.ba-right {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Banner */
+.ba-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid;
+}
+.ba-banner.is-success {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+.ba-banner.is-info {
+    background: #f0f9ff;
+    border-color: #bae6fd;
+}
+.ba-banner-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    background: #fff;
+}
+.ba-banner.is-success .ba-banner-icon { color: #15803d; }
+.ba-banner.is-info .ba-banner-icon    { color: #0369a1; }
+.ba-banner-body {
+    flex: 1;
+    min-width: 0;
+}
+.ba-banner-title {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0;
+    color: #0f172a;
+}
+.ba-banner-text {
+    font-size: 10px;
+    color: #475569;
+    margin: 2px 0 0;
+}
+
+/* Stat */
+.ba-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+.ba-stat {
+    background: #fff;
+    border: 1px solid #e8edf3;
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+.ba-stat-label {
+    font-size: 10px;
+    color: #64748b;
+    margin: 0;
+}
+.ba-stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 4px 0 2px;
+}
+.ba-stat-value small {
+    font-size: 11px;
+    font-weight: 500;
+    color: #64748b;
+}
+.ba-stat-value.is-ok {
+    color: #15803d;
+}
+.ba-stat-value.is-warn {
+    color: #ea580c;
+}
+.ba-stat-note {
+    font-size: 9px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* Baris bawah */
+.ba-bottom {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 14px;
+    align-items: start;
+}
+.ba-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.ba-panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0 0 12px;
+}
+.ba-panel-head .ba-panel-title {
+    margin: 0;
+}
+
+/* Status rapor */
+.ba-status-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.ba-status-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #e8edf3;
+    border-radius: 8px;
+    padding: 10px 12px;
+    flex-wrap: wrap;
+}
+.ba-status-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    background: #f1f5f9;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    color: #64748b;
+    flex-shrink: 0;
+}
+.ba-status-body {
+    flex: 1;
+    min-width: 120px;
+}
+.ba-status-name {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0;
+}
+.ba-status-sub {
+    font-size: 10px;
+    color: #94a3b8;
+    margin: 2px 0 0;
+}
+
+/* Chip, link, tombol */
+.ba-chip {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    white-space: nowrap;
+}
+.ba-chip.ok {
+    background: #dcfce7;
+    color: #15803d;
+}
+.ba-chip.warn {
+    background: #ffedd5;
+    color: #c2410c;
+}
+.ba-link {
+    font-size: 11px;
+    font-weight: 600;
+    color: #0369a1;
+    text-decoration: none;
+}
+.ba-link:hover {
+    text-decoration: underline;
+}
+.ba-btn-primary {
+    font-size: 11px;
+    font-weight: 600;
+    background: #0ea5e9;
+    color: #fff;
+    padding: 7px 12px;
+    border-radius: 7px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.ba-btn-primary:hover {
+    background: #0284c7;
+}
+
+/* Capaian per mapel */
+.ba-mapel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.ba-mapel-row {
+    display: grid;
+    grid-template-columns: 170px 36px 1fr 110px;
+    align-items: center;
+    gap: 12px;
+}
+.ba-mapel-name {
+    font-size: 12px;
+    color: #334155;
+}
+.ba-mapel-score {
+    font-size: 12px;
+    font-weight: 700;
+    text-align: right;
+}
+.ba-mapel-score.is-warn {
+    color: #ea580c;
+}
+.ba-mapel-row .ba-chip {
+    justify-self: end;
+}
+.ba-bar {
+    height: 6px;
+    background: #eef2f6;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.ba-bar-fill {
+    height: 100%;
+    background: #16a34a;
+    border-radius: 999px;
+}
+.ba-bar-fill.is-warn {
+    background: #f59e0b;
+}
+
+/* Empty */
+.ba-empty {
+    text-align: center;
+    padding: 36px 16px;
+}
+.ba-empty-icon {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    color: #64748b;
+}
+.ba-empty-title {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0;
+}
+.ba-empty-text {
+    font-size: 10px;
+    color: #64748b;
+    margin: 4px 0 0;
+}
+
+.ba-footnote {
+    margin: 14px 0 0;
+    padding: 10px 14px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    font-size: 10px;
+    color: #64748b;
+}
+
+/* Responsif */
+@media (max-width: 1100px) {
+    .ba-top,
+    .ba-bottom {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 760px) {
+    .ba-page {
+        padding: 18px 14px;
+    }
+    .ba-stats {
+        grid-template-columns: 1fr;
+    }
+    .ba-mapel-row {
+        grid-template-columns: 1fr 40px;
+    }
+    .ba-mapel-row .ba-bar {
+        grid-column: 1 / -1;
+    }
+    .ba-mapel-row .ba-chip {
+        justify-self: start;
+    }
+}

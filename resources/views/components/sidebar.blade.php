@@ -13,17 +13,14 @@
             ['label' => 'Presensi Manual', 'icon' => 'map-pin', 'route' => 'presensi.manual'],
             ['label' => 'Riwayat Presensi', 'icon' => 'history', 'route' => 'presensi.riwayat'],
         ],
-
         'wali_kelas' => [
             ['label' => 'Riwayat Presensi', 'icon' => 'history', 'route' => 'presensi.riwayat'],
             ['label' => 'Edit Presensi', 'icon' => 'pencil', 'route' => 'presensi.edit'],
         ],
-
         'budaya_positif' => [
             ['label' => 'Riwayat Presensi', 'icon' => 'history', 'route' => 'presensi.riwayat'],
             ['label' => 'Scan Presensi', 'icon' => 'scan', 'route' => 'presensi.scan'],
         ],
-
         'admin' => [
             ['label' => 'Riwayat Presensi', 'icon' => 'history', 'route' => 'presensi.riwayat'],
             ['label' => 'Edit Presensi', 'icon' => 'pencil', 'route' => 'presensi.edit'],
@@ -32,33 +29,20 @@
     ];
 
     $presensiItems = $presensiMenus[$role] ?? $presensiMenus['wali_kelas'];
-@endphp
 
-@php
     // Menu default (Wali Kelas). Backend bisa mengirim $menu sendiri lewat <x-sidebar :menu="$menu" />
     $defaultMenu = [
         [
             'code' => 'A1', 'label' => 'Presensi', 'icon' => 'calendar', 'sub_title' => 'Presensi', 'items' => $presensiItems,
-            ],
-    'menu'         => null,
-    'academicYear' => '2026/2027 • Ganjil',
-])
-
-@php
-    // Menu default (Wali Kelas). Backend bisa mengirim $menu sendiri lewat <x-sidebar :menu="$menu" />
-    $defaultMenu = [
-        [
-            'code' => 'A1', 'label' => 'Presensi', 'icon' => 'calendar', 'href' => '#',
         ],
-
         [
             'code' => 'A2', 'label' => 'Akademik', 'icon' => 'file', 'sub_title' => 'Wali Kelas',
             'items' => [
-                ['label' => 'Dashboard Kelas',    'icon' => 'grid',    'route' => null],
-                ['label' => 'Verifikasi Nilai',   'icon' => 'check',   'route' => 'verifikasi-nilai.index', 'pattern' => 'verifikasi-nilai.*'],
-                ['label' => 'Pelengkap Rapor',    'icon' => 'pencil',  'route' => null],
-                ['label' => 'Rekap Nilai (DKN)',  'icon' => 'table',   'route' => 'rekap-nilai.index',      'pattern' => 'rekap-nilai.*'],
-                ['label' => 'Cetak Rapor',        'icon' => 'printer', 'route' => null],
+                ['label' => 'Dashboard Kelas',   'icon' => 'grid',    'route' => null],
+                ['label' => 'Verifikasi Nilai',  'icon' => 'check',   'route' => 'verifikasi-nilai.index', 'pattern' => 'verifikasi-nilai.*'],
+                ['label' => 'Pelengkap Rapor',   'icon' => 'pencil',  'route' => null],
+                ['label' => 'Rekap Nilai (DKN)', 'icon' => 'table',   'route' => 'rekap-nilai.index',      'pattern' => 'rekap-nilai.*'],
+                ['label' => 'Cetak Rapor',       'icon' => 'printer', 'route' => null],
             ],
         ],
         [
@@ -87,8 +71,8 @@
         'logout'   => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
         'chev'     => '<path d="m6 9 6 6 6-6"/>',
         'qr'       => '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v2M17 20h4M20 18v3"/>',
-        'map-pin' => '<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/>',
-        'history' => '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+        'map-pin'  => '<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/>',
+        'history'  => '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
         'scan'     => '<path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M4 12h16"/>',
     ];
 

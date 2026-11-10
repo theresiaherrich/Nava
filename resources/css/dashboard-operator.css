@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+.do-page {
+    min-height: 100vh;
+    background: #f6f8fb;
+    padding: 24px 28px;
+    font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+}
+.do-page * { box-sizing: border-box; }
+
+/* Header */
+.do-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.do-eyebrow { font-size: 10px; font-weight: 600; color: #0369a1; margin: 0 0 4px; }
+.do-title { font-size: 24px; font-weight: 700; letter-spacing: -.01em; margin: 0; }
+.do-subtitle { font-size: 12px; color: #64748b; margin: 4px 0 0; }
+.do-date {
+    font-size: 11px; color: #64748b; background: #fff;
+    border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 12px;
+}
+
+/* Card */
+.do-card {
+    background: #fff; border: 1px solid #e8edf3; border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 14px;
+}
+.do-panel-title { font-size: 13px; font-weight: 600; margin: 0 0 10px; }
+.do-panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.do-label { font-size: 10px; color: #64748b; margin: 0; }
+.do-note { font-size: 10px; color: #94a3b8; margin: 4px 0 0; }
+.do-note.is-warn { color: #ea580c; }
+.do-empty { font-size: 11px; color: #64748b; margin: 0; padding: 8px 0; }
+
+/* Statistik */
+.do-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.do-stats .do-card { margin-bottom: 0; }
+.do-value { font-size: 24px; font-weight: 700; margin: 4px 0 0; }
+.do-value small { font-size: 12px; font-weight: 500; color: #64748b; }
+
+.do-bar { height: 6px; background: #eef2f6; border-radius: 999px; overflow: hidden; margin-top: 10px; }
+.do-bar-fill { height: 100%; background: #16a34a; border-radius: 999px; }
+
+/* Grid */
+.do-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.do-grid > .do-card { margin-bottom: 0; }
+.do-left { display: flex; flex-direction: column; gap: 14px; }
+.do-left .do-card { margin-bottom: 0; }
+
+/* Perlu ditindaklanjuti */
+.do-count { font-size: 10px; font-weight: 700; background: #ffedd5; color: #c2410c; padding: 2px 8px; border-radius: 999px; }
+.do-todo { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #f1f5f9; }
+.do-todo:first-of-type { border-top: 0; }
+.do-todo-icon { font-size: 9px; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; flex-shrink: 0; }
+.do-todo-text { flex: 1; font-size: 11px; color: #334155; }
+.do-link { font-size: 11px; font-weight: 600; color: #0369a1; text-decoration: none; white-space: nowrap; }
+.do-link:hover { text-decoration: underline; }
+.tone-orange { background: #ffedd5; color: #ea580c; }
+.tone-blue { background: #e0f2fe; color: #0369a1; }
+.tone-purple { background: #f3e8ff; color: #7e22ce; }
+.tone-red { background: #fee2e2; color: #dc2626; }
+.tone-green { background: #dcfce7; color: #15803d; }
+.tone-gray { background: #f1f5f9; color: #64748b; }
+
+/* Aksi cepat */
+.do-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.do-quick-item {
+    display: flex; flex-direction: column; gap: 2px; text-decoration: none;
+    border: 1px solid #e8edf3; border-radius: 8px; padding: 12px; background: #fff;
+}
+.do-quick-item:hover { background: #f8fafc; }
+.do-quick-title { font-size: 11px; font-weight: 600; color: #0f172a; }
+.do-quick-sub { font-size: 10px; color: #64748b; }
+
+/* Aktivitas */
+.do-activity { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-top: 1px solid #f1f5f9; }
+.do-activity:first-of-type { border-top: 0; }
+.do-activity-icon { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; font-size: 12px; flex-shrink: 0; }
+.do-activity-body { flex: 1; min-width: 0; }
+.do-activity-title { font-size: 11px; font-weight: 600; margin: 0; color: #0f172a; }
+.do-activity-detail { font-size: 10px; color: #64748b; margin: 2px 0 0; }
+.do-activity-time { font-size: 10px; color: #94a3b8; white-space: nowrap; }
+
+/* Responsif */
+@media (max-width: 1100px) {
+    .do-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .do-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+    .do-page { padding: 18px 14px; }
+    .do-stats { grid-template-columns: 1fr; }
+}

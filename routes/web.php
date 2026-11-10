@@ -8,7 +8,70 @@ use App\Http\Controllers\PeriodePenguncianController;
 use App\Http\Controllers\PelengkapRaporController;
 use App\Http\Controllers\CetakRaporController;
 use App\Http\Controllers\PresensiController;
+use App\Http\Controllers\RaporSayaController;
+use App\Http\Controllers\NilaiPerMapelController;
+use App\Http\Controllers\RiwayatRaporController;
+use App\Http\Controllers\BerandaAkademikController;
+use App\Http\Controllers\DashboardKurikulumController;
+use App\Http\Controllers\DashboardOperatorController;
+use App\Http\Controllers\AkunPeranController;
+use App\Http\Controllers\DataSiswaController;
+use App\Http\Controllers\DataGuruController;
+use App\Http\Controllers\DataKelasController;
+use App\Http\Controllers\RelasiOrangTuaController;
 
+Route::get('/relasi-orang-tua', [RelasiOrangTuaController::class, 'index'])
+    ->name('relasi-orang-tua.index');
+
+Route::post('/relasi-orang-tua', [RelasiOrangTuaController::class, 'store'])
+    ->name('relasi-orang-tua.store');
+
+Route::put('/relasi-orang-tua/{ortu}', [RelasiOrangTuaController::class, 'update'])
+    ->name('relasi-orang-tua.update');
+
+Route::delete('/relasi-orang-tua/{ortu}', [RelasiOrangTuaController::class, 'destroy'])
+    ->name('relasi-orang-tua.destroy');
+
+Route::get('/data-kelas', [DataKelasController::class, 'index'])
+    ->name('data-kelas.index');
+
+Route::post('/data-kelas/kelas', [DataKelasController::class, 'tambahKelas'])
+    ->name('data-kelas.kelas.store');
+
+Route::post('/data-kelas/pindah', [DataKelasController::class, 'pindah'])
+    ->name('data-kelas.pindah');
+
+Route::post('/data-kelas/{kelas}/siswa', [DataKelasController::class, 'tambahSiswa'])
+    ->name('data-kelas.siswa.store');
+
+Route::get('/data-siswa/format', [DataSiswaController::class, 'format'])->name('data-siswa.format');
+Route::post('/data-siswa/impor', [DataSiswaController::class, 'impor'])->name('data-siswa.impor');
+Route::post('/data-siswa', [DataSiswaController::class, 'store'])->name('data-siswa.store');
+
+Route::get('/data-guru/format', [DataGuruController::class, 'format'])->name('data-guru.format');
+Route::post('/data-guru/impor', [DataGuruController::class, 'impor'])->name('data-guru.impor');
+Route::post('/data-guru', [DataGuruController::class, 'store'])->name('data-guru.store');
+
+Route::get('/data-guru', [DataGuruController::class, 'index'])
+    ->name('data-guru.index');
+
+Route::get('/data-siswa', [DataSiswaController::class, 'index'])
+    ->name('data-siswa.index');
+
+Route::get('/akun-peran', [AkunPeranController::class, 'index'])
+    ->name('akun-peran.index');
+
+Route::get('/dashboard-kurikulum', [DashboardKurikulumController::class, 'index'])
+    ->name('dashboard-kurikulum.index');
+
+Route::get('/dashboard-operator', [DashboardOperatorController::class, 'index'])
+    ->name('dashboard-operator.index');
+
+Route::get('/beranda-akademik', [BerandaAkademikController::class, 'index'])
+    ->name('beranda-akademik.index');
+
+Route::get('/riwayat-rapor', [RiwayatRaporController::class, 'index'])
+    ->name('riwayat-rapor.index');
 Route::get('/', function () {
     return view('welcome');
 });
@@ -35,6 +98,15 @@ Route::prefix('presensi')->name('presensi.')->group(function () {
     Route::view('/edit', 'presensi.edit.index')
         ->name('edit');
 });
+
+Route::get('/rapor-saya', [RaporSayaController::class, 'index'])
+    ->name('rapor-saya.index');
+ 
+Route::get('/nilai-per-mapel', [NilaiPerMapelController::class, 'index'])
+    ->name('nilai-per-mapel.index');
+
+Route::get('/nilai-per-mapel/{id}', [NilaiPerMapelController::class, 'show'])
+    ->name('nilai-per-mapel.show');
 
 // Halaman Input Nilai tanpa login
 Route::get('/input-nilai', [InputNilaiController::class, 'index'])

@@ -5,7 +5,9 @@
         <x-page-label />
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Selamat pagi, Nadia</h1>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">
+                    Selamat pagi, {{ $siswa->nama ?? $siswa->nama_siswa ?? $siswa->nama_lengkap ?? Auth::user()->name ?? 'Siswa' }}
+                </h1>
                 <p class="text-xs text-gray-500 mt-1">Berikut ringkasan pemetaan minat dan rekomendasi belajarmu hari ini.</p>
             </div>
             <div class="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs text-gray-600 shadow-sm w-fit">
@@ -13,7 +15,7 @@
                     <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
-                <span>Senin, 18 Agustus 2025</span>
+                <span>{{ \Carbon\Carbon::now()->isoFormat('D MMMM Y') }}</span>
             </div>
         </div>
     </div>
@@ -28,8 +30,10 @@
             </div>
             <div>
                 <span class="text-[9px] font-bold text-sky-700 uppercase tracking-wider block">PERIODE PEMINATAN AKTIF</span>
-                <p class="text-xs font-bold text-slate-800">Semester Ganjil · Tahun Ajaran 2025/2026</p>
-                <p class="text-[11px] text-gray-500">Tes RIASEC dan layanan rekomendasi mata pelajaran sedang berlangsung.</p>
+                <p class="text-xs font-bold text-slate-800">Semester {{ $semester->nama_semester ?? 'Ganjil' }} · Tahun Ajaran {{ $semester->tahunAjaran->tahun_ajaran ?? '2025/2026' }}</p>
+                <p class="text-[11px] text-gray-500">
+                    {{ $tingkat === 'XII' ? 'Layanan rekomendasi program studi dan profesi berlangsung.' : 'Tes RIASEC dan layanan rekomendasi mata pelajaran berlangsung.' }}
+                </p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -52,8 +56,8 @@
             </div>
             <div>
                 <span class="text-[11px] text-gray-500 font-medium block">Identitas Siswa</span>
-                <div class="text-2xl font-black text-slate-900 leading-tight">X-3</div>
-                <span class="text-[10px] text-gray-400">NIS 2410073</span>
+                <div class="text-2xl font-black text-slate-900 leading-tight">{{ $riwayat->kelas->nama_kelas ?? '-' }}</div>
+                <span class="text-[10px] text-gray-400">NIS {{ $siswa->nis ?? '-' }}</span>
             </div>
         </div>
 
@@ -66,8 +70,8 @@
             </div>
             <div>
                 <span class="text-[11px] text-gray-500 font-medium block">Status Tes</span>
-                <div class="text-2xl font-black text-slate-900 leading-tight">Selesai</div>
-                <span class="text-[10px] text-gray-400">18 Agustus 2025</span>
+                <div class="text-2xl font-black text-slate-900 leading-tight">{{ $sesiTes ? 'Selesai' : 'Belum Tes' }}</div>
+                <span class="text-[10px] text-gray-400">{{ $sesiTes ? \Carbon\Carbon::parse($sesiTes->created_at)->isoFormat('D MMMM Y') : '-' }}</span>
             </div>
         </div>
 
@@ -82,12 +86,12 @@
             </div>
             <div>
                 <span class="text-[11px] text-gray-500 font-medium block">Kode Dominan</span>
-                <div class="text-2xl font-black text-slate-900 leading-tight">IAS</div>
-                <span class="text-[10px] text-gray-400">Skor tertinggi 91</span>
+                <div class="text-2xl font-black text-slate-900 leading-tight">{{ $sesiTes->kode_dominan ?? '-' }}</div>
+                <span class="text-[10px] text-gray-400">Skor tertinggi {{ $sesiTes->skor_tertinggi ?? 0 }}</span>
             </div>
         </div>
 
-        <!-- Rekomendasi -->
+        <!-- Rekomendasi (Menyesuaikan Kelas X vs XII) -->
         <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
             <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-none">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,8 +100,16 @@
             </div>
             <div>
                 <span class="text-[11px] text-gray-500 font-medium block">Rekomendasi</span>
-                <div class="text-2xl font-black text-slate-900 leading-tight">3 Paket</div>
-                <span class="text-[10px] text-purple-600 font-medium">Siap dipelajari</span>
+                <div class="text-2xl font-black text-slate-900 leading-tight">
+                    @if ($tingkat === 'XII')
+                        {{ $rekomendasiProdi ? count($rekomendasiProdi) . ' Prodi' : '-' }}
+                    @else
+                        {{ $rekomendasiMapel ? count($rekomendasiMapel) . ' Mapel' : '5 Mapel' }}
+                    @endif
+                </div>
+                <span class="text-[10px] text-purple-600 font-medium">
+                    {{ $tingkat === 'XII' ? 'Prodi & Profesi' : 'Mapel Pilihan' }}
+                </span>
             </div>
         </div>
     </div>
@@ -112,15 +124,17 @@
                         <h2 class="text-sm font-bold text-slate-900">Profil Minat RIASEC</h2>
                         <p class="text-xs text-gray-400">Skor enam dimensi dari tes terakhirmu</p>
                     </div>
-                    <a href="{{ url('/riasec/hasil-view/1') }}" class="text-xs font-semibold text-sky-600 hover:underline flex items-center gap-1">
-                        <span>Lihat hasil</span>
-                        <span>&gt;</span>
-                    </a>
+                    @if ($sesiTes)
+                        <a href="{{ url('/riasec/hasil-view/' . $sesiTes->id_sesi_tes) }}" class="text-xs font-semibold text-sky-600 hover:underline flex items-center gap-1">
+                            <span>Lihat hasil</span>
+                            <span>&gt;</span>
+                        </a>
+                    @endif
                 </div>
 
                 <!-- Bar Chart 6 Dimensi -->
                 <div class="h-56 flex items-end justify-between gap-4 pt-6 pb-2 px-4">
-                    <!-- R: 72% -->
+                    <!-- R: Realistic -->
                     <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end">
                         <span class="text-[11px] font-bold text-gray-600">72%</span>
                         <div class="w-full max-w-[42px] bg-sky-100 rounded-t-xl relative overflow-hidden h-[72%]">
@@ -132,7 +146,7 @@
                         </div>
                     </div>
 
-                    <!-- I: 91% (Dominan) -->
+                    <!-- I: Investigative -->
                     <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end">
                         <span class="text-[11px] font-bold text-gray-600">91%</span>
                         <div class="w-full max-w-[42px] bg-indigo-100 rounded-t-xl relative overflow-hidden h-[91%]">
@@ -144,7 +158,7 @@
                         </div>
                     </div>
 
-                    <!-- A: 84% -->
+                    <!-- A: Artistic -->
                     <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end">
                         <span class="text-[11px] font-bold text-gray-600">84%</span>
                         <div class="w-full max-w-[42px] bg-pink-100 rounded-t-xl relative overflow-hidden h-[84%]">
@@ -156,7 +170,7 @@
                         </div>
                     </div>
 
-                    <!-- S: 76% -->
+                    <!-- S: Social -->
                     <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end">
                         <span class="text-[11px] font-bold text-gray-600">76%</span>
                         <div class="w-full max-w-[42px] bg-emerald-100 rounded-t-xl relative overflow-hidden h-[76%]">
@@ -168,7 +182,7 @@
                         </div>
                     </div>
 
-                    <!-- E: 65% -->
+                    <!-- E: Enterprising -->
                     <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end">
                         <span class="text-[11px] font-bold text-gray-600">65%</span>
                         <div class="w-full max-w-[42px] bg-amber-100 rounded-t-xl relative overflow-hidden h-[65%]">
@@ -180,7 +194,7 @@
                         </div>
                     </div>
 
-                    <!-- C: 58% -->
+                    <!-- C: Conventional -->
                     <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end">
                         <span class="text-[11px] font-bold text-gray-600">58%</span>
                         <div class="w-full max-w-[42px] bg-slate-200 rounded-t-xl relative overflow-hidden h-[58%]">
@@ -194,19 +208,40 @@
                 </div>
             </div>
 
-            <!-- Banner Mulai Tes Bawah -->
-            <div class="mt-6 p-4 bg-sky-50/70 border border-sky-100 rounded-xl flex items-center justify-between flex-wrap gap-3">
-                <div class="flex items-center gap-3">
-                    <span class="text-lg">✨</span>
-                    <div>
-                        <p class="text-xs font-bold text-slate-800">Kenali Minat dan Potensimu</p>
-                        <p class="text-[10px] text-gray-500">Perbarui hasil untuk rekomendasi yang lebih akurat.</p>
+            <!-- Banner Mulai Tes / Informasi Minat Bawah -->
+            @if (in_array($tingkat, ['X', 'XII']))
+                <!-- Untuk Kelas X & XII (Boleh Ikut Tes) -->
+                <div class="mt-6 p-4 bg-sky-50/70 border border-sky-100 rounded-xl flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-lg">✨</span>
+                        <div>
+                            <p class="text-xs font-bold text-slate-800">Kenali Minat dan Potensimu</p>
+                            <p class="text-[10px] text-gray-500">
+                                {{ $tingkat === 'X' ? 'Dapatkan 5 rekomendasi mata pelajaran pilihan.' : 'Dapatkan rekomendasi program studi dan profesi impian.' }}
+                            </p>
+                        </div>
                     </div>
+                    <a href="{{ url('/riasec/soal-view') }}" class="px-5 py-2 bg-[#009bf2] hover:bg-[#0088d4] text-white text-xs font-bold rounded-xl shadow-md transition">
+                        Mulai Tes
+                    </a>
                 </div>
-                <a href="{{ url('/riasec/soal-view') }}" class="px-5 py-2 bg-[#009bf2] hover:bg-[#0088d4] text-white text-xs font-bold rounded-xl shadow-md transition">
-                    Mulai Tes
-                </a>
-            </div>
+            @else
+                <!-- Hanya untuk Kelas XI (Tidak Ada Tes Baru) -->
+                <div class="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-lg">📚</span>
+                        <div>
+                            <p class="text-xs font-bold text-slate-800">Hasil Pemetaan Minat & Rekomendasi</p>
+                            <p class="text-[10px] text-gray-500">Tes RIASEC diambil pada Kelas X. Kamu dapat meninjau kembali rekomendasi mata pelajaran pilihanmu.</p>
+                        </div>
+                    </div>
+                    @if ($sesiTes)
+                        <a href="{{ url('/riasec/hasil-view/' . $sesiTes->id_sesi_tes) }}" class="px-5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-md transition">
+                            Lihat Rekomendasi
+                        </a>
+                    @endif
+                </div>
+            @endif
         </div>
 
         <!-- Kolom Kanan: Aktivitas Terbaru Siswa -->
@@ -216,7 +251,7 @@
                 <p class="text-xs text-gray-400 mb-4">Pembaruan modul A3</p>
 
                 <div class="space-y-4">
-                    <!-- Item 1: Rekomendasi Mapel -->
+                    <!-- Item 1: Rekomendasi -->
                     <div class="flex items-start gap-3">
                         <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-none mt-0.5">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,8 +259,12 @@
                             </svg>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-bold text-slate-800 leading-tight">3 rekomendasi mapel tersedia</p>
-                            <p class="text-[11px] text-gray-500">Sains & Teknologi Kreatif paling sesuai</p>
+                            <p class="text-xs font-bold text-slate-800 leading-tight">
+                                {{ $tingkat === 'XII' ? 'Rekomendasi prodi & profesi' : '5 rekomendasi mapel tersedia' }}
+                            </p>
+                            <p class="text-[11px] text-gray-500">
+                                {{ $tingkat === 'XII' ? 'Teknik Informatika & Sains Data' : 'Sains & Teknologi Kreatif paling sesuai' }}
+                            </p>
                             <span class="text-[10px] text-gray-400">12 menit lalu</span>
                         </div>
                     </div>
@@ -241,8 +280,8 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-xs font-bold text-slate-800 leading-tight">Tes RIASEC selesai</p>
-                            <p class="text-[11px] text-gray-500">Profil dominanmu adalah IAS</p>
-                            <span class="text-[10px] text-gray-400">18 Agustus 2025</span>
+                            <p class="text-[11px] text-gray-500">Profil dominanmu adalah {{ $sesiTes->kode_dominan ?? 'IAS' }}</p>
+                            <span class="text-[10px] text-gray-400">{{ $sesiTes ? \Carbon\Carbon::parse($sesiTes->created_at)->isoFormat('D MMMM Y') : '-' }}</span>
                         </div>
                     </div>
 
@@ -255,7 +294,7 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-xs font-bold text-slate-800 leading-tight">Layanan bimbingan konseling</p>
-                            <p class="text-[11px] text-gray-500">Diskusikan pilihan mapel dengan guru BK</p>
+                            <p class="text-[11px] text-gray-500">Diskusikan pilihan {{ $tingkat === 'XII' ? 'prodi' : 'mapel' }} dengan guru BK</p>
                             <span class="text-[10px] text-gray-400">Tersedia setiap hari sekolah</span>
                         </div>
                     </div>
@@ -265,4 +304,3 @@
     </div>
 
 </x-layouts.admin>
-

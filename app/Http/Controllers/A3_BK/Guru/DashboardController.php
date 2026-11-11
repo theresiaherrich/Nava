@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\A3_BK\Guru;
 
@@ -8,7 +8,7 @@ use App\Models\PengajuanBk;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Dashboard Guru BK — data real dari v_rekap_tes_bk dan pengajuan_bk.
+ * Dashboard Guru BK â€” data real dari v_rekap_tes_bk dan pengajuan_bk.
  */
 class DashboardController extends Controller
 {
@@ -34,7 +34,7 @@ class DashboardController extends Controller
             ->whereHas('riwayatKelas', fn ($q) => $q->where('id_semester', $idSemester))
             ->count();
 
-        // Distribusi minat (rata-rata skor per dimensi) — semester aktif
+        // Distribusi minat (rata-rata skor per dimensi) â€” semester aktif
         $distribusiMinat = DB::table('sesi_tes as st')
             ->join('riwayat_kelas as rk', 'rk.id_riwayat_kelas', '=', 'st.id_riwayat_kelas')
             ->where('rk.id_semester', $idSemester)
@@ -81,7 +81,7 @@ class DashboardController extends Controller
             ->take(8)
             ->values();
 
-        return view('bk.dashboard_guru', array_merge($ctx, compact(
+        return view('bk.guru.dashboard', array_merge($ctx, compact(
             'rekapStats',
             'pengajuanAktif',
             'distribusiMinat',
@@ -90,3 +90,4 @@ class DashboardController extends Controller
         )));
     }
 }
+

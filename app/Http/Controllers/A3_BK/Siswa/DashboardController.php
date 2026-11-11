@@ -1,14 +1,17 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\A3_BK\Siswa;
 
 use App\Http\Controllers\Controller;
+use App\Models\RiwayatKelas;
+use App\Models\Semester;
+
 use App\Services\RekomendasiService;
 use App\Services\TesRiasecService;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * DashboardController — halaman utama area siswa.
+ * DashboardController â€” halaman utama area siswa.
  */
 class DashboardController extends Controller
 {
@@ -20,10 +23,25 @@ class DashboardController extends Controller
     public function index()
     {
         $ctx = $this->getKonteksSiswa();
-        $tingkat = $ctx['riwayat']->kelas->tingkat;
+        $tingkat = $ctx['riwayat']->kelas->tingkat; // 'X', 'XI', atau 'XII'
 
         $sesiTes = $ctx['riwayat']->sesiTes;
         $periodeAktif = $this->tesService->periodeAktifAda($ctx['riwayat']);
+
+        // Khusus Kelas XI: jika belum ada sesi tes di semester ini, cari sesi tes sewaktu Kelas X
+        if ($tingkat === 'XI' && ! $sesiTes) {
+            $riwayatKelasX = RiwayatKelas::where('id_siswa', $ctx['siswa']->id_siswa)
+                ->whereHas('kelas', function ($q) {
+                    $q->where('tingkat', 'X');
+                })
+                ->whereHas('sesiTes')
+                ->latest()
+                ->first();
+
+            if ($riwayatKelasX) {
+                $sesiTes = $riwayatKelasX->sesiTes;
+            }
+        }
 
         $rekomendasiMapel = null;
         $rekomendasiProdi = null;
@@ -41,13 +59,13 @@ class DashboardController extends Controller
             ->latest()
             ->first();
 
-        return view('bk.dashboard_siswa', array_merge($ctx, compact(
+        return view('bk.siswa.dashboard', array_merge($ctx, compact(
             'tingkat',
             'sesiTes',
             'periodeAktif',
             'rekomendasiMapel',
             'rekomendasiProdi',
-            'pengajuanTerakhir',
+            'pengajuanTerakhir'
         )));
     }
 
@@ -60,13 +78,13 @@ class DashboardController extends Controller
             abort(403, 'Data siswa tidak ditemukan.');
         }
 
-        $semester = \App\Models\Semester::where('aktif', true)->with('tahunAjaran')->first();
+        $semester = Semester::where('aktif', true)->with('tahunAjaran')->first();
 
         if (! $semester) {
             abort(503, 'Tidak ada semester aktif saat ini.');
         }
 
-        $riwayat = \App\Models\RiwayatKelas::with('kelas.tahunAjaran', 'semester', 'sesiTes')
+        $riwayat = RiwayatKelas::with('kelas.tahunAjaran', 'semester', 'sesiTes')
             ->where('id_siswa', $siswa->id_siswa)
             ->where('id_semester', $semester->id_semester)
             ->first();

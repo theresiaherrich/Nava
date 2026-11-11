@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\A3_BK;
 
@@ -20,7 +20,7 @@ class RiasecController extends Controller
             'pengajuan_aktif' => 3,
         ];
 
-        return view('bk.dashboard_guru', compact('stats'));
+        return view('bk.guru.dashboard', compact('stats'));
     }
 
     /**
@@ -48,7 +48,7 @@ class RiasecController extends Controller
             'C' => 58,
         ];
 
-        return view('bk.dashboard_siswa', compact('siswa', 'skorRiasec'));
+        return view('bk.siswa.dashboard', compact('siswa', 'skorRiasec'));
     }
 
     /**
@@ -142,3 +142,4 @@ class RiasecController extends Controller
         ]);
     }
 }
+

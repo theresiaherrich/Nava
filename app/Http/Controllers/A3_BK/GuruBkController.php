@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\A3_BK;
 
@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * GuruBkController — semua halaman area Guru BK.
+ * GuruBkController â€” semua halaman area Guru BK.
  */
 class GuruBkController extends Controller
 {
@@ -40,7 +40,7 @@ class GuruBkController extends Controller
     }
 
     /**
-     * Dashboard Guru BK — data real dari v_rekap_tes_bk dan pengajuan_bk.
+     * Dashboard Guru BK â€” data real dari v_rekap_tes_bk dan pengajuan_bk.
      */
     public function dashboard()
     {
@@ -62,7 +62,7 @@ class GuruBkController extends Controller
             ->whereHas('riwayatKelas', fn ($q) => $q->where('id_semester', $idSemester))
             ->count();
 
-        // Distribusi minat (rata-rata skor per dimensi) — semester aktif
+        // Distribusi minat (rata-rata skor per dimensi) â€” semester aktif
         $distribusiMinat = DB::table('sesi_tes as st')
             ->join('riwayat_kelas as rk', 'rk.id_riwayat_kelas', '=', 'st.id_riwayat_kelas')
             ->where('rk.id_semester', $idSemester)
@@ -109,7 +109,7 @@ class GuruBkController extends Controller
             ->take(8)
             ->values();
 
-        return view('bk.dashboard_guru', array_merge($ctx, compact(
+        return view('bk.guru.dashboard', array_merge($ctx, compact(
             'rekapStats',
             'pengajuanAktif',
             'distribusiMinat',
@@ -119,7 +119,7 @@ class GuruBkController extends Controller
     }
 
     /**
-     * Rekap Tes RIASEC — tabel v_rekap_tes_bk dengan filter dan pagination.
+     * Rekap Tes RIASEC â€” tabel v_rekap_tes_bk dengan filter dan pagination.
      */
     public function rekapTes(Request $request)
     {
@@ -183,7 +183,7 @@ class GuruBkController extends Controller
     }
 
     /**
-     * Pengajuan BK — daftar semua pengajuan aktif semester ini.
+     * Pengajuan BK â€” daftar semua pengajuan aktif semester ini.
      */
     public function pengajuanBk(Request $request)
     {
@@ -367,3 +367,4 @@ class GuruBkController extends Controller
         return redirect()->route('bk.profil')->with('success', 'Kata sandi berhasil diubah.');
     }
 }
+

@@ -6,15 +6,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * RekomendasiService — mengambil data rekomendasi dari view database.
- * Semua perhitungan Cosine Similarity dilakukan oleh view MySQL.
+ * RekomendasiService — Mengambil data rekomendasi dari view database.
+ * Semua komputasi Cosine Similarity diserahkan ke View MySQL agar ringan.
  */
 class RekomendasiService
 {
     /**
-     * Rekomendasi mapel (5 teratas) untuk sesi tes tertentu.
-     * Digunakan untuk kelas X dan XI.
-     * View: v_rekomendasi_mapel JOIN mapel JOIN profil_mapel.
+     * Rekomendasi mapel (5 teratas) untuk sesi tes tertentu (Kelas X dan XI).
      */
     public function rekomendasiMapel(int $idSesiTes): Collection
     {
@@ -31,15 +29,14 @@ class RekomendasiService
                 'm.kode',
                 'pm.rumpun',
                 'pm.kode_holland',
-                'pm.deskripsi',
+                'pm.deskripsi'
             )
+            ->limit(5) // Pastikan dilimit agar konsisten mengambil 5 teratas
             ->get();
     }
 
     /**
-     * Rekomendasi program studi (5 teratas) untuk sesi tes tertentu.
-     * Digunakan untuk kelas XII.
-     * View: v_rekomendasi_prodi JOIN program_studi.
+     * Rekomendasi program studi (5 teratas) untuk sesi tes tertentu (Kelas XII).
      */
     public function rekomendasiProdi(int $idSesiTes): Collection
     {
@@ -54,8 +51,9 @@ class RekomendasiService
                 'ps.nama',
                 'ps.kategori',
                 'ps.deskripsi',
-                'ps.kode_holland',
+                'ps.kode_holland'
             )
+            ->limit(5)
             ->get();
     }
 
@@ -72,8 +70,7 @@ class RekomendasiService
     }
 
     /**
-     * Kesesuaian mapel pilihan dengan profil siswa (kelas XI).
-     * View: v_kecocokan_mapel JOIN mapel JOIN profil_mapel.
+     * Kesesuaian mapel pilihan dengan profil siswa (Kelas XI).
      */
     public function kecocokanMapel(int $idSesiTes): Collection
     {
@@ -82,14 +79,20 @@ class RekomendasiService
             ->join('profil_mapel as pm', 'pm.id_mapel', '=', 'km.id_mapel')
             ->where('km.id_sesi_tes', $idSesiTes)
             ->orderByDesc('km.skor_kecocokan')
-            ->select('km.skor_kecocokan', 'm.id_mapel', 'm.nama', 'm.kode', 'pm.rumpun', 'pm.kode_holland')
+            ->select(
+                'km.skor_kecocokan', 
+                'm.id_mapel', 
+                'm.nama', 
+                'm.kode', 
+                'pm.rumpun', 
+                'pm.kode_holland'
+            )
             ->limit(5)
             ->get();
     }
 
     /**
-     * Program studi relevan untuk suatu mapel (kelas XI — Mendukung Studi Lanjut).
-     * View: v_prodi_relevan_mapel JOIN program_studi.
+     * Program studi relevan untuk suatu mapel (Mendukung Studi Lanjut).
      */
     public function prodiRelevanMapel(int $idMapel): Collection
     {
@@ -97,7 +100,13 @@ class RekomendasiService
             ->join('program_studi as ps', 'ps.id_prodi', '=', 'prm.id_prodi')
             ->where('prm.id_mapel', $idMapel)
             ->orderByDesc('prm.skor_relevansi')
-            ->select('prm.skor_relevansi', 'ps.id_prodi', 'ps.nama', 'ps.kategori', 'ps.kode_holland')
+            ->select(
+                'prm.skor_relevansi', 
+                'ps.id_prodi', 
+                'ps.nama', 
+                'ps.kategori', 
+                'ps.kode_holland'
+            )
             ->limit(3)
             ->get();
     }

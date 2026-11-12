@@ -2,9 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\RiwayatPerubahanPresensi;
+use App\Models\Izin;
+use App\Models\Sakit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Presensi extends Model
 {
@@ -18,9 +22,10 @@ class Presensi extends Model
         'id_siswa',
         'metode',
         'status',
-        'hari',
         'tanggal',
         'waktu_presensi',
+        'file_bukti',
+        'keterangan',
     ];
 
     protected function casts(): array
@@ -32,16 +37,37 @@ class Presensi extends Model
 
     public function siswa(): BelongsTo
     {
-        return $this->belongsTo(Siswa::class, 'id_siswa', 'id_siswa');
+        return $this->belongsTo(
+            Siswa::class,
+            'id_siswa',
+            'id_siswa'
+        );
     }
 
-    public function izin(): HasMany
+    public function izin(): HasOne
     {
-        return $this->hasMany(Izin::class, 'id_presensi', 'id_presensi');
+        return $this->hasOne(
+            Izin::class,
+            'id_presensi',
+            'id_presensi'
+        );
     }
 
-    public function sakit(): HasMany
+    public function sakit(): HasOne
     {
-        return $this->hasMany(Sakit::class, 'id_presensi', 'id_presensi');
+        return $this->hasOne(
+            Sakit::class,
+            'id_presensi',
+            'id_presensi'
+        );
+    }
+
+    public function riwayatPerubahan(): HasMany
+    {
+        return $this->hasMany(
+            RiwayatPerubahanPresensi::class,
+            'id_presensi',
+            'id_presensi'
+        )->orderByDesc('waktu_perubahan');
     }
 }

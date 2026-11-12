@@ -8,6 +8,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('presensi:generate-alpa')
-    ->dailyAt('07:31')
-    ->timezone('Asia/Jakarta');
+Schedule::command('app:tandai-siswa-alpa')
+    ->dailyAt('07:30')
+    ->timezone('Asia/Jakarta')
+    ->withoutOverlapping();

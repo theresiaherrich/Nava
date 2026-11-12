@@ -8,13 +8,16 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
-    public function handle(Request $request, Closure $next, string ...$roles): Response
-    {
+    public function handle(
+        Request $request,
+        Closure $next,
+        string ...$roles
+    ): Response {
         $user = $request->user();
 
         if (!$user || !in_array($user->role, $roles, true)) {
             return response()->json([
-                'message' => 'Kamu tidak memiliki akses untuk fitur ini.',
+                'message' => 'Kamu tidak memiliki akses untuk melakukan tindakan ini.',
             ], 403);
         }
 

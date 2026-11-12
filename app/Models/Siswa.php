@@ -37,6 +37,15 @@ class Siswa extends Model
         return $this->hasMany(Presensi::class, 'id_siswa', 'id_siswa');
     }
 
+    public function riwayatKelas(): HasMany
+    {
+        return $this->hasMany(
+            RiwayatKelas::class,
+            'id_siswa',
+            'id_siswa'
+        );
+    }
+
     public function qrSiswa(): HasOne
     {
         return $this->hasOne(QrSiswa::class, 'id_siswa', 'id_siswa');

@@ -13,16 +13,51 @@ use Illuminate\Support\Str;
 
 class SiswaController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $siswa = Siswa::with('user')
-            ->orderBy('nama')
-            ->get();
+        $user = $request->user();
+
+        if ($user->role === 'SISWA') {
+            $siswa = Siswa::with('user')
+                ->where('id_user', $user->id_user)
+                ->first();
+
+            if (!$siswa) {
+                return response()->json([
+                    'message' => 'Data siswa tidak ditemukan.',
+                ], 404);
+            }
+
+            return response()->json([
+                'message' => 'Data siswa berhasil diambil.',
+                'data' => [$siswa],
+            ]);
+        }
+
+        if (in_array($user->role, [
+            'ADMIN',
+            'BUDAYA_POSITIF',
+            'KURIKULUM',
+        ], true)) {
+            $siswa = Siswa::with('user')
+                ->orderBy('nama')
+                ->get();
+
+            return response()->json([
+                'message' => 'Data siswa berhasil diambil.',
+                'data' => $siswa,
+            ]);
+        }
+
+        if ($user->role === 'GURU') {
+            return response()->json([
+                'message' => 'Akses data siswa berdasarkan penugasan wali kelas belum tersedia karena tabel integrasi kelas belum diterapkan.',
+            ], 409);
+        }
 
         return response()->json([
-            'message' => 'Data siswa berhasil diambil.',
-            'data' => $siswa,
-        ]);
+            'message' => 'Kamu tidak memiliki akses untuk melihat data siswa.',
+        ], 403);
     }
 
     public function store(Request $request): JsonResponse

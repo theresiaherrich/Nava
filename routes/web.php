@@ -15,8 +15,14 @@ Route::get('/', function () {
 
 Route::view('/test-sidebar', 'test-sidebar');
 
+// Fe - Halaman Login & Register
+Route::view('/login', 'auth.login')->name('login');
+Route::view('/register', 'auth.register')->name('register');
+
 // A1 - PRESENSI
 Route::prefix('presensi')->name('presensi.')->group(function () {
+
+    // Fitur umum presensi
     Route::view('/qr-code', 'presensi.qr-code.index')
         ->name('qr-code');
 
@@ -34,6 +40,73 @@ Route::prefix('presensi')->name('presensi.')->group(function () {
 
     Route::view('/edit', 'presensi.edit.index')
         ->name('edit');
+
+
+    // ==========================================
+    // ROLE SISWA
+    // ==========================================
+
+    Route::view('/siswa', 'presensi.siswa.index')
+        ->name('siswa');
+
+
+    // ==========================================
+    // ROLE GURU / WALI KELAS
+    // ==========================================
+
+    Route::view('/guru', 'presensi.guru.index', [
+        'pageTitle' => 'Kelola Presensi',
+        'rolePresensi' => 'guru',
+        'namaProfil' => 'Nama Guru',
+        'labelProfil' => 'Guru Wali Kelas',
+        'detailProfil' => 'XI MIPA 2',
+    ])->name('guru');
+
+
+    // ==========================================
+    // ROLE KURIKULUM
+    // Menggunakan dashboard yang sama dengan Guru
+    // ==========================================
+
+    Route::view('/kurikulum', 'presensi.guru.index', [
+        'pageTitle' => 'Dashboard',
+        'rolePresensi' => 'kurikulum',
+        'namaProfil' => 'Kurikulum',
+        'labelProfil' => 'Kurikulum',
+        'detailProfil' => 'SMAN 1 Malang',
+    ])->name('kurikulum');
+
+
+    // ==========================================
+    // ROLE ADMIN
+    // ==========================================
+
+    Route::view('/admin', 'presensi.admin.index')
+        ->name('admin');
+
+
+    // ==========================================
+    // ROLE BUDAYA POSITIF
+    // Dashboard menggunakan template Guru
+    // ==========================================
+
+    Route::view('/budaya-positif', 'presensi.guru.index', [
+        'pageTitle' => 'Dashboard',
+        'rolePresensi' => 'budaya-positif',
+        'namaProfil' => 'Budaya Positif',
+        'labelProfil' => 'Budaya Positif',
+        'detailProfil' => 'SMAN 1 Malang',
+    ])->name('budaya-positif');
+
+
+    // ==========================================
+    // ADMIN PRESENSI BUDAYA POSITIF
+    // Tetap menggunakan halaman Admin Presensi
+    // ==========================================
+
+    Route::view('/budaya-positif/admin-presensi', 'presensi.admin.index')
+        ->name('budaya-positif.admin-presensi');
+
 });
 
 // Halaman Input Nilai tanpa login

@@ -1,0 +1,337 @@
+/* resources/css/presensi/admin.css
+   PRESENSI ADMIN - SMAN 1 Malang. Semua gaya dibatasi di #presensiAdmin */
+
+#presensiAdmin {
+    --pa-blue: #089bd5;
+    --pa-blue-dark: #0674a0;
+    --pa-pink: #e20a7a;
+    --pa-ink: #202b3c;
+    --pa-muted: #778397;
+    --pa-border: #d5dce5;
+
+    box-sizing: border-box;
+    width: 100%;
+    min-height: calc(100vh - 60px);
+    padding: 15px 20px 30px;
+    background: #f4f7fb;
+    color: var(--pa-ink);
+    font-family: 'Poppins', sans-serif;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+#presensiAdmin *,
+#presensiAdmin *::before,
+#presensiAdmin *::after { box-sizing: border-box; }
+
+#presensiAdmin [hidden] { display: none !important; }
+
+/* AREA KONTEN */
+#presensiAdmin .pa-content { width: 100%; max-width: 1150px; margin: 0 auto; }
+
+/* ================= HEADER ================= */
+#presensiAdmin .pa-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+    min-height: 70px;
+    margin-bottom: 18px;
+    padding: 10px 22px;
+    background: #fff;
+}
+
+#presensiAdmin .pa-search { position: relative; display: block; width: 365px; max-width: 65%; }
+
+#presensiAdmin .pa-search input {
+    width: 100%;
+    height: 32px;
+    padding: 7px 36px 7px 13px;
+    border: 1px solid #cbd2dc;
+    border-radius: 9px;
+    outline: none;
+    background: #fff;
+    color: #344054;
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+}
+#presensiAdmin .pa-search input:focus { border-color: var(--pa-blue); box-shadow: 0 0 0 3px rgba(8, 155, 213, .15); }
+#presensiAdmin .pa-search input::placeholder { color: #777; }
+#presensiAdmin .pa-search-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #555; pointer-events: none; }
+
+/* PROFIL */
+#presensiAdmin .pa-profile { position: relative; display: flex; align-items: center; }
+
+#presensiAdmin .pa-profile-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    text-align: left;
+}
+#presensiAdmin .pa-profile-button:focus-visible { outline: 2px solid var(--pa-blue); outline-offset: 4px; border-radius: 8px; }
+
+#presensiAdmin .pa-profile-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    min-width: 35px;
+    border-radius: 50%;
+    background: var(--pa-blue);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+#presensiAdmin .pa-profile-info { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 105px; }
+#presensiAdmin .pa-profile-info strong { color: #202124; font-size: 12px; font-weight: 600; }
+#presensiAdmin .pa-profile-info small { color: #858585; font-size: 10px; font-weight: 400; }
+
+#presensiAdmin .pa-profile-chevron { margin-left: 12px; color: #555; transition: transform .2s; }
+#presensiAdmin .pa-profile-button.active .pa-profile-chevron { transform: rotate(180deg); }
+
+#presensiAdmin .pa-profile-dropdown {
+    display: none;
+    position: absolute;
+    top: 46px;
+    right: 0;
+    z-index: 50;
+    width: 175px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 7px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, .08);
+}
+#presensiAdmin .pa-profile-dropdown.show { display: block; }
+#presensiAdmin .pa-profile-dropdown p { margin: 0; padding: 5px 7px; color: #475467; font-size: 11px; }
+
+/* ================= LAYOUT UTAMA ================= */
+#presensiAdmin .pa-main-grid { display: flex; flex-direction: column; align-items: stretch; gap: 14px; width: 100%; }
+
+/* ================= SCANNER QR CODE ================= */
+#presensiAdmin .pa-scanner-card {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--pa-border) !important;
+    border-radius: 7px;
+    background: #fff;
+    box-shadow: none !important;
+}
+
+#presensiAdmin .pa-reader-wrap {
+    position: relative;
+    width: 100%;
+    height: 208px;
+    min-height: 208px;
+    overflow: hidden;
+    border: 1px solid var(--pa-border);
+    border-radius: 7px;
+    background: #172536;
+}
+
+#presensiAdmin #paReader { position: relative; width: 100%; height: 100%; min-height: 208px; overflow: hidden; background: #172536; }
+#presensiAdmin #paReader > div { max-width: 100%; }
+#presensiAdmin #paReader video { display: block; width: 100% !important; height: 208px !important; max-width: 100%; object-fit: cover !important; border-radius: 7px; }
+#presensiAdmin #paReader img { max-width: 100%; }
+
+/* placeholder kamera */
+#presensiAdmin .pa-camera-placeholder {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    color: #fff;
+    text-align: center;
+    background: #172536;
+    pointer-events: none;
+}
+#presensiAdmin .pa-camera-placeholder strong { font-size: 12px; font-weight: 600; }
+#presensiAdmin .pa-camera-placeholder small { color: #c3cfdb; font-size: 10px; }
+
+#presensiAdmin .pa-camera-frame { position: relative; display: block; width: 84px; height: 84px; border: 3px solid #fff; border-radius: 4px; }
+#presensiAdmin .pa-camera-frame::before {
+    position: absolute; content: ""; width: 34px; height: 48px; left: 50%; top: 50%;
+    transform: translate(-50%, -50%); border-left: 3px solid #fff; border-right: 3px solid #fff;
+}
+#presensiAdmin .pa-camera-frame::after {
+    position: absolute; content: ""; width: 48px; height: 3px; left: 50%; top: 50%;
+    transform: translate(-50%, -50%); background: #fff;
+}
+
+/* tombol scanner */
+#presensiAdmin .pa-scanner-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 9px; }
+
+#presensiAdmin .pa-button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 5px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: .2s;
+}
+#presensiAdmin .pa-button:focus-visible { outline: 2px solid var(--pa-blue); outline-offset: 2px; }
+#presensiAdmin .pa-button-primary { color: #fff; background: var(--pa-blue); }
+#presensiAdmin .pa-button-primary:hover { background: var(--pa-blue-dark); }
+#presensiAdmin .pa-button-light { color: #526174; background: #edf2f7; }
+#presensiAdmin .pa-button:disabled { opacity: .45; cursor: not-allowed; }
+
+/* hasil scan */
+#presensiAdmin .pa-scan-result {
+    display: block;
+    margin-top: 9px;
+    padding: 9px 11px;
+    border-radius: 5px;
+    background: #f1f7fb;
+    color: #526174;
+    font-size: 10px;
+    line-height: 1.5;
+}
+#presensiAdmin .pa-scan-result.is-ok { background: #e7f6ee; color: #157a46; }
+#presensiAdmin .pa-scan-result.is-error { background: #fdeaea; color: #b42323; }
+
+/* ================= PRESENSI MANUAL ================= */
+#presensiAdmin .pa-manual-card { width: 100%; padding: 0; border: none !important; border-radius: 0; background: transparent; box-shadow: none !important; }
+
+#presensiAdmin .pa-manual-card .pa-section-heading { display: block; margin: 0 0 9px; padding: 0; }
+#presensiAdmin .pa-manual-card .pa-section-heading h2 { margin: 0; color: #111827; font-size: 15px; font-weight: 600; }
+
+#presensiAdmin #paManualForm {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 16px 19px 20px;
+    border: 1px solid var(--pa-border);
+    border-radius: 7px;
+    background: #fff;
+}
+
+#presensiAdmin .pa-form-title { margin: 0 0 10px; color: #111; font-size: 14px; font-weight: 500; }
+
+/* field */
+#presensiAdmin .pa-field { position: relative; width: 100%; margin-bottom: 9px; }
+#presensiAdmin .pa-field label:not(.pa-upload-box) { display: block; margin-bottom: 4px; color: var(--pa-ink); font-size: 11px; font-weight: 500; }
+
+#presensiAdmin .pa-field input:not([type="file"]),
+#presensiAdmin .pa-field select {
+    display: block;
+    width: 100%;
+    height: 34px;
+    min-height: 34px;
+    padding: 5px 10px;
+    border: 1px solid var(--pa-border);
+    border-radius: 6px;
+    outline: none;
+    background: #fff;
+    color: #344054;
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+}
+#presensiAdmin .pa-field input::placeholder { color: #a0a8b4; }
+#presensiAdmin .pa-field input:focus,
+#presensiAdmin .pa-field select:focus { border-color: var(--pa-blue); box-shadow: 0 0 0 3px rgba(8, 155, 213, .15); }
+
+#presensiAdmin .pa-field select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 30px;
+    cursor: pointer;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23089bd5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+}
+
+/* upload file */
+#presensiAdmin .pa-upload-field { margin-bottom: 9px; }
+
+#presensiAdmin .pa-upload-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    height: 90px;
+    margin: 0;
+    padding: 8px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 7px;
+    background: #fff;
+    cursor: pointer;
+    transition: .2s;
+}
+#presensiAdmin .pa-upload-box:hover { background: #f9fafb; border-color: var(--pa-blue); }
+
+#presensiAdmin .pa-upload-icon { display: flex; justify-content: center; align-items: center; width: 32px; height: 32px; border-radius: 5px; background: #eee; color: #111; }
+#presensiAdmin .pa-upload-title { color: #344054; font-size: 11px; font-weight: 400; }
+#presensiAdmin .pa-upload-box small { color: var(--pa-muted); font-size: 10px; }
+#presensiAdmin .pa-file-name { display: block; margin-top: 5px; color: #64748b; font-size: 10px; overflow-wrap: anywhere; }
+
+/* informasi bawah form */
+#presensiAdmin .pa-form-bottom-info { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; }
+#presensiAdmin .pa-warning-text { color: var(--pa-pink); }
+#presensiAdmin .pa-location-badge { display: inline-flex; align-items: center; gap: 5px; color: #157a46; font-size: 11px; font-weight: 500; }
+
+/* tombol submit */
+#presensiAdmin .pa-button-submit {
+    display: block;
+    width: auto;
+    min-width: 85px;
+    margin: 15px 0 0 auto;
+    padding: 9px 17px;
+    color: #fff;
+    background: var(--pa-blue);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .15);
+}
+#presensiAdmin .pa-button-submit:hover { background: var(--pa-blue-dark); }
+
+/* notifikasi */
+#presensiAdmin .pa-toast {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 100;
+    max-width: min(320px, calc(100vw - 36px));
+    padding: 10px 14px;
+    border-radius: 6px;
+    color: #fff;
+    background: #263548;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, .15);
+    font-size: 11px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: .2s;
+}
+#presensiAdmin .pa-toast.show { opacity: 1; transform: translateY(0); }
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 700px) {
+    #presensiAdmin { padding: 10px; }
+    #presensiAdmin .pa-topbar { padding: 10px; gap: 8px; }
+    #presensiAdmin .pa-search { width: 55%; }
+    #presensiAdmin .pa-profile-info { min-width: auto; }
+    #presensiAdmin .pa-profile-chevron { margin-left: 0; }
+    #presensiAdmin .pa-reader-wrap,
+    #presensiAdmin #paReader { height: 200px; min-height: 200px; }
+    #presensiAdmin #paReader video { height: 200px !important; }
+    #presensiAdmin #paManualForm { padding: 12px; }
+    #presensiAdmin .pa-form-bottom-info { gap: 8px; flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #presensiAdmin * { transition: none !important; }
+}

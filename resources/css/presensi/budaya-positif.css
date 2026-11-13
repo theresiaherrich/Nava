@@ -1,0 +1,153 @@
+/* ==========================================================
+   TAMBAHAN (tempel di PALING BAWAH resources/css/presensi/budaya-positif.css)
+   Menyesuaikan elemen baru: ikon SVG, avatar, donat dinamis, area kamera.
+   ========================================================== */
+
+.bp-container { font-family: 'Poppins', 'Plus Jakarta Sans', system-ui, sans-serif; }
+.bp-container [hidden] { display: none !important; }
+
+/* ikon SVG menggantikan Font Awesome */
+.bp-search { display: block; }
+.bp-search svg { position: absolute; left: 11px; top: 9px; color: #7f8794; pointer-events: none; }
+.bp-chevron { margin-left: 12px; color: #6f7682; }
+.bp-tab { display: inline-flex; align-items: center; gap: 6px; }
+
+.bp-avatar {
+    display: grid; place-items: center; width: 27px; height: 27px; border-radius: 50%;
+    background: #089bd5; color: #fff; font-size: 11px; font-weight: 600;
+}
+
+/* donat mengikuti data */
+.bp-donut { background: var(--donut, #dde6f0); }
+
+/* bar izin & alpa */
+.bp-progress-fill { transition: width .3s ease; }
+.bp-recap-item:last-child .bp-progress { background: #fbd9ec; }
+.bp-recap-item:last-child .bp-percent { color: #e71983; }
+.bp-recap-title small { font-size: 9px; }
+
+.bp-msg { display: block; min-height: 12px; margin-top: 5px; color: #e71983; font-size: 9px; }
+.bp-empty { margin: 14px 0 0; color: #8c96a5; text-align: center; font-size: 11px; }
+.bp-table-filters select { appearance: none; -webkit-appearance: none; padding-right: 24px; background: #f8f9fb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23079ed5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center; }
+
+/* area kamera: placeholder menumpuk di atas pembaca QR */
+.bp-reader-wrap {
+    position: relative; min-height: 275px; overflow: hidden;
+    border: 2px solid #079de5; border-radius: 12px; background: #f1f4f8;
+}
+.bp-reader-wrap #bpQrReader { min-height: 275px; border: 0; border-radius: 0; background: transparent; }
+.bp-reader-wrap .bp-camera-placeholder { position: absolute; inset: 0; background: #f1f4f8; }
+.bp-camera-placeholder > svg { width: 35px; height: 35px; color: #079de5; }
+
+.bp-manual-footer span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* Warna chip status dari Figma: [FIXED] Colors Collection > Status Badge Chip */
+.bp-status { border: 1px solid transparent; }
+.bp-status.hadir { background: #E7F6EE; color: #157A46; border-color: rgba(21, 122, 70, .28); }
+.bp-status.telat { background: #E6F2FC; color: #0B6AA8; border-color: rgba(11, 106, 168, .28); }
+.bp-status.izin  { background: #FFF2E2; color: #D46000; border-color: rgba(212, 96, 0, .28); }
+.bp-status.sakit { background: #EEF1F5; color: #3F4850; border-color: rgba(63, 72, 80, .28); }
+.bp-status.alpa  { background: #FDEAEA; color: #B42323; border-color: rgba(180, 35, 35, .28); }
+
+/* Warna utama dan status dari Figma: [FIXED] Colors Collection (Primary, Secondary, A1 State) */
+.blue-dot   { background: #1565c0; }
+.yellow-dot { background: #fff500; }
+.pink-dot   { background: #dc137b; }
+.izin-fill  { background: #fbcd02; }
+.alfa-fill  { background: #dc137b; }
+.bp-tab.active { background: #e20a7a; }
+.bp-date-button, .bp-manual-footer button, .bp-camera-placeholder button { background: #089bd5; }
+.bp-manual-card input, .bp-manual-card select { border-color: #089bd5; }
+.bp-reader-wrap { border-color: #089bd5; }
+
+/* ==========================================================
+   TAMBAHAN (tempel di PALING BAWAH resources/css/presensi/budaya-positif.css)
+   Menyesuaikan elemen baru: ikon SVG, avatar, donat dinamis, area kamera.
+   ========================================================== */
+
+.bp-container { font-family: 'Poppins', 'Plus Jakarta Sans', system-ui, sans-serif; }
+.bp-container [hidden] { display: none !important; }
+
+/* ikon SVG menggantikan Font Awesome */
+.bp-search { display: block; }
+.bp-search svg { position: absolute; left: 11px; top: 9px; color: #7f8794; pointer-events: none; }
+.bp-chevron { margin-left: 12px; color: #6f7682; }
+.bp-tab { display: inline-flex; align-items: center; gap: 6px; }
+
+.bp-avatar {
+    display: grid; place-items: center; width: 27px; height: 27px; border-radius: 50%;
+    background: #089bd5; color: #fff; font-size: 11px; font-weight: 600;
+}
+
+/* donat mengikuti data */
+.bp-donut { background: var(--donut, #dde6f0); }
+
+/* bar izin & alpa */
+.bp-progress-fill { transition: width .3s ease; }
+.bp-recap-item:last-child .bp-progress { background: #fbd9ec; }
+.bp-recap-item:last-child .bp-percent { color: #e71983; }
+.bp-recap-title small { font-size: 9px; }
+
+.bp-msg { display: block; min-height: 12px; margin-top: 5px; color: #e71983; font-size: 9px; }
+.bp-empty { margin: 14px 0 0; color: #8c96a5; text-align: center; font-size: 11px; }
+.bp-table-filters select { appearance: none; -webkit-appearance: none; padding-right: 24px; background: #f8f9fb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23079ed5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center; }
+
+/* area kamera: placeholder menumpuk di atas pembaca QR */
+.bp-reader-wrap {
+    position: relative; min-height: 275px; overflow: hidden;
+    border: 2px solid #079de5; border-radius: 12px; background: #f1f4f8;
+}
+.bp-reader-wrap #bpQrReader { min-height: 275px; border: 0; border-radius: 0; background: transparent; }
+.bp-reader-wrap .bp-camera-placeholder { position: absolute; inset: 0; background: #f1f4f8; }
+.bp-camera-placeholder > svg { width: 35px; height: 35px; color: #079de5; }
+
+.bp-manual-footer span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* Warna chip status dari Figma: [FIXED] Colors Collection > Status Badge Chip */
+.bp-status { border: 1px solid transparent; }
+.bp-status.hadir { background: #E7F6EE; color: #157A46; border-color: rgba(21, 122, 70, .28); }
+.bp-status.telat { background: #E6F2FC; color: #0B6AA8; border-color: rgba(11, 106, 168, .28); }
+.bp-status.izin  { background: #FFF2E2; color: #D46000; border-color: rgba(212, 96, 0, .28); }
+.bp-status.sakit { background: #EEF1F5; color: #3F4850; border-color: rgba(63, 72, 80, .28); }
+.bp-status.alpa  { background: #FDEAEA; color: #B42323; border-color: rgba(180, 35, 35, .28); }
+
+/* Warna utama dan status dari Figma: [FIXED] Colors Collection (Primary, Secondary, A1 State) */
+.blue-dot   { background: #1565c0; }
+.yellow-dot { background: #fff500; }
+.pink-dot   { background: #dc137b; }
+.izin-fill  { background: #fbcd02; }
+.alfa-fill  { background: #dc137b; }
+.bp-tab.active { background: #e20a7a; }
+.bp-date-button, .bp-manual-footer button, .bp-camera-placeholder button { background: #089bd5; }
+.bp-manual-card input, .bp-manual-card select { border-color: #089bd5; }
+.bp-reader-wrap { border-color: #089bd5; }
+
+/* ==========================================================
+   HALAMAN TERPISAH (Dashboard / Admin Presensi): bingkai pemindai, info scan, pesan
+   ========================================================== */
+
+/* sembunyikan kotak bayangan bawaan html5-qrcode, diganti bingkai sudut putih milik sendiri */
+#bpQrReader #qr-shaded-region { display: none !important; }
+#bpQrReader video { border-radius: 0; }
+
+.bp-scan-frame { position: absolute; top: 50%; left: 50%; z-index: 3; width: 120px; height: 120px; transform: translate(-50%, -50%); pointer-events: none; }
+.bp-scan-frame[hidden] { display: none !important; }
+.bp-scan-frame i { position: absolute; width: 28px; height: 28px; border: 0 solid #fff; filter: drop-shadow(0 0 2px rgba(0, 0, 0, .35)); }
+.bp-scan-frame i:nth-child(1) { top: 0; left: 0;  border-top-width: 5px;    border-left-width: 5px;  border-top-left-radius: 4px; }
+.bp-scan-frame i:nth-child(2) { top: 0; right: 0; border-top-width: 5px;    border-right-width: 5px; border-top-right-radius: 4px; }
+.bp-scan-frame i:nth-child(3) { bottom: 0; left: 0;  border-bottom-width: 5px; border-left-width: 5px;  border-bottom-left-radius: 4px; }
+.bp-scan-frame i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 5px; border-right-width: 5px; border-bottom-right-radius: 4px; }
+
+.bp-reader-wrap { border-radius: 14px; }
+.bp-camera-placeholder button[hidden] { display: none !important; }
+
+.bp-scan-info.is-ok    { color: #157a46; }
+.bp-scan-info.is-error { color: #b42323; }
+
+/* kartu manual: ikon panah pada pilihan status */
+.bp-manual-card select {
+    appearance: none; -webkit-appearance: none; padding-right: 30px;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23089bd5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+}
+.bp-validation { color: #e20a7a; }
+.bp-manual-footer span { color: #157a46; }

@@ -1,3 +1,4 @@
+
 @props([
     'menu' => null,
     'academicYear' => '2026/2027 • Ganjil',
@@ -5,199 +6,442 @@
 ])
 
 @php
-    $role = strtolower(str_replace([' ', '-'], '_', $role ?? request('role', 'wali_kelas')));
+    /*
+    |--------------------------------------------------------------------------
+    | 1. DETEKSI ROLE
+    |--------------------------------------------------------------------------
+    */
 
-    $presensiMenus = [
-        'siswa' => [
-            ['label' => 'Presensi QR Code', 'icon' => 'qr', 'route' => 'presensi.qr-code'],
-            ['label' => 'Presensi Manual', 'icon' => 'map-pin', 'route' => 'presensi.manual'],
-            ['label' => 'Riwayat Presensi', 'icon' => 'history', 'route' => 'presensi.riwayat'],
-        ],
+    $roleDariRoute = match (true) {
+    request()->routeIs('presensi.siswa') => 'siswa',
+    request()->routeIs('presensi.guru') => 'wali_kelas',
+    request()->routeIs('presensi.kurikulum') => 'kurikulum',
+    request()->routeIs('presensi.admin') => 'admin',
 
-        'wali_kelas' => [
-            ['label' => 'Riwayat Presensi', 'icon' => 'history', 'route' => 'presensi.riwayat'],
-            ['label' => 'Edit Presensi', 'icon' => 'pencil', 'route' => 'presensi.edit'],
-        ],
+    // Budaya Positif: Dashboard dan Admin Presensi
+    request()->routeIs(
+        'presensi.budaya-positif',
+        'presensi.budaya-positif.*'
+    ) => 'budaya_positif',
 
-        'budaya_positif' => [
-            ['label' => 'Riwayat Presensi', 'icon' => 'history', 'route' => 'presensi.riwayat'],
-            ['label' => 'Scan Presensi', 'icon' => 'scan', 'route' => 'presensi.scan'],
-        ],
+    default => null,
+    };
 
-        'admin' => [
-            ['label' => 'Riwayat Presensi', 'icon' => 'history', 'route' => 'presensi.riwayat'],
-            ['label' => 'Edit Presensi', 'icon' => 'pencil', 'route' => 'presensi.edit'],
-            ['label' => 'Scan Presensi', 'icon' => 'scan', 'route' => 'presensi.scan'],
-        ],
-    ];
+    $roleAktif = strtolower(
+        str_replace(
+            [' ', '-'],
+            '_',
+            $roleDariRoute ?? $role ?? request('role', 'wali_kelas')
+        )
+    );
 
-    $presensiItems = $presensiMenus[$role] ?? $presensiMenus['wali_kelas'];
-@endphp
+    /*
+    |--------------------------------------------------------------------------
+    | 2. MENU DEFAULT WALI KELAS
+    |--------------------------------------------------------------------------
+    */
 
-@php
-    // Menu default (Wali Kelas). Backend bisa mengirim $menu sendiri lewat <x-sidebar :menu="$menu" />
     $defaultMenu = [
         [
-            'code' => 'A1', 'label' => 'Presensi', 'icon' => 'calendar', 'sub_title' => 'Presensi', 'items' => $presensiItems,
-            ],
-    'menu'         => null,
-    'academicYear' => '2026/2027 • Ganjil',
-])
-
-@php
-    // Menu default (Wali Kelas). Backend bisa mengirim $menu sendiri lewat <x-sidebar :menu="$menu" />
-    $defaultMenu = [
-        [
-            'code' => 'A1', 'label' => 'Presensi', 'icon' => 'calendar', 'href' => '#',
+            'code' => 'A1',
+            'label' => 'Kelola Presensi',
+            'icon' => 'calendar',
+            'route' => 'presensi.guru',
+            'pattern' => 'presensi.guru',
         ],
-
         [
-            'code' => 'A2', 'label' => 'Akademik', 'icon' => 'file', 'sub_title' => 'Wali Kelas',
+            'code' => 'A2',
+            'label' => 'Akademik',
+            'icon' => 'file',
+            'sub_title' => 'Wali Kelas',
             'items' => [
-                ['label' => 'Dashboard Kelas',    'icon' => 'grid',    'route' => null],
-                ['label' => 'Verifikasi Nilai',   'icon' => 'check',   'route' => 'verifikasi-nilai.index', 'pattern' => 'verifikasi-nilai.*'],
-                ['label' => 'Pelengkap Rapor',    'icon' => 'pencil',  'route' => null],
-                ['label' => 'Rekap Nilai (DKN)',  'icon' => 'table',   'route' => 'rekap-nilai.index',      'pattern' => 'rekap-nilai.*'],
-                ['label' => 'Cetak Rapor',        'icon' => 'printer', 'route' => null],
+                [
+                    'label' => 'Dashboard Kelas',
+                    'icon' => 'grid',
+                    'route' => null,
+                ],
+                [
+                    'label' => 'Verifikasi Nilai',
+                    'icon' => 'check',
+                    'route' => 'verifikasi-nilai.index',
+                    'pattern' => 'verifikasi-nilai.*',
+                ],
+                [
+                    'label' => 'Pelengkap Rapor',
+                    'icon' => 'pencil',
+                    'route' => null,
+                ],
+                [
+                    'label' => 'Rekap Nilai (DKN)',
+                    'icon' => 'table',
+                    'route' => 'rekap-nilai.index',
+                    'pattern' => 'rekap-nilai.*',
+                ],
+                [
+                    'label' => 'Cetak Rapor',
+                    'icon' => 'printer',
+                    'route' => null,
+                ],
             ],
         ],
         [
-            'code' => 'A3', 'label' => 'BK', 'icon' => 'shield', 'href' => '#',
+            'code' => 'A3',
+            'label' => 'BK',
+            'icon' => 'shield',
+            'href' => '#',
         ],
         [
-            'code' => 'A4', 'label' => 'Portal Orang Tua', 'icon' => 'home', 'href' => '#',
+            'code' => 'A4',
+            'label' => 'Portal Orang Tua',
+            'icon' => 'home',
+            'href' => '#',
         ],
     ];
 
-    $menu = $menu ?? $defaultMenu;
+    /*
+    |--------------------------------------------------------------------------
+    | 3. MENU SISWA
+    |--------------------------------------------------------------------------
+    */
 
-    $resolve  = fn (?string $route) => ($route && \Illuminate\Support\Facades\Route::has($route)) ? route($route) : '#';
-    $isActive = fn (?string $pattern) => $pattern && request()->routeIs($pattern);
+    $menuSiswa = [
+        [
+            'code' => 'A1',
+            'label' => 'Presensi',
+            'icon' => 'calendar',
+            'route' => 'presensi.siswa',
+            'pattern' => 'presensi.siswa',
+        ],
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | 4. MENU ADMIN
+    |--------------------------------------------------------------------------
+    */
+
+    $menuAdmin = [
+        [
+            'code' => 'A1',
+            'label' => 'Admin Presensi',
+            'icon' => 'check',
+            'route' => 'presensi.admin',
+            'pattern' => 'presensi.admin',
+        ],
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | 5. MENU BUDAYA POSITIF
+    |--------------------------------------------------------------------------
+    */
+
+    $menuBudayaPositif = [
+        [
+            'code' => 'A1',
+            'label' => 'Presensi',
+            'icon' => 'calendar',
+            'sub_title' => 'BUDAYA POSITIF',
+            'items' => [
+                [
+                    'label' => 'Dashboard',
+                    'icon' => 'grid',
+                    'route' => 'presensi.budaya-positif',
+                    'pattern' => 'presensi.budaya-positif',
+                ],
+                [
+                    'label' => 'Admin Presensi',
+                    'icon' => 'pencil',
+                    'route' => 'presensi.budaya-positif.admin-presensi',
+                    'pattern' => 'presensi.budaya-positif.admin-presensi',
+                ],
+            ],
+        ],
+    ];
+
+    /*
+|--------------------------------------------------------------------------
+| 6. MENU KURIKULUM
+|--------------------------------------------------------------------------
+*/
+
+$menuKurikulum = [
+    [
+        'code' => 'A1',
+        'label' => 'Presensi',
+        'icon' => 'calendar',
+        'sub_title' => 'KURIKULUM',
+        'items' => [
+            [
+                'label' => 'Dashboard',
+                'icon' => 'grid',
+                'route' => 'presensi.kurikulum',
+                'pattern' => 'presensi.kurikulum',
+            ],
+        ],
+    ],
+];
+    /*
+    |--------------------------------------------------------------------------
+    | 7. PEMILIHAN MENU BERDASARKAN ROLE
+    |--------------------------------------------------------------------------
+    */
+
+    $menusPerRole = [
+        'siswa' => $menuSiswa,
+        'admin' => $menuAdmin,
+        'kurikulum' => $menuKurikulum,
+        'budaya_positif' => $menuBudayaPositif,
+        'wali_kelas' => $defaultMenu,
+    ];
+
+    $menu = $roleDariRoute
+        ? ($menusPerRole[$roleAktif] ?? $defaultMenu)
+        : ($menu ?? ($menusPerRole[$roleAktif] ?? $defaultMenu));
+
+    /*
+    |--------------------------------------------------------------------------
+    | 7. RESOLVE ROUTE DAN ACTIVE MENU
+    |--------------------------------------------------------------------------
+    */
+
+    $resolve = fn (?string $route) =>
+        ($route && \Illuminate\Support\Facades\Route::has($route))
+            ? route($route)
+            : '#';
+
+    $isActive = fn (?string $pattern) =>
+        $pattern && request()->routeIs($pattern);
+
+    /*
+    |--------------------------------------------------------------------------
+    | 8. ICON SVG
+    |--------------------------------------------------------------------------
+    */
 
     $icons = [
         'calendar' => '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
-        'file'     => '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
-        'shield'   => '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
-        'home'     => '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
-        'grid'     => '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
-        'check'    => '<path d="M20 6 9 17l-5-5"/>',
-        'pencil'   => '<path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/><path d="m15 5 4 4"/>',
-        'table'    => '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/>',
-        'printer'  => '<path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>',
-        'logout'   => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
-        'chev'     => '<path d="m6 9 6 6 6-6"/>',
-        'qr'       => '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v2M17 20h4M20 18v3"/>',
+
+        'file' => '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
+
+        'shield' => '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+
+        'home' => '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
+
+        'grid' => '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+
+        'check' => '<path d="M20 6 9 17l-5-5"/>',
+
+        'pencil' => '<path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/><path d="m15 5 4 4"/>',
+
+        'table' => '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/>',
+
+        'printer' => '<path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>',
+
+        'logout' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
+
+        'chev' => '<path d="m6 9 6 6 6-6"/>',
+
+        'qr' => '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v2M17 20h4M20 18v3"/>',
+
         'map-pin' => '<path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/>',
+
         'history' => '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
-        'scan'     => '<path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M4 12h16"/>',
+
+        'scan' => '<path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M4 12h16"/>',
     ];
 
-    $svg = fn (string $name, string $class = 'sb-icon') => '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'.($icons[$name] ?? '').'</svg>';
+    $svg = fn (string $name, string $class = 'sb-icon') =>
+        '<svg class="'.$class.'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        . ($icons[$name] ?? '')
+        . '</svg>';
 @endphp
 
 <aside class="sb" id="app-sidebar" aria-label="Navigasi utama">
+
     <a href="{{ url('/') }}" class="sb-brand">
-        <img class="sb-brand__logo" src="{{ asset('images/logo-siakad.png') }}" alt="Logo SIAKAD">
+        <img
+            class="sb-brand__logo"
+            src="{{ asset('images/logo-siakad.png') }}"
+            alt="Logo SIAKAD"
+        >
         <span class="sb-brand__name">SIAKAD SMAN 1</span>
     </a>
 
     <div class="sb-scroll">
+
         <p class="sb-label">Modul utama</p>
 
         <nav class="sb-nav" aria-label="Modul utama">
+
             @foreach ($menu as $m)
+
                 @php
-                    $items       = $m['items'] ?? [];
-                    $groupActive = collect($items)->contains(fn ($i) => $isActive($i['pattern'] ?? $i['route'] ?? null));
+                    $items = $m['items'] ?? [];
+
+                    $groupActive = collect($items)->contains(
+                        fn ($i) => $isActive($i['pattern'] ?? $i['route'] ?? null)
+                    );
                 @endphp
 
                 <div class="sb-group {{ $groupActive ? 'is-open' : '' }}">
+
                     @if (count($items))
-                        <button type="button"
-                                class="sb-item sb-toggle {{ $groupActive ? 'is-active' : '' }}"
-                                aria-expanded="{{ $groupActive ? 'true' : 'false' }}">
+
+                        <button
+                            type="button"
+                            class="sb-item sb-toggle {{ $groupActive ? 'is-active' : '' }}"
+                            aria-expanded="{{ $groupActive ? 'true' : 'false' }}"
+                        >
                             {!! $svg($m['icon']) !!}
-                            <span class="sb-item__code">{{ $m['code'] }}</span>
-                            <span class="sb-item__text">{{ $m['label'] }}</span>
+
+                            <span class="sb-item__code">
+                                {{ $m['code'] }}
+                            </span>
+
+                            <span class="sb-item__text">
+                                {{ $m['label'] }}
+                            </span>
+
                             {!! $svg('chev', 'sb-chevron') !!}
                         </button>
 
                         <div class="sb-submenu">
-                            @if (! empty($m['sub_title']))
-                                <p class="sb-label">{{ $m['sub_title'] }}</p>
+
+                            @if (!empty($m['sub_title']))
+                                <p class="sb-label">
+                                    {{ $m['sub_title'] }}
+                                </p>
                             @endif
 
                             <nav class="sb-nav" aria-label="{{ $m['label'] }}">
+
                                 @foreach ($items as $item)
-                                    @php $active = $isActive($item['pattern'] ?? $item['route'] ?? null); @endphp
-                                    <a href="{{ $resolve($item['route'] ?? null) }}"
-                                       class="sb-sub {{ $active ? 'is-active' : '' }}"
-                                       @if ($active) aria-current="page" @endif>
+
+                                    @php
+                                        $active = $isActive(
+                                            $item['pattern'] ?? $item['route'] ?? null
+                                        );
+                                    @endphp
+
+                                    <a
+                                        href="{{ $resolve($item['route'] ?? null) }}"
+                                        class="sb-sub {{ $active ? 'is-active' : '' }}"
+                                        @if ($active) aria-current="page" @endif
+                                    >
                                         {!! $svg($item['icon']) !!}
-                                        <span class="sb-item__text">{{ $item['label'] }}</span>
+
+                                        <span class="sb-item__text">
+                                            {{ $item['label'] }}
+                                        </span>
                                     </a>
+
                                 @endforeach
+
                             </nav>
                         </div>
+
                     @else
-                        <a href="{{ $m['href'] ?? '#' }}" class="sb-item">
+
+                        @php
+                            $active = $isActive(
+                                $m['pattern'] ?? $m['route'] ?? null
+                            );
+                        @endphp
+
+                        <a
+                            href="{{ isset($m['route']) ? $resolve($m['route']) : ($m['href'] ?? '#') }}"
+                            class="sb-item {{ $active ? 'is-active' : '' }}"
+                            @if ($active) aria-current="page" @endif
+                        >
                             {!! $svg($m['icon']) !!}
-                            <span class="sb-item__code">{{ $m['code'] }}</span>
-                            <span class="sb-item__text">{{ $m['label'] }}</span>
+
+                            <span class="sb-item__code">
+                                {{ $m['code'] }}
+                            </span>
+
+                            <span class="sb-item__text">
+                                {{ $m['label'] }}
+                            </span>
                         </a>
+
                     @endif
+
                 </div>
+
             @endforeach
+
         </nav>
     </div>
 
     <div class="sb-footer">
+
         <div class="sb-year">
+
             {!! $svg('calendar') !!}
+
             <div>
                 <p class="sb-year__label">Tahun ajaran</p>
                 <p class="sb-year__value">{{ $academicYear }}</p>
             </div>
+
         </div>
 
         @if (\Illuminate\Support\Facades\Route::has('logout'))
+
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
+
                 <button type="submit" class="sb-sub sb-logout">
                     {!! $svg('logout') !!}
                     <span class="sb-item__text">Keluar</span>
                 </button>
             </form>
+
         @else
+
             <a href="#" class="sb-sub sb-logout">
                 {!! $svg('logout') !!}
                 <span class="sb-item__text">Keluar</span>
             </a>
+
         @endif
+
     </div>
+
 </aside>
 
 <div class="sb-overlay" data-sidebar-toggle hidden></div>
 
 <script>
-    (function () {
-        var sb = document.getElementById('app-sidebar');
-        if (!sb) return;
+(function () {
+    var sb = document.getElementById('app-sidebar');
+    if (!sb) return;
 
-        // Buka/tutup submenu
-        sb.addEventListener('click', function (e) {
-            var btn = e.target.closest('.sb-toggle');
-            if (!btn) return;
-            var open = btn.parentNode.classList.toggle('is-open');
-            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        });
+    // Buka dan tutup submenu
+    sb.addEventListener('click', function (e) {
+        var btn = e.target.closest('.sb-toggle');
+        if (!btn) return;
 
-        // Drawer di layar kecil. Tombol pembuka cukup diberi atribut data-sidebar-toggle.
-        var overlay = document.querySelector('.sb-overlay');
-        document.addEventListener('click', function (e) {
-            if (!e.target.closest('[data-sidebar-toggle]')) return;
-            var open = sb.classList.toggle('is-open');
-            if (overlay) overlay.hidden = !open;
-        });
-    })();
+        var open = btn.parentNode.classList.toggle('is-open');
+
+        btn.setAttribute(
+            'aria-expanded',
+            open ? 'true' : 'false'
+        );
+    });
+
+    // Drawer pada layar kecil
+    var overlay = document.querySelector('.sb-overlay');
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('[data-sidebar-toggle]')) return;
+
+        var open = sb.classList.toggle('is-open');
+
+        if (overlay) {
+            overlay.hidden = !open;
+        }
+    });
+})();
 </script>

@@ -18,5 +18,8 @@
         @yield('content')
     </main>
 
+     {{-- Memanggil JavaScript dari setiap halaman --}}
+    @stack('scripts')
+
 </body>
 </html>

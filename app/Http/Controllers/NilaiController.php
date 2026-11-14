@@ -7,6 +7,7 @@ use App\Models\PaketNilai;
 use App\Models\PeriodeNilai;
 use App\Models\Rombel;
 use App\Models\SiswaRombel;
+use App\Services\AlokasiTpService;
 use App\Services\AuditService;
 use App\Services\PenilaianAccess;
 use Illuminate\Http\JsonResponse;
@@ -43,7 +44,7 @@ class NilaiController extends Controller
         return response()->json(['data' => [
             'periode' => $periode,
             'tp' => $tp,
-            'tp_dapat_diisi' => $tp->filter(fn ($t) => PenilaianAccess::tpDapatDiisi($periode, $t))->pluck('id')->values(),
+            'tp_dapat_diisi' => AlokasiTpService::untukInput($tp, $periode->jenis)->pluck('id')->values(),
             'peserta' => $peserta,
             'nilai' => $nilai,   // null = belum diisi (BUKAN 0)
             'status_paket' => PaketNilai::where('rombel_id', $record->id)->where('periode_id', $periode->id)->get(['kelas_id', 'status']),
@@ -62,7 +63,13 @@ class NilaiController extends Controller
         $data = $this->validasiItems($request);
 
         $jumlah = DB::transaction(function () use ($record, $data, $user) {
-            $periode = PeriodeNilai::whereKey($data['periode_id'])->lockForUpdate()->firstOrFail();
+            $record = Rombel::whereKey($record->id)->lockForUpdate()->firstOrFail();
+            // Termasuk periode SAS yang memakai skor STS; cegah balapan dengan
+            // penguncian global periode. Urutan ID tetap untuk semua penulis.
+            $periods = PeriodeNilai::where(fn ($q) => $q->where('semester_id', $record->semester_id)->orWhere('id', $data['periode_id']))
+                ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+            $periode = $periods->get($data['periode_id']);
+            abort_if($periode === null, 404);
             $this->pastikanDapatDiisi($record, $periode, $data['items']);
 
             foreach ($data['items'] as $item) {
@@ -123,7 +130,9 @@ class NilaiController extends Controller
         abort_unless($periode->terbuka(), 422, 'Periode penilaian sedang tertutup atau sudah dikunci.');
 
         $sel = collect($items);
-        $tpMap = $record->tp()->whereIn('id', $sel->pluck('tp_id')->unique()->values())->get()->keyBy('id');
+        $semuaTp = $record->tp()->get();
+        $tpMap = $semuaTp->keyBy('id');
+        $boleh = AlokasiTpService::untukInput($semuaTp, $periode->jenis)->pluck('id');
         $pesertaMap = SiswaRombel::with('siswaKelas.kelas')
             ->where('rombel_id', $record->id)
             ->whereIn('id', $sel->pluck('siswa_rombel_id')->unique()->values())
@@ -154,16 +163,21 @@ class NilaiController extends Controller
                 && (int) $penempatan->kelas->semester_id === (int) $periode->semester_id
                 && (int) $penempatan->kelas->tingkat === (int) $periode->tingkat,
                 422, 'Semester atau tingkat peserta tidak sesuai dengan periode.');
-            abort_unless(PenilaianAccess::tpDapatDiisi($periode, $tp), 422, "TP ke-{$tp->nomor_urut} tidak dapat diisi pada periode {$periode->jenis}.");
+            abort_unless($boleh->contains($tp->id), 422, "TP ke-{$tp->nomor_urut} tidak dapat diisi pada periode {$periode->jenis}.");
             $kelasIds[(int) $peserta->siswaKelas->kelas_id] = true;
         }
 
-        // Nilai pada paket yang sudah dikirim/disetujui/dikunci tidak boleh berubah.
+        // STS juga memengaruhi hasil akhir SAS; paket SAS final melindungi skor STS.
         $terkunci = PaketNilai::where('rombel_id', $record->id)
-            ->where('periode_id', $periode->id)
+            ->whereHas('periode', fn ($q) => $q->where('semester_id', $periode->semester_id)
+                ->where('tingkat', $periode->tingkat)
+                ->where(fn ($p) => $p->where('id', $periode->id)->orWhere('jenis', 'SAS')))
             ->whereIn('kelas_id', array_keys($kelasIds))
             ->whereNotIn('status', ['draft', 'perlu_perbaikan'])
             ->exists();
         abort_if($terkunci, 422, 'Nilai pada paket kelas ini sudah dikirim atau dikunci.');
+        abort_if(PeriodeNilai::where('semester_id', $periode->semester_id)->where('tingkat', $periode->tingkat)
+            ->where('jenis', 'SAS')->where('dikunci', true)->exists(),
+            422, 'Nilai tidak dapat diubah karena periode SAS yang menggunakan skor ini sudah dikunci.');
     }
 }

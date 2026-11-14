@@ -112,7 +112,9 @@ class PenilaianTest extends TestCase
 
     public function test_pratinjau_mempertahankan_nol_dan_null_tanpa_query_tulis(): void
     {
-        $tp = Tp::create(['rombel_id' => $this->rombel->id, 'nomor_urut' => 3, 'deskripsi' => 'TP tambahan STS', 'masuk_sts' => true]);
+        $this->tpSas->update(['nomor_urut' => 4]);
+        $tp = Tp::create(['rombel_id' => $this->rombel->id, 'nomor_urut' => 2, 'deskripsi' => 'TP tambahan STS', 'masuk_sts' => true]);
+        Tp::create(['rombel_id' => $this->rombel->id, 'nomor_urut' => 3, 'deskripsi' => 'TP bagian SAS']);
         $this->actingAs($this->guruUser);
         // Listener dipasang setelah fixture siap; hanya SELECT diizinkan selama pratinjau.
         DB::listen(function ($query) {

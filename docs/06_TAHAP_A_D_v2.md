@@ -1,5 +1,7 @@
 # Tahap A–D (v2): rombel, wali, TP, nilai, paket
 
+Aturan TP/input/paket terkini dijelaskan di `09_PENYELARASAN_TP_STS_SAS.md`.
+
 Lihat panduan lengkap di artifact "Panduan Backend SIAKAD A2". Ringkasan cepat:
 
 - Migrasi baru: `2026_10_31_000001_create_rombel_tables.php` dan `2026_10_31_000002_create_penilaian_tables.php`.

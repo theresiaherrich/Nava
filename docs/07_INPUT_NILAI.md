@@ -1,5 +1,8 @@
 # Kontrak Input Nilai
 
+Aturan alokasi dan kunci lintas periode terbaru ada di `09_PENYELARASAN_TP_STS_SAS.md`.
+Input memakai posisi TP terurut, bukan flag legacy. Format body tetap sama.
+
 POST `/api/rombel/{record}/nilai/pratinjau-tempel` dan PUT
 `/api/rombel/{record}/nilai` menerima body yang sama:
 
@@ -86,9 +89,10 @@ frontend lintas origin, cookie, domain, dan konfigurasi CORS aplikasi harus sesu
 
 Tidak ada perubahan skema. Dump SQL `siakad_sma1` tidak ditemukan di workspace;
 kesesuaian dump dengan migration belum dapat diverifikasi.
-Penguncian tetap diperiksa per periode sesuai implementasi sebelumnya.
+Penguncian diperiksa untuk periode input dan paket SAS yang bergantung pada skor.
 Karena skor TP tidak memiliki `periode_id`, TP yang dipakai STS sekaligus SAS
-masih berisiko mengubah hasil periode lain. Tim perlu memutuskan apakah skor
+berbagi skor antarperiode. Koreksi STS kini ditolak jika paket SAS terkait sudah
+dikirim/disetujui/dikunci; belum ada snapshot historis. Tim perlu memutuskan apakah skor
 dibagikan antarperiode, dipisahkan, atau hasil final disimpan sebagai snapshot.
 
 ### Opsi kebijakan lintas STS/SAS untuk tim

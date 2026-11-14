@@ -23,6 +23,7 @@ class TpRequest extends FormRequest
             'nomor_urut' => ['required', 'integer', 'min:1', 'max:'.PenilaianAccess::MAKS_TP,
                 Rule::unique('tp', 'nomor_urut')->where('rombel_id', $rombelId)->ignore($this->route('tp')?->id)],
             'deskripsi' => ['required', 'string', 'min:5', 'max:500'],
+            // Flag legacy tetap diterima untuk kompatibilitas; tidak menentukan alokasi.
             'masuk_sts' => ['sometimes', 'boolean'],
             'is_sas' => ['sometimes', 'boolean'],
         ];

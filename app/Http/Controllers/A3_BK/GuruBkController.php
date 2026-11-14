@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers\A3_BK;
 
@@ -318,23 +318,23 @@ class GuruBkController extends Controller
      * Update profil Guru BK.
      */
     public function updateProfil(Request $request)
-{
-    $ctx = $this->getKonteksGuru();
+    {
+        $ctx = $this->getKonteksGuru();
 
-    $request->validate([
-        'nama' => 'required|string|max:100',
-        'email' => 'nullable|email|max:100',
-        'no_telepon' => 'nullable|string|max:25',
-        'jadwal_layanan' => 'nullable|string|max:100',
-    ]);
+        $request->validate([
+            'nama' => 'required|string|max:100',
+            'email' => 'nullable|email|max:100',
+            'no_telepon' => 'nullable|string|max:25',
+            'jadwal_layanan' => 'nullable|string|max:100',
+        ]);
 
-    DB::transaction(function () use ($request, $ctx) {
-        $ctx['guru']->forceFill(['nama' => $request->nama])->save();
-        $ctx['guruBk']->update($request->only('email', 'no_telepon', 'jadwal_layanan'));
-    });
+        DB::transaction(function () use ($request, $ctx) {
+            $ctx['guru']->forceFill(['nama' => $request->nama])->save();
+            $ctx['guruBk']->update($request->only('email', 'no_telepon', 'jadwal_layanan'));
+        });
 
-    return redirect()->route('bk.profil')->with('success', 'Profil berhasil diperbarui.');
-}
+        return redirect()->route('bk.profil')->with('success', 'Profil berhasil diperbarui.');
+    }
 
     /**
      * Ubah kata sandi Guru BK.
@@ -367,4 +367,3 @@ class GuruBkController extends Controller
         return redirect()->route('bk.profil')->with('success', 'Kata sandi berhasil diubah.');
     }
 }
-

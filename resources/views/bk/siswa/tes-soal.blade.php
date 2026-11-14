@@ -103,35 +103,6 @@
         </div>
     </form>
 
-    {{-- Script Timer & Progress --}}
-    <script>
-        // Progress tracker
-        const totalSoal = {{ $soal->count() }};
-        const progressBar = document.getElementById('progress-bar');
-        const answeredCount = document.getElementById('answered-count');
-        const answered = new Set();
-
-        document.querySelectorAll('.soal-radio').forEach(function(radio) {
-            radio.addEventListener('change', function() {
-                answered.add(this.dataset.soalId);
-                answeredCount.textContent = answered.size;
-                progressBar.style.width = ((answered.size / totalSoal) * 100) + '%';
-            });
-        });
-
-        // Countdown timer (30 menit)
-        let seconds = 30 * 60;
-        const timerDisplay = document.getElementById('timer-display');
-        const timerInterval = setInterval(function() {
-            seconds--;
-            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const s = (seconds % 60).toString().padStart(2, '0');
-            timerDisplay.textContent = m + ':' + s;
-            if (seconds <= 0) {
-                clearInterval(timerInterval);
-                document.getElementById('form-tes').submit();
-            }
-        }, 1000);
-    </script>
+    @vite('resources/js/bk/student-x.js')
 
 </x-layouts.admin>

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers\A3_BK\Guru;
 
@@ -90,4 +90,3 @@ class DashboardController extends Controller
         )));
     }
 }
-

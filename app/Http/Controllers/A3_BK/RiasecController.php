@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers\A3_BK;
 
@@ -142,4 +142,3 @@ class RiasecController extends Controller
         ]);
     }
 }
-

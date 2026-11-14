@@ -1,14 +1,66 @@
-document.addEventListener('DOMContentLoaded',()=>{
- const form=document.getElementById('a3x-quiz-form');if(!form)return;
- const fields=[...form.querySelectorAll('.a3x-question')];if(!fields.length)return;
- const prev=document.getElementById('a3x-prev'),next=document.getElementById('a3x-next'),submit=document.getElementById('a3x-submit');
- const message=document.getElementById('a3x-quiz-error'),counter=document.getElementById('a3x-counter');
- const progress=document.getElementById('a3x-progress-bar'),progressLabel=document.getElementById('a3x-progress-label');
- const dialog=document.getElementById('a3x-confirm');let index=0,confirmed=false;
- const answered=()=>fields.filter(f=>!!f.querySelector('input:checked')).length;
- function render(){fields.forEach((f,i)=>{f.hidden=i!==index});prev.disabled=index===0;next.hidden=index===fields.length-1;submit.hidden=index!==fields.length-1;const n=answered();counter.textContent=`${index+1} dari ${fields.length} · ${n} terjawab`;const pct=Math.round(n/fields.length*100);progress.style.width=pct+'%';progressLabel.textContent=pct+'% selesai';message.hidden=true;}
- function valid(){if(!fields[index].querySelector('input:checked')){message.hidden=false;return false;}return true;}
- form.addEventListener('change',render);next.addEventListener('click',()=>{if(valid()){index++;render();}});prev.addEventListener('click',()=>{index=Math.max(0,index-1);render();});
- form.addEventListener('submit',e=>{if(confirmed)return;e.preventDefault();if(answered()!==fields.length){index=fields.findIndex(f=>!f.querySelector('input:checked'));render();message.hidden=false;return;}if(typeof dialog.showModal==='function')dialog.showModal();else if(window.confirm('Kirim jawaban tes RIASEC?')){confirmed=true;form.requestSubmit();}});
- document.getElementById('a3x-cancel')?.addEventListener('click',()=>dialog.close());document.getElementById('a3x-confirm-submit')?.addEventListener('click',()=>{dialog.close();confirmed=true;submit.disabled=true;form.requestSubmit();});render();
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('form-tes');
+
+    if (!form) {
+        return;
+    }
+
+    const radios = Array.from(form.querySelectorAll('.soal-radio'));
+    const questionIds = new Set(radios.map((radio) => radio.dataset.soalId));
+    const answeredCount = document.getElementById('answered-count');
+    const progressBar = document.getElementById('progress-bar');
+    const timerDisplay = document.getElementById('timer-display');
+
+    const updateProgress = () => {
+        const answeredIds = new Set(
+            radios
+                .filter((radio) => radio.checked)
+                .map((radio) => radio.dataset.soalId),
+        );
+
+        if (answeredCount) {
+            answeredCount.textContent = answeredIds.size;
+        }
+
+        if (progressBar) {
+            const progress = questionIds.size === 0
+                ? 0
+                : (answeredIds.size / questionIds.size) * 100;
+
+            progressBar.style.width = `${progress}%`;
+        }
+    };
+
+    form.addEventListener('change', (event) => {
+        if (event.target.matches('.soal-radio')) {
+            updateProgress();
+        }
+    });
+
+    updateProgress();
+
+    if (!timerDisplay) {
+        return;
+    }
+
+    let remainingSeconds = 30 * 60;
+
+    const renderTimer = () => {
+        const minutes = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
+        const seconds = (remainingSeconds % 60).toString().padStart(2, '0');
+
+        timerDisplay.textContent = `${minutes}:${seconds}`;
+    };
+
+    renderTimer();
+
+    const timerInterval = window.setInterval(() => {
+        remainingSeconds -= 1;
+        renderTimer();
+
+        if (remainingSeconds <= 0) {
+            window.clearInterval(timerInterval);
+            form.submit();
+        }
+    }, 1000);
 });

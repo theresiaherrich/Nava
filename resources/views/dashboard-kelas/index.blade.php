@@ -56,14 +56,17 @@
     $toneIcon = ['verify' => 'check', 'warn' => 'warn', 'note' => 'pencil'];
 @endphp
 
-<x-topbar
-    :name="$pengguna['nama']"
-    :role="$pengguna['peran']"
-    :initials="$pengguna['inisial']"
-    :academic-year="$tahunAjaran"
-    :academic-years="$daftarTahunAjaran"
-    :notifications="$notifikasi"
-/>
+@php
+    // Header dipasang oleh layouts.app; variabel $topbar ini dibaca layout untuk mengisinya.
+    $topbar = [
+        'name'          => $pengguna['nama'],
+        'role'          => $pengguna['peran'],
+        'initials'      => $pengguna['inisial'],
+        'academicYear'  => $tahunAjaran,
+        'academicYears' => $daftarTahunAjaran,
+        'notifications' => $notifikasi,
+    ];
+@endphp
 
 <div class="dkl-page">
 

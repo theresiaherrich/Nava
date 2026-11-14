@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -9,20 +10,31 @@ use App\Http\Controllers\PelengkapRaporController;
 use App\Http\Controllers\CetakRaporController;
 use App\Http\Controllers\PresensiController;
 
+// ==========================================
+// PEMBAGIAN MODUL PROYEK NAVA
+// ==========================================
+// A1 - PRESENSI
+// A2 - AKADEMIK
+// A3 - BK (BIMBINGAN KONSELING)
+// A4 - PORTAL ORANG TUA
+// ==========================================
+
 Route::get('/', function () {
     return view('welcome');
 });
 
 Route::view('/test-sidebar', 'test-sidebar');
 
-// Fe - Halaman Login & Register
+// ==========================================
+// A1 - PRESENSI
+// ==========================================
+
+// FE - Halaman Login & Register
 Route::view('/login', 'auth.login')->name('login');
 Route::view('/register', 'auth.register')->name('register');
 
-// A1 - PRESENSI
 Route::prefix('presensi')->name('presensi.')->group(function () {
 
-    // Fitur umum presensi
     Route::view('/qr-code', 'presensi.qr-code.index')
         ->name('qr-code');
 
@@ -41,19 +53,11 @@ Route::prefix('presensi')->name('presensi.')->group(function () {
     Route::view('/edit', 'presensi.edit.index')
         ->name('edit');
 
-
-    // ==========================================
     // ROLE SISWA
-    // ==========================================
-
     Route::view('/siswa', 'presensi.siswa.index')
         ->name('siswa');
 
-
-    // ==========================================
     // ROLE GURU / WALI KELAS
-    // ==========================================
-
     Route::view('/guru', 'presensi.guru.index', [
         'pageTitle' => 'Kelola Presensi',
         'rolePresensi' => 'guru',
@@ -62,12 +66,7 @@ Route::prefix('presensi')->name('presensi.')->group(function () {
         'detailProfil' => 'XI MIPA 2',
     ])->name('guru');
 
-
-    // ==========================================
     // ROLE KURIKULUM
-    // Menggunakan dashboard yang sama dengan Guru
-    // ==========================================
-
     Route::view('/kurikulum', 'presensi.guru.index', [
         'pageTitle' => 'Dashboard',
         'rolePresensi' => 'kurikulum',
@@ -76,20 +75,11 @@ Route::prefix('presensi')->name('presensi.')->group(function () {
         'detailProfil' => 'SMAN 1 Malang',
     ])->name('kurikulum');
 
-
-    // ==========================================
     // ROLE ADMIN
-    // ==========================================
-
     Route::view('/admin', 'presensi.admin.index')
         ->name('admin');
 
-
-    // ==========================================
     // ROLE BUDAYA POSITIF
-    // Dashboard menggunakan template Guru
-    // ==========================================
-
     Route::view('/budaya-positif', 'presensi.guru.index', [
         'pageTitle' => 'Dashboard',
         'rolePresensi' => 'budaya-positif',
@@ -98,22 +88,20 @@ Route::prefix('presensi')->name('presensi.')->group(function () {
         'detailProfil' => 'SMAN 1 Malang',
     ])->name('budaya-positif');
 
-
-    // ==========================================
-    // ADMIN PRESENSI BUDAYA POSITIF
-    // Tetap menggunakan halaman Admin Presensi
-    // ==========================================
-
     Route::view('/budaya-positif/admin-presensi', 'presensi.admin.index')
         ->name('budaya-positif.admin-presensi');
 
 });
 
-// Halaman Input Nilai tanpa login
+// ==========================================
+// A2 - AKADEMIK
+// ==========================================
+
+// Input Nilai
 Route::get('/input-nilai', [InputNilaiController::class, 'index'])
     ->name('input-nilai.index');
 
-// Halaman Verifikasi Nilai tanpa login
+// Verifikasi Nilai
 Route::prefix('verifikasi-nilai')
     ->name('verifikasi-nilai.')
     ->group(function () {
@@ -123,14 +111,15 @@ Route::prefix('verifikasi-nilai')
         Route::post('/{mapel}/setujui', [VerifikasiNilaiController::class, 'approve'])->name('setujui');
     });
 
-// Halaman Rekap Nilai
+// Rekap Nilai
 Route::get('/rekap-nilai', [RekapNilaiController::class, 'index'])
     ->name('rekap-nilai.index');
 
-// Halaman Periode & Penguncian
+// Periode dan Penguncian
 Route::get('/periode-penguncian', [PeriodePenguncianController::class, 'index'])
     ->name('periode-penguncian.index');
 
+// Pelengkap Rapor
 Route::prefix('pelengkap-rapor')
     ->name('pelengkap-rapor.')
     ->group(function () {
@@ -139,7 +128,7 @@ Route::prefix('pelengkap-rapor')
         Route::post('/siswa/{siswa}/catatan', [PelengkapRaporController::class, 'simpanCatatan'])->name('catatan');
     });
 
-// Halaman Cetak & Ekspor Rapor
+// Cetak dan Ekspor Rapor
 Route::prefix('cetak-rapor')
     ->name('cetak-rapor.')
     ->group(function () {
@@ -149,7 +138,7 @@ Route::prefix('cetak-rapor')
         Route::get('/riwayat/{riwayat}/unduh', [CetakRaporController::class, 'unduhUlang'])->name('ulang');
     });
 
-// Placeholder, nanti diganti dengan controller sungguhan
+// Placeholder Akademik
 Route::get('/rekap-nilai/export/{scope}', function ($scope) {
     return 'Export ' . $scope . ' belum dibuat';
 })->name('rekap-nilai.export');
@@ -161,3 +150,13 @@ Route::get('/rekap-nilai/rombel/{rombel}', function ($rombel) {
 Route::get('/kelola-tp', function () {
     return 'Halaman Kelola TP belum dibuat';
 })->name('tp.index');
+
+// ==========================================
+// A3 - BK (BIMBINGAN DAN KONSELING)
+// Route BK dipertahankan sesuai implementasi kelompok A3.
+// ==========================================
+
+// ==========================================
+// A4 - PORTAL ORANG TUA
+// Route Portal Orang Tua dipertahankan sesuai implementasi kelompok A4.
+// ==========================================

@@ -7,6 +7,7 @@ use App\Http\Controllers\MapelController;
 use App\Http\Controllers\NilaiController;
 use App\Http\Controllers\PaketNilaiController;
 use App\Http\Controllers\PeriodeNilaiController;
+use App\Http\Controllers\RekapNilaiController;
 use App\Http\Controllers\RombelController;
 use App\Http\Controllers\SekolahController;
 use App\Http\Controllers\SemesterController;
@@ -25,6 +26,11 @@ Route::prefix('api')->group(function () {
     Route::post('register', [AuthController::class, 'register'])->middleware('throttle:register');
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
     Route::middleware(['auth', 'active'])->group(function () {
+        Route::middleware('role:admin,kurikulum,guru,wali_kelas')->group(function () {
+            Route::get('rekap-nilai', [RekapNilaiController::class, 'index']);
+            Route::get('rekap-nilai/export', [RekapNilaiController::class, 'export'])->name('rekap-nilai.export');
+            Route::get('rekap-nilai/rombel/{rombel}', [RekapNilaiController::class, 'show']);
+        });
         Route::get('me', [AuthController::class, 'me']);
         Route::post('logout', [AuthController::class, 'logout']);
         Route::prefix('admin')->middleware('role:admin')->group(function () {

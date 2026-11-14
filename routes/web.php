@@ -16,6 +16,11 @@ use App\Http\Controllers\TahunAjaranController;
 use App\Http\Controllers\TpController;
 use App\Http\Controllers\UserAccessController;
 use App\Http\Controllers\WaliKelasController;
+use App\Http\Controllers\CetakRaporController;
+use App\Http\Controllers\EkskulController;
+use App\Http\Controllers\PelengkapRaporController;
+use App\Http\Controllers\PesertaEkskulController;
+use App\Http\Controllers\PresensiRingkasanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => response()->json(['application' => 'SIAKAD A2', 'status' => 'ok']));
@@ -69,6 +74,7 @@ Route::prefix('api')->group(function () {
 
         // Pembacaan periode & paket (wali melihat kelasnya saja, dibatasi di controller).
         Route::middleware('role:admin,kurikulum,guru,wali_kelas')->group(function () {
+            Route::get('paket-nilai/{record}', [PaketNilaiController::class, 'show']);
             Route::get('periode-nilai', [PeriodeNilaiController::class, 'index']);
             Route::get('paket-nilai', [PaketNilaiController::class, 'index']);
         });
@@ -107,6 +113,31 @@ Route::prefix('api')->group(function () {
             Route::post('periode-nilai/{record}/kunci', [PeriodeNilaiController::class, 'kunci']);
             Route::post('paket-nilai/{record}/kunci', [PaketNilaiController::class, 'kunci']);
             Route::post('paket-nilai/{record}/buka-koreksi', [PaketNilaiController::class, 'bukaKoreksi']);
+        });
+
+        // ===== Bagian 4.7 & 4.8 (Siwa): pelengkap rapor, presensi ringkasan, ekskul, cetak rapor =====
+
+        // Baca: wali kelas (kelasnya) dan kurikulum/admin. Pembatasan kelas ada di controller (RaporAccess).
+        Route::middleware('role:admin,kurikulum,wali_kelas')->group(function () {
+            Route::get('pelengkap-rapor', [PelengkapRaporController::class, 'index']);
+            Route::get('presensi-ringkasan', [PresensiRingkasanController::class, 'index']);
+            Route::get('cetak-rapor', [CetakRaporController::class, 'index']);
+            Route::get('cetak-rapor/riwayat', [CetakRaporController::class, 'riwayat']);
+            Route::post('cetak-rapor/siswa/{siswa}/pdf', [CetakRaporController::class, 'pdfSiswa']);
+            Route::post('cetak-rapor/kelas/pdf', [CetakRaporController::class, 'pdfKelas']);
+        });
+
+        // Tulis catatan: hanya wali kelas dari kelas tersebut.
+        Route::middleware('role:wali_kelas')->group(function () {
+            Route::post('pelengkap-rapor/siswa/{siswa}/catatan', [PelengkapRaporController::class, 'catatan']);
+            Route::post('pelengkap-rapor/simpan', [PelengkapRaporController::class, 'simpan']);
+        });
+
+        // Ekskul: kesiswaan dan admin.
+        Route::middleware('role:admin,kesiswaan')->group(function () {
+            Route::get('ekskul', [EkskulController::class, 'index']);
+            Route::post('ekskul', [EkskulController::class, 'store']);
+            Route::put('peserta-ekskul', [PesertaEkskulController::class, 'simpan']);
         });
     });
 });

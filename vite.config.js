@@ -35,6 +35,10 @@ export default defineConfig({
                 'resources/css/data-kelas.css',
                 'resources/js/data-kelas.js',
                 'resources/css/relasi-orang-tua.css',
+                'resources/css/topbar.css',
+                'resources/js/topbar.js',
+                'resources/css/dashboard-kelas.css',
+                'resources/js/dashboard-kelas.js',
             ],
             refresh: true,
             fonts: [

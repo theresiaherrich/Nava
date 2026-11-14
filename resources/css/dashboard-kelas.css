@@ -1,0 +1,295 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+/* ==========================================================
+   Dashboard Kelas (Wali Kelas)
+   ========================================================== */
+.dkl-page {
+    --dkl-text: #0f172a;
+    --dkl-soft: #64748b;
+    --dkl-muted: #94a3b8;
+    --dkl-line: #e8edf3;
+    --dkl-blue: #0ea5e9;
+    --dkl-blue-dark: #0369a1;
+    --dkl-green: #16a34a;
+    --dkl-orange: #ea580c;
+    --dkl-red: #dc2626;
+    --dkl-purple: #7c3aed;
+
+    min-height: calc(100vh - 60px);
+    background: #f6f8fb;
+    padding: 24px 28px 32px;
+    font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+    color: var(--dkl-text);
+    box-sizing: border-box;
+}
+.dkl-page *, .dkl-page *::before, .dkl-page *::after { box-sizing: border-box; }
+.dkl-page p { margin: 0; }
+.dkl-page [hidden] { display: none !important; }
+
+.dkl-icon { width: 14px; height: 14px; flex: 0 0 auto; }
+.dkl-sr {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+}
+.dkl-muted { color: var(--dkl-muted); }
+.dkl-nowrap { white-space: nowrap; }
+
+/* Header halaman */
+.dkl-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.dkl-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--dkl-blue-dark); margin-bottom: 4px !important; }
+.dkl-title { font-size: 24px; font-weight: 700; letter-spacing: -.01em; margin: 0; }
+.dkl-subtitle { font-size: 12px; color: var(--dkl-soft); margin-top: 4px !important; }
+.dkl-date {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--dkl-soft); background: #fff;
+    border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 12px;
+}
+.dkl-date strong { color: var(--dkl-text); font-weight: 600; }
+
+/* Banner */
+.dkl-banner {
+    display: flex; align-items: center; gap: 12px;
+    background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 14px;
+}
+.dkl-banner__icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 7px; background: #fff; color: var(--dkl-blue-dark);
+    border: 1px solid #bae6fd; flex: 0 0 auto;
+}
+.dkl-banner__body { flex: 1; min-width: 0; }
+.dkl-banner__title { font-size: 12px; font-weight: 600; color: var(--dkl-blue-dark); }
+.dkl-banner__text { font-size: 11px; color: #475569; margin-top: 2px !important; }
+.dkl-banner__link {
+    display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+    font-size: 11px; font-weight: 600; color: var(--dkl-blue-dark); text-decoration: none;
+}
+.dkl-banner__link:hover { text-decoration: underline; }
+
+/* Kartu */
+.dkl-card {
+    background: #fff; border: 1px solid var(--dkl-line); border-radius: 12px;
+    padding: 16px 18px;
+}
+.dkl-panel-title { font-size: 13px; font-weight: 600; margin: 0 0 12px; }
+.dkl-panel-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.dkl-panel-head .dkl-panel-title { margin: 0; }
+.dkl-label { font-size: 11px; color: var(--dkl-soft); }
+.dkl-note { font-size: 10px; color: var(--dkl-muted); margin-top: 2px !important; }
+.dkl-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+    background: #fff7ed; color: var(--dkl-orange); font-size: 10px; font-weight: 700;
+}
+
+/* Statistik */
+.dkl-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.dkl-stat__value { font-size: 24px; font-weight: 700; margin: 6px 0 2px !important; line-height: 1.1; }
+.dkl-stat__value small { font-size: 13px; font-weight: 500; color: var(--dkl-muted); }
+.dkl-stat__value.is-warn { color: var(--dkl-orange); }
+
+/* Bar */
+.dkl-bar { height: 5px; background: #eef2f6; border-radius: 999px; overflow: hidden; }
+.dkl-bar--stat { margin-top: 10px; height: 4px; }
+.dkl-bar__fill { height: 100%; border-radius: 999px; background: transparent; }
+.dkl-bar__fill.is-blue { background: #0284c7; }
+.dkl-bar__fill.is-green { background: var(--dkl-green); }
+.dkl-bar__fill.is-orange { background: #f59e0b; }
+
+/* Stepper */
+.dkl-steps-card { margin-bottom: 14px; }
+.dkl-steps { display: flex; list-style: none; margin: 0; padding: 4px 0 0; }
+.dkl-step {
+    --step-line: #e2e8f0;
+    position: relative; flex: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: 8px;
+    padding-right: 12px;
+}
+.dkl-step::after {
+    content: ""; position: absolute; top: 13px; left: 36px; right: 10px;
+    height: 2px; border-radius: 2px; background: var(--step-line);
+}
+.dkl-step:last-child::after { display: none; }
+.dkl-step.is-selesai, .dkl-step.is-aktif { --step-line: #7dd3fc; }
+
+.dkl-step__dot {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    font-size: 11px; font-weight: 700;
+    background: #f1f5f9; color: var(--dkl-muted); border: 2px solid #f1f5f9;
+    flex: 0 0 auto;
+}
+.dkl-step__dot .dkl-icon { width: 14px; height: 14px; stroke-width: 3; }
+.dkl-step.is-selesai .dkl-step__dot { background: var(--dkl-green); border-color: var(--dkl-green); color: #fff; }
+.dkl-step.is-aktif .dkl-step__dot { background: #0284c7; border-color: #0284c7; color: #fff; box-shadow: 0 0 0 4px #e0f2fe; }
+.dkl-step.is-berjalan .dkl-step__dot { background: #fff; border-color: #0284c7; color: #0284c7; }
+
+.dkl-step__text { display: flex; flex-direction: column; gap: 2px; }
+.dkl-step__title { font-size: 11px; font-weight: 600; color: var(--dkl-text); }
+.dkl-step.is-menunggu .dkl-step__title { color: var(--dkl-soft); font-weight: 500; }
+.dkl-step__ket { font-size: 10px; color: var(--dkl-muted); }
+.dkl-step.is-selesai .dkl-step__ket { color: var(--dkl-green); font-weight: 600; }
+.dkl-step.is-aktif .dkl-step__ket,
+.dkl-step.is-berjalan .dkl-step__ket { color: #0284c7; font-weight: 600; }
+
+/* Grid bawah */
+.dkl-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 300px); gap: 14px; align-items: start; }
+.dkl-side { display: flex; flex-direction: column; gap: 14px; }
+
+/* Tabel: kepala & filter */
+.dkl-table-card { padding-bottom: 12px; }
+.dkl-table-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.dkl-table-head .dkl-panel-title { margin: 0; }
+.dkl-filter { display: flex; gap: 8px; flex-wrap: wrap; }
+.dkl-select-wrap { position: relative; display: inline-flex; }
+.dkl-select {
+    appearance: none; -webkit-appearance: none;
+    font: inherit; font-size: 11px; color: var(--dkl-text);
+    padding: 7px 28px 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px;
+    background: #fff; cursor: pointer; outline: none;
+}
+.dkl-select__chev { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--dkl-soft); width: 12px; height: 12px; }
+.dkl-search {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;
+    color: var(--dkl-muted);
+}
+.dkl-search input {
+    width: 140px; border: 0; outline: 0; background: transparent; padding: 7px 0;
+    font: inherit; font-size: 11px; color: var(--dkl-text);
+}
+.dkl-select:focus, .dkl-search:focus-within { border-color: #7dd3fc; box-shadow: 0 0 0 3px rgba(14, 165, 233, .15); }
+
+/* Tabel */
+.dkl-table-wrap { overflow-x: auto; margin: 0 -18px; padding: 0 18px; -webkit-overflow-scrolling: touch; }
+.dkl-table { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 11px; }
+.dkl-table th {
+    text-align: left; font-size: 10px; font-weight: 600; color: var(--dkl-soft);
+    padding: 8px 8px; background: #f8fafc; border-bottom: 1px solid var(--dkl-line); white-space: nowrap;
+}
+.dkl-table th:first-child { border-radius: 6px 0 0 6px; }
+.dkl-table th:last-child { border-radius: 0 6px 6px 0; }
+.dkl-table td { padding: 9px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+.dkl-table tbody tr[data-row]:hover { background: #fbfdff; }
+.dkl-table .is-right { text-align: right; }
+.dkl-table td:first-child { min-width: 180px; }
+.dkl-mapel { font-size: 11px; font-weight: 600; }
+.dkl-mapel__sub { font-size: 9px; color: var(--dkl-muted); margin-top: 1px !important; }
+.dkl-guru { min-width: 120px; }
+.dkl-fill { display: flex; align-items: center; gap: 8px; min-width: 110px; }
+.dkl-fill .dkl-bar { flex: 1; min-width: 60px; }
+.dkl-fill span { font-size: 10px; color: var(--dkl-soft); white-space: nowrap; }
+.dkl-empty td { text-align: center; color: var(--dkl-soft); padding: 24px 8px; }
+
+/* Badge status */
+.dkl-badge {
+    display: inline-block; white-space: nowrap;
+    font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 999px;
+}
+.dkl-badge.is-menunggu     { background: #e0f2fe; color: #0369a1; }
+.dkl-badge.is-disetujui    { background: #dcfce7; color: #15803d; }
+.dkl-badge.is-sedang_diisi { background: #ffedd5; color: #c2410c; }
+.dkl-badge.is-belum_tp     { background: #fee2e2; color: #b91c1c; }
+.dkl-badge.is-dikembalikan { background: #ede9fe; color: #6d28d9; }
+
+/* Tombol */
+.dkl-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font: inherit; font-size: 11px; font-weight: 600; text-decoration: none;
+    padding: 6px 12px; border-radius: 7px; border: 1px solid transparent; cursor: pointer;
+    white-space: nowrap;
+}
+.dkl-btn--primary { background: #0284c7; color: #fff; }
+.dkl-btn--primary:hover { background: #0369a1; }
+.dkl-btn--outline { background: #fff; border-color: #e2e8f0; color: var(--dkl-text); }
+.dkl-btn--outline:hover { background: #f8fafc; border-color: #cbd5e1; }
+.dkl-btn--block { display: flex; width: 100%; margin-top: 14px; padding: 9px 12px; }
+.dkl-btn--print { background: #f1f5f9; color: var(--dkl-text); }
+.dkl-btn--print:disabled { background: #e2e8f0; color: var(--dkl-muted); cursor: not-allowed; }
+
+/* Kaki tabel */
+.dkl-table-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; padding-top: 12px; }
+.dkl-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; list-style: none; margin: 0; padding: 0; font-size: 10px; color: var(--dkl-soft); }
+.dkl-legend li { display: inline-flex; align-items: center; gap: 5px; }
+.dkl-legend__dot { width: 7px; height: 7px; border-radius: 50%; }
+.dkl-legend__dot.is-disetujui    { background: var(--dkl-green); }
+.dkl-legend__dot.is-menunggu     { background: var(--dkl-blue); }
+.dkl-legend__dot.is-sedang_diisi { background: #f59e0b; }
+.dkl-legend__dot.is-belum_tp     { background: #ef4444; }
+.dkl-legend__dot.is-dikembalikan { background: #8b5cf6; }
+
+.dkl-pager { display: flex; gap: 4px; margin-left: auto; }
+.dkl-pager button {
+    min-width: 26px; height: 26px; padding: 0 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font: inherit; font-size: 11px; font-weight: 600; color: var(--dkl-text);
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;
+}
+.dkl-pager button:hover:not(:disabled) { background: #f8fafc; }
+.dkl-pager button.is-active { background: #0284c7; border-color: #0284c7; color: #fff; }
+.dkl-pager button:disabled { color: #cbd5e1; cursor: not-allowed; }
+
+/* Perlu tindakan */
+.dkl-todo { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; }
+.dkl-todo + .dkl-todo { border-top: 1px solid #f1f5f9; }
+.dkl-todo__icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 6px; flex: 0 0 auto;
+}
+.dkl-todo__icon .dkl-icon { width: 12px; height: 12px; }
+.dkl-todo__icon.is-verify { background: #e0f2fe; color: #0284c7; }
+.dkl-todo__icon.is-warn   { background: #fee2e2; color: var(--dkl-red); }
+.dkl-todo__icon.is-note   { background: #ffedd5; color: var(--dkl-orange); }
+.dkl-todo__body { flex: 1; min-width: 0; }
+.dkl-todo__title { font-size: 11px; font-weight: 600; }
+.dkl-todo__link { font-size: 11px; font-weight: 600; color: #0284c7; text-decoration: none; align-self: center; }
+.dkl-todo__link:hover { text-decoration: underline; }
+
+/* Pelengkap rapor */
+.dkl-pl + .dkl-pl { margin-top: 12px; }
+.dkl-pl__row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11px; margin-bottom: 6px; }
+.dkl-pl__row strong { font-weight: 700; }
+
+/* Status rapor */
+.dkl-rapor { display: flex; gap: 10px; align-items: flex-start; }
+.dkl-rapor__icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 7px; background: #f1f5f9; color: var(--dkl-soft); flex: 0 0 auto;
+}
+
+/* ==========================================================
+   Responsif
+   ========================================================== */
+@media (max-width: 1200px) {
+    .dkl-grid { grid-template-columns: minmax(0, 1fr); }
+    .dkl-side { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+}
+
+@media (max-width: 1024px) {
+    .dkl-page { padding: 20px; }
+    .dkl-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 768px) {
+    .dkl-page { padding: 16px 12px 24px; }
+    .dkl-title { font-size: 20px; }
+    .dkl-banner { flex-wrap: wrap; }
+    .dkl-banner__body { flex-basis: calc(100% - 40px); }
+    .dkl-banner__link { margin-left: 40px; }
+    .dkl-filter { width: 100%; }
+    .dkl-search { flex: 1; }
+    .dkl-search input { width: 100%; }
+    .dkl-pager { margin-left: 0; }
+
+    /* Stepper vertikal */
+    .dkl-steps { flex-direction: column; }
+    .dkl-step { flex-direction: row; align-items: flex-start; gap: 12px; padding: 0 0 16px; }
+    .dkl-step::after { top: 32px; bottom: 4px; left: 13px; right: auto; width: 2px; height: auto; }
+    .dkl-step:last-child { padding-bottom: 0; }
+    .dkl-step__text { padding-top: 5px; }
+}
+
+@media (max-width: 480px) {
+    .dkl-stats { grid-template-columns: minmax(0, 1fr); }
+    .dkl-date { width: 100%; }
+}

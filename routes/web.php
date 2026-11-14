@@ -84,6 +84,7 @@ Route::prefix('api')->group(function () {
             Route::post('tp/salin', [TpController::class, 'salin']);
             Route::get('rombel/{record}/nilai', [NilaiController::class, 'index']);
             Route::put('rombel/{record}/nilai', [NilaiController::class, 'simpan']);
+            Route::post('rombel/{record}/nilai/pratinjau-tempel', [NilaiController::class, 'pratinjauTempel']);
         });
 
         // Guru mengirim nilai paket kelasnya.

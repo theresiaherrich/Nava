@@ -12,6 +12,7 @@ use App\Services\PenilaianAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class NilaiController extends Controller
 {
@@ -25,9 +26,11 @@ class NilaiController extends Controller
         ]);
 
         $periode = PeriodeNilai::findOrFail($data['periode_id']);
+        abort_unless((int) $periode->semester_id === (int) $record->semester_id, 422, 'Semester periode tidak sesuai dengan rombel.');
         $tp = $record->tp()->get();
         $peserta = SiswaRombel::with(['siswaKelas.siswa', 'siswaKelas.kelas'])
             ->where('rombel_id', $record->id)
+            ->whereHas('siswaKelas.kelas', fn ($q) => $q->where('tingkat', $periode->tingkat)->where('semester_id', $periode->semester_id))
             ->when($data['kelas_id'] ?? null, fn ($q, $kelasId) => $q->whereHas('siswaKelas', fn ($s) => $s->where('kelas_id', $kelasId)))
             ->get()
             ->sortBy(fn ($p) => $p->siswaKelas?->siswa?->nama)
@@ -56,42 +59,16 @@ class NilaiController extends Controller
         $user = $request->user();
         abort_unless(PenilaianAccess::bisaInputNilai($user, $record), 403, 'Hanya guru pengampu rombel ini yang dapat mengisi nilai.');
 
-        $data = $request->validate([
-            'periode_id' => ['required', 'integer', 'exists:periode_nilai,id'],
-            'items' => ['required', 'array', 'min:1', 'max:1000'],
-            'items.*.siswa_rombel_id' => ['required', 'integer', 'exists:siswa_rombel,id'],
-            'items.*.tp_id' => ['required', 'integer', 'exists:tp,id'],
-            'items.*.skor' => ['nullable', 'numeric', 'between:0,100'],
-        ]);
+        $data = $this->validasiItems($request);
 
         $jumlah = DB::transaction(function () use ($record, $data, $user) {
             $periode = PeriodeNilai::whereKey($data['periode_id'])->lockForUpdate()->firstOrFail();
-            abort_unless($periode->terbuka(), 422, 'Periode penilaian sedang tertutup atau sudah dikunci.');
-
-            $tpMap = $record->tp()->get()->keyBy('id');
-            $pesertaMap = SiswaRombel::with('siswaKelas')->where('rombel_id', $record->id)->get()->keyBy('id');
-
-            $kelasIds = [];
-            foreach ($data['items'] as $item) {
-                $tp = $tpMap->get($item['tp_id']);
-                $peserta = $pesertaMap->get($item['siswa_rombel_id']);
-                abort_if($tp === null || $peserta === null, 422, 'TP atau peserta tidak berada dalam rombel ini.');
-                abort_unless(PenilaianAccess::tpDapatDiisi($periode, $tp), 422, "TP ke-{$tp->nomor_urut} tidak dapat diisi pada periode {$periode->jenis}.");
-                $kelasIds[(int) $peserta->siswaKelas->kelas_id] = true;
-            }
-
-            // Nilai pada paket yang sudah dikirim/disetujui/dikunci tidak boleh berubah.
-            $terkunci = PaketNilai::where('rombel_id', $record->id)
-                ->where('periode_id', $periode->id)
-                ->whereIn('kelas_id', array_keys($kelasIds))
-                ->whereNotIn('status', ['draft', 'perlu_perbaikan'])
-                ->exists();
-            abort_if($terkunci, 422, 'Nilai pada paket kelas ini sudah dikirim atau dikunci.');
+            $this->pastikanDapatDiisi($record, $periode, $data['items']);
 
             foreach ($data['items'] as $item) {
                 NilaiTp::updateOrCreate(
                     ['tp_id' => $item['tp_id'], 'siswa_rombel_id' => $item['siswa_rombel_id']],
-                    ['skor' => $item['skor'] ?? null, 'diubah_oleh' => $user->id],
+                    ['skor' => $item['skor'], 'diubah_oleh' => $user->id],
                 );
             }
 
@@ -101,5 +78,92 @@ class NilaiController extends Controller
         });
 
         return response()->json(['data' => ['tersimpan' => $jumlah, 'waktu' => now()->toIso8601String()]]);
+    }
+
+    /** Pratinjau menerima pemetaan sel yang sama dengan PUT; hanya membaca database. */
+    public function pratinjauTempel(Request $request, Rombel $record): JsonResponse
+    {
+        abort_unless(PenilaianAccess::bisaInputNilai($request->user(), $record), 403, 'Hanya guru pengampu rombel ini yang dapat mengisi nilai.');
+        $data = $this->validasiItems($request);
+        $periode = PeriodeNilai::findOrFail($data['periode_id']);
+        $this->pastikanDapatDiisi($record, $periode, $data['items']);
+
+        return response()->json(['data' => $data + ['jumlah_sel' => count($data['items'])]]);
+    }
+
+    private function validasiItems(Request $request): array
+    {
+        $data = $request->validate([
+            'periode_id' => ['required', 'integer', 'exists:periode_nilai,id'],
+            'items' => ['required', 'array', 'list', 'min:1', 'max:1000'],
+            'items.*.siswa_rombel_id' => ['required', 'integer'],
+            'items.*.tp_id' => ['required', 'integer'],
+            'items.*' => ['required', 'array:siswa_rombel_id,tp_id,skor'],
+            'items.*.skor' => ['present', 'nullable', 'numeric', 'between:0,100', 'decimal:0,2'],
+        ]);
+
+        $pasangan = [];
+        foreach ($data['items'] as $index => &$item) {
+            $item['siswa_rombel_id'] = (int) $item['siswa_rombel_id'];
+            $item['tp_id'] = (int) $item['tp_id'];
+            $key = $item['siswa_rombel_id'].':'.$item['tp_id'];
+            if (isset($pasangan[$key])) {
+                throw ValidationException::withMessages(["items.{$index}.tp_id" => 'Pasangan siswa dan TP tidak boleh berulang.']);
+            }
+            $pasangan[$key] = true;
+        }
+        unset($item);
+
+        return $data;
+    }
+
+    private function pastikanDapatDiisi(Rombel $record, PeriodeNilai $periode, array $items): void
+    {
+        abort_unless((int) $periode->semester_id === (int) $record->semester_id, 422, 'Semester periode tidak sesuai dengan rombel.');
+        abort_unless($periode->terbuka(), 422, 'Periode penilaian sedang tertutup atau sudah dikunci.');
+
+        $sel = collect($items);
+        $tpMap = $record->tp()->whereIn('id', $sel->pluck('tp_id')->unique()->values())->get()->keyBy('id');
+        $pesertaMap = SiswaRombel::with('siswaKelas.kelas')
+            ->where('rombel_id', $record->id)
+            ->whereIn('id', $sel->pluck('siswa_rombel_id')->unique()->values())
+            ->get()->keyBy('id');
+
+        $kelasIds = [];
+        $errors = [];
+        foreach ($items as $index => $item) {
+            $tp = $tpMap->get($item['tp_id']);
+            $peserta = $pesertaMap->get($item['siswa_rombel_id']);
+            if ($tp === null) {
+                $errors["items.{$index}.tp_id"] = 'TP tidak ditemukan dalam rombel ini.';
+            }
+            if ($peserta === null) {
+                $errors["items.{$index}.siswa_rombel_id"] = 'Peserta tidak ditemukan dalam rombel ini.';
+            }
+        }
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        foreach ($items as $item) {
+            $tp = $tpMap->get($item['tp_id']);
+            $peserta = $pesertaMap->get($item['siswa_rombel_id']);
+            $penempatan = $peserta->siswaKelas;
+            abort_unless($penempatan && $penempatan->kelas
+                && (int) $penempatan->semester_id === (int) $periode->semester_id
+                && (int) $penempatan->kelas->semester_id === (int) $periode->semester_id
+                && (int) $penempatan->kelas->tingkat === (int) $periode->tingkat,
+                422, 'Semester atau tingkat peserta tidak sesuai dengan periode.');
+            abort_unless(PenilaianAccess::tpDapatDiisi($periode, $tp), 422, "TP ke-{$tp->nomor_urut} tidak dapat diisi pada periode {$periode->jenis}.");
+            $kelasIds[(int) $peserta->siswaKelas->kelas_id] = true;
+        }
+
+        // Nilai pada paket yang sudah dikirim/disetujui/dikunci tidak boleh berubah.
+        $terkunci = PaketNilai::where('rombel_id', $record->id)
+            ->where('periode_id', $periode->id)
+            ->whereIn('kelas_id', array_keys($kelasIds))
+            ->whereNotIn('status', ['draft', 'perlu_perbaikan'])
+            ->exists();
+        abort_if($terkunci, 422, 'Nilai pada paket kelas ini sudah dikirim atau dikunci.');
     }
 }

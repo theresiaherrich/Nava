@@ -1,5 +1,10 @@
 # DKN: rekap nilai dan ekspor
 
+**Pembaruan penyelarasan:** sumber alokasi kini posisi TP terurut melalui
+`AlokasiTpService`, bukan flag manual. Rincian aktif dan dampak data lama ada di
+`09_PENYELARASAN_TP_STS_SAS.md`. Audit TP di bawah merupakan catatan sebelum
+penyelarasan; bukan deskripsi kemampuan terbaru.
+
 DKN ini membaca data kerja saat ini, bukan arsip nilai final. Tidak ada
 perubahan skema, migration, atau penulisan nilai/paket melalui endpoint DKN.
 Middleware session tetap mengikuti konfigurasi aplikasi.
@@ -78,7 +83,8 @@ kelas asal. Paket yang belum ada menghasilkan `null`, bukan draft buatan.
 
 ## Aturan nilai dan batasan
 
-- STS: jumlah skor TP `masuk_sts=true` dibagi jumlah TP yang ditandai tersebut.
+- STS: jumlah skor separuh pertama TP terurut (floor jumlah/2), dibagi jumlah
+  TP bagian STS tersebut. Flag `masuk_sts` tidak menentukan pemilihan.
 - SAS: jumlah skor seluruh TP rombel dibagi jumlah seluruh TP rombel pada semester
   terkait, termasuk TP STS, TP khusus SAS, dan TP tanpa kedua tanda.
   `is_sas` tidak menjadi filter perhitungan DKN SAS.

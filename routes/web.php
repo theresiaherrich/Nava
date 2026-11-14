@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Academic\TpController;
 use App\Http\Controllers\Admin\KurikulumController;
+use App\Http\Controllers\DashboardKelasController;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
 
@@ -21,6 +22,8 @@ Route::middleware('guest')->group(function () {
 
 // --- PINDAHKAN KE SINI SEMENTARA UNTUK BYPASS LOGIN ---
 Route::get('/academic/tp', [TpController::class, 'index'])->name('tp.index');
+// Dashboard Wali Kelas (data dummy). TODO (backend): pindahkan ke grup middleware auth.
+Route::get('/dashboard-kelas', [DashboardKelasController::class, 'index'])->name('dashboard-kelas.index');
 // ------------------------------------------------------
 
 Route::middleware(['auth', 'active'])->group(function () {

@@ -38,7 +38,7 @@
         [
             'code' => 'A2', 'label' => 'Akademik', 'icon' => 'file', 'sub_title' => 'Wali Kelas',
             'items' => [
-                ['label' => 'Dashboard Kelas',   'icon' => 'grid',    'route' => null],
+                ['label' => 'Dashboard Kelas', 'icon' => 'grid', 'route' => 'dashboard-kelas.index', 'pattern' => 'dashboard-kelas.*'],
                 ['label' => 'Verifikasi Nilai',  'icon' => 'check',   'route' => 'verifikasi-nilai.index', 'pattern' => 'verifikasi-nilai.*'],
                 ['label' => 'Pelengkap Rapor',   'icon' => 'pencil',  'route' => null],
                 ['label' => 'Rekap Nilai (DKN)', 'icon' => 'table',   'route' => 'rekap-nilai.index',      'pattern' => 'rekap-nilai.*'],

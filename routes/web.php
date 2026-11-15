@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\RombelController;
+use App\Http\Controllers\Api\TpController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GuruController;
 use App\Http\Controllers\KelasController;
@@ -7,6 +10,7 @@ use App\Http\Controllers\MapelController;
 use App\Http\Controllers\NilaiController;
 use App\Http\Controllers\PaketNilaiController;
 use App\Http\Controllers\PeriodeNilaiController;
+use App\Http\Controllers\RekapNilaiController;
 use App\Http\Controllers\RombelController;
 use App\Http\Controllers\SekolahController;
 use App\Http\Controllers\SemesterController;
@@ -23,6 +27,49 @@ use App\Http\Controllers\PesertaEkskulController;
 use App\Http\Controllers\PresensiRingkasanController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::prefix('api')
+    ->middleware('auth')
+    ->group(function () {
+        // GET daftar rombel
+        Route::get('/rombel', [App\Http\Controllers\Api\RombelController::class, 'index']);
+
+        // POST tambah rombel
+        Route::post('/rombel', [App\Http\Controllers\Api\RombelController::class, 'store']);
+
+        // GET detail rombel
+        Route::get('/rombel/{rombel}', [App\Http\Controllers\Api\RombelController::class, 'show']);
+
+        // PUT edit rombel
+        Route::put('/rombel/{rombel}', [App\Http\Controllers\Api\RombelController::class, 'update']);
+
+        // PUT penetapan guru
+        Route::put('/rombel/{rombel}/guru', [App\Http\Controllers\Api\RombelController::class, 'setGuru']);
+
+        // POST tambah peserta didik ke rombel
+        Route::post('/rombel/{rombel}/peserta', [App\Http\Controllers\Api\RombelController::class, 'addPeserta']);
+
+        // MODUL AKADEMIK - TUJUAN PEMBELAJARAN (TP)
+        // Menampilkan daftar TP milik rombel
+        Route::get('/rombel/{rombel}/tp', [TpController::class, 'index']);
+
+        // Menambahkan TP ke rombel
+        Route::post('/rombel/{rombel}/tp', [TpController::class, 'store']);
+
+        // Memperbarui TP
+        Route::put('/tp/{tp}', [TpController::class, 'update']);
+
+        // Menghapus TP
+        Route::delete('/tp/{tp}', [TpController::class, 'destroy']);
+
+        // Menyalin TP antarrombel
+        Route::post('/tp/copy', [TpController::class, 'copy']);
+    });
+    });
+
 Route::get('/', fn () => response()->json(['application' => 'SIAKAD A2', 'status' => 'ok']));
 // Sengaja di web.php: semua endpoint memakai cookie session dan proteksi CSRF.
 Route::prefix('api')->group(function () {
@@ -30,6 +77,11 @@ Route::prefix('api')->group(function () {
     Route::post('register', [AuthController::class, 'register'])->middleware('throttle:register');
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
     Route::middleware(['auth', 'active'])->group(function () {
+        Route::middleware('role:admin,kurikulum,guru,wali_kelas')->group(function () {
+            Route::get('rekap-nilai', [RekapNilaiController::class, 'index']);
+            Route::get('rekap-nilai/export', [RekapNilaiController::class, 'export'])->name('rekap-nilai.export');
+            Route::get('rekap-nilai/rombel/{rombel}', [RekapNilaiController::class, 'show']);
+        });
         Route::get('me', [AuthController::class, 'me']);
         Route::post('logout', [AuthController::class, 'logout']);
         Route::prefix('admin')->middleware('role:admin')->group(function () {
@@ -90,6 +142,7 @@ Route::prefix('api')->group(function () {
             Route::post('tp/salin', [TpController::class, 'salin']);
             Route::get('rombel/{record}/nilai', [NilaiController::class, 'index']);
             Route::put('rombel/{record}/nilai', [NilaiController::class, 'simpan']);
+            Route::post('rombel/{record}/nilai/pratinjau-tempel', [NilaiController::class, 'pratinjauTempel']);
         });
 
         // Guru mengirim nilai paket kelasnya.

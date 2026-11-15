@@ -10,6 +10,7 @@ use App\Models\Rombel;
 use App\Models\SiswaRombel;
 use App\Models\VerifikasiNilai;
 use App\Models\WaliKelas;
+use App\Services\AlokasiTpService;
 use App\Services\AuditService;
 use App\Services\PenilaianAccess;
 use Illuminate\Http\JsonResponse;
@@ -59,10 +60,12 @@ class PaketNilaiController extends Controller
         abort_unless(PenilaianAccess::bisaInputNilai($user, $rombel), 403, 'Hanya guru pengampu yang dapat mengirim nilai rombel ini.');
 
         $paket = DB::transaction(function () use ($user, $data, $rombel, $kelas) {
+            $rombel = Rombel::whereKey($rombel->id)->lockForUpdate()->firstOrFail();
             $periode = PeriodeNilai::whereKey($data['periode_id'])->lockForUpdate()->firstOrFail();
             abort_unless($periode->terbuka(), 422, 'Periode penilaian tertutup. Nilai tidak dapat dikirim.');
             abort_if((int) $kelas->tingkat !== (int) $periode->tingkat, 422, 'Tingkat kelas tidak sesuai dengan periode.');
             abort_if((int) $kelas->semester_id !== (int) $rombel->semester_id, 422, 'Kelas asal dan rombel berasal dari semester berbeda.');
+            abort_if((int) $periode->semester_id !== (int) $rombel->semester_id, 422, 'Semester periode dan rombel berbeda.');
 
             $paket = PaketNilai::firstOrCreate(
                 ['rombel_id' => $rombel->id, 'periode_id' => $periode->id, 'kelas_id' => $kelas->id],
@@ -71,19 +74,7 @@ class PaketNilaiController extends Controller
             $paket = PaketNilai::whereKey($paket->id)->lockForUpdate()->firstOrFail();
             abort_unless(in_array($paket->status, ['draft', 'perlu_perbaikan'], true), 422, "Paket berstatus {$paket->status} dan tidak dapat dikirim.");
 
-            $tpWajib = $rombel->tp()->get()->filter(fn ($t) => PenilaianAccess::tpDapatDiisi($periode, $t));
-            $peserta = SiswaRombel::with('siswaKelas')->where('rombel_id', $rombel->id)->get()
-                ->filter(fn ($p) => (int) $p->siswaKelas->kelas_id === (int) $kelas->id);
-
-            $sel = $peserta->count() * $tpWajib->count();
-            abort_if($sel === 0, 422, 'Belum ada TP atau peserta pada kelas ini.');
-
-            $terisi = NilaiTp::whereIn('siswa_rombel_id', $peserta->pluck('id'))
-                ->whereIn('tp_id', $tpWajib->pluck('id'))
-                ->whereNotNull('skor')
-                ->count();
-            $kosong = $sel - $terisi;
-            abort_if($kosong > 0, 422, "Nilai belum lengkap: {$kosong} sel belum diisi. Nilai tidak dapat dikirim.");
+            $this->pastikanLengkap($rombel, $periode, $kelas->id);
 
             $sebelum = $paket->status;
             $paket->update(['status' => 'dikirim', 'dikirim_oleh' => $user->id, 'waktu_kirim' => now()]);
@@ -132,8 +123,13 @@ class PaketNilaiController extends Controller
         $user = $request->user();
 
         return DB::transaction(function () use ($record, $dari, $ke, $keputusan, $aksi, $catatan, $user) {
+            $rombel = Rombel::whereKey($record->rombel_id)->lockForUpdate()->firstOrFail();
+            $periode = PeriodeNilai::whereKey($record->periode_id)->lockForUpdate()->firstOrFail();
             $paket = PaketNilai::whereKey($record->id)->lockForUpdate()->firstOrFail();
             abort_unless($paket->status === $dari, 422, "Status paket harus '{$dari}', saat ini '{$paket->status}'.");
+            if (in_array($ke, ['disetujui', 'dikunci'], true)) {
+                $this->pastikanLengkap($rombel, $periode, $paket->kelas_id);
+            }
 
             $sebelum = $paket->status;
             $perubahan = ['status' => $ke];
@@ -152,5 +148,20 @@ class PaketNilaiController extends Controller
 
             return $paket;
         });
+    }
+
+    private function pastikanLengkap(Rombel $rombel, PeriodeNilai $periode, int $kelasId): void
+    {
+        $kelas = Kelas::findOrFail($kelasId);
+        abort_unless((int) $periode->semester_id === (int) $rombel->semester_id
+            && (int) $kelas->semester_id === (int) $periode->semester_id
+            && (int) $kelas->tingkat === (int) $periode->tingkat, 422, 'Konteks akademik paket tidak sesuai.');
+        $tpWajib = AlokasiTpService::untukRekap($rombel->tp()->get(), $periode->jenis);
+        $peserta = SiswaRombel::where('rombel_id', $rombel->id)
+            ->whereHas('siswaKelas', fn ($q) => $q->where('kelas_id', $kelasId)->where('semester_id', $periode->semester_id))->pluck('id');
+        $sel = $peserta->count() * $tpWajib->count();
+        abort_if($sel === 0, 422, 'Tidak ada TP relevan atau peserta untuk paket periode ini.');
+        $terisi = NilaiTp::whereIn('siswa_rombel_id', $peserta)->whereIn('tp_id', $tpWajib->pluck('id'))->whereNotNull('skor')->count();
+        abort_if($terisi !== $sel, 422, 'Nilai belum lengkap: seluruh TP yang diperlukan untuk DKN periode ini wajib terisi.');
     }
 }

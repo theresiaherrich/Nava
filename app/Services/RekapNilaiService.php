@@ -37,8 +37,7 @@ class RekapNilaiService
             });
         }
 
-        return $query->with(['siswaKelas.siswa', 'siswaKelas.kelas', 'rombel.mapel',
-            'rombel.tp' => fn ($q) => $q->when($periode->jenis === 'STS', fn ($tp) => $tp->where('masuk_sts', true))])
+        return $query->with(['siswaKelas.siswa', 'siswaKelas.kelas', 'rombel.mapel', 'rombel.tp'])
             ->orderBy('siswa_rombel.id');
     }
 
@@ -65,9 +64,9 @@ class RekapNilaiService
             ->whereIn('kelas_id', $peserta->map(fn ($p) => $p->siswaKelas->kelas_id)->unique())
             ->get()->keyBy(fn ($p) => $p->rombel_id.':'.$p->kelas_id);
 
-        return $peserta->map(function ($p) use ($nilai, $paket) {
+        return $peserta->map(function ($p) use ($nilai, $paket, $periode) {
             $sk = $p->siswaKelas;
-            $scores = $p->rombel->tp->map(fn ($tp) => [
+            $scores = AlokasiTpService::untukRekap($p->rombel->tp, $periode->jenis)->map(fn ($tp) => [
                 'tp_id' => $tp->id, 'nomor_urut' => $tp->nomor_urut,
                 'skor' => $nilai->get($p->id.':'.$tp->id)?->skor,
             ])->values();

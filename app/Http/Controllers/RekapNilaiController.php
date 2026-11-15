@@ -6,6 +6,7 @@ use App\Exports\RekapNilaiExport;
 use App\Http\Requests\RekapNilaiRequest;
 use App\Models\PeriodeNilai;
 use App\Models\Rombel;
+use App\Services\AlokasiTpService;
 use App\Services\RekapNilaiService;
 use Illuminate\Http\JsonResponse;
 use Maatwebsite\Excel\Facades\Excel;
@@ -32,8 +33,8 @@ class RekapNilaiController extends Controller
             $service->pastikanAksesRombel($request->user(), $rombel, $periode);
             $filters['rombel_id'] = $rombel->id;
             $meta['rombel'] = $rombel->only(['id', 'nama']);
-            $meta['tp'] = $rombel->tp()->when($periode->jenis === 'STS', fn ($q) => $q->where('masuk_sts', true))
-                ->get(['id', 'nomor_urut', 'deskripsi', 'masuk_sts', 'is_sas']);
+            $meta['tp'] = AlokasiTpService::untukRekap($rombel->tp()->get(), $periode->jenis)
+                ->map(fn ($tp) => $tp->only(['id', 'nomor_urut', 'deskripsi', 'masuk_sts', 'is_sas']));
         }
         $page = $service->query($request->user(), $periode, $filters)->paginate($filters['per_page'] ?? 20);
 

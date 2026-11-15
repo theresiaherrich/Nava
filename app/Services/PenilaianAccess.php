@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\NilaiTp;
 use App\Models\PaketNilai;
 use App\Models\PeriodeNilai;
 use App\Models\Rombel;
 use App\Models\Tp;
 use App\Models\User;
 use App\Models\WaliKelas;
+use Illuminate\Support\Collection;
 
 /**
  * Satu tempat untuk aturan akses dan aturan nilai. Controller memanggil ini,
@@ -47,15 +49,19 @@ class PenilaianAccess
             && WaliKelas::where('kelas_id', $kelasId)->where('guru_id', $guruId)->exists();
     }
 
-    /** Aturan dasar: TP STS = masuk_sts; SAS = TP bertanda is_sas. ASUMSI, perlu disepakati sekolah. */
-    public static function tpDapatDiisi(PeriodeNilai $periode, Tp $tp): bool
+    /** Seluruh TP rombel harus diberikan; jangan memakai subset sel request. */
+    public static function tpDapatDiisi(PeriodeNilai $periode, Tp $tp, Collection $semuaTp): bool
     {
-        return $periode->jenis === 'STS' ? $tp->masuk_sts : $tp->is_sas;
+        return AlokasiTpService::untukInput($semuaTp, $periode->jenis)->contains('id', $tp->id);
     }
 
     /** TP tidak boleh diubah/dihapus ketika nilai sedang dikirim, disetujui, atau sudah dikunci. */
     public static function pastikanRombelBisaDiubah(Rombel $rombel): void
     {
+        abort_if(NilaiTp::whereHas('tp', fn ($q) => $q->where('rombel_id', $rombel->id))->whereNotNull('skor')->exists(),
+            422, 'Struktur TP tidak dapat diubah karena rombel sudah memiliki skor (termasuk 0).');
+        abort_if(PeriodeNilai::where('semester_id', $rombel->semester_id)->orderBy('id')->lockForUpdate()->get()->contains('dikunci', true),
+            422, 'Struktur TP tidak dapat diubah pada semester yang memiliki periode terkunci.');
         $terkunci = PaketNilai::where('rombel_id', $rombel->id)
             ->whereIn('status', ['dikirim', 'disetujui', 'dikunci'])
             ->exists();

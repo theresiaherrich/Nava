@@ -90,12 +90,22 @@ class TpController extends Controller
         abort_unless(PenilaianAccess::bisaKelolaRombel($user, $sumber) && PenilaianAccess::bisaKelolaRombel($user, $tujuan), 403, 'Anda harus mengampu kedua rombel.');
 
         $hasil = DB::transaction(function () use ($sumber, $tujuan) {
-            $tujuanLocked = Rombel::whereKey($tujuan->id)->lockForUpdate()->firstOrFail();
+            // Kunci kedua rombel dengan urutan ID tetap untuk menghindari deadlock salin silang.
+            $locked = Rombel::whereIn('id', [$sumber->id, $tujuan->id])->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+            $tujuanLocked = $locked->get($tujuan->id);
             PenilaianAccess::pastikanRombelBisaDiubah($tujuanLocked);
             abort_if(Tp::where('rombel_id', $tujuanLocked->id)->exists(), 422, 'Rombel tujuan sudah memiliki TP. Hapus TP tujuan terlebih dahulu.');
+            $tpSumber = $locked->get($sumber->id)->tp()->get();
+            abort_if($tpSumber->isEmpty() || $tpSumber->count() > PenilaianAccess::MAKS_TP
+                || $tpSumber->pluck('nomor_urut')->unique()->count() !== $tpSumber->count()
+                || $tpSumber->contains(fn ($tp) => $tp->nomor_urut < 1 || $tp->nomor_urut > PenilaianAccess::MAKS_TP),
+                422, 'Sumber salin harus memiliki 1–10 TP dengan nomor unik pada rentang 1–10.');
+            $penanda = $tpSumber->where('is_sas', true);
+            abort_if($penanda->count() > 1 || ($penanda->isNotEmpty() && $penanda->first()->id !== $tpSumber->last()->id),
+                422, 'Penanda is_sas sumber tidak valid: hanya boleh pada satu TP terakhir. Periksa sumber salin.');
 
             $salin = [];
-            foreach ($sumber->tp()->get() as $t) {
+            foreach ($tpSumber as $t) {
                 $salin[] = Tp::create([
                     'rombel_id' => $tujuanLocked->id,
                     'nomor_urut' => $t->nomor_urut,
@@ -114,13 +124,16 @@ class TpController extends Controller
 
     private function pastikanSatuSas(int $rombelId, ?int $kecualiId, array $data): void
     {
-        if (empty($data['is_sas'])) {
-            return;
+        $tp = Tp::where('rombel_id', $rombelId)->get();
+        $lama = $tp->firstWhere('id', $kecualiId);
+        $lain = $tp->reject(fn ($t) => $t->id === $kecualiId);
+        $penanda = $lain->where('is_sas', true)->pluck('nomor_urut');
+        if ($data['is_sas'] ?? $lama?->is_sas ?? false) {
+            $penanda->push((int) $data['nomor_urut']);
         }
-        $q = Tp::where('rombel_id', $rombelId)->where('is_sas', true);
-        if ($kecualiId !== null) {
-            $q->where('id', '!=', $kecualiId);
-        }
-        abort_if($q->exists(), 422, 'Hanya satu TP yang boleh ditandai SAS per rombel (TP terakhir).');
+        abort_if($penanda->count() > 1, 422, 'Hanya satu TP yang boleh ditandai is_sas (TP terakhir).');
+        $maks = max((int) $lain->max('nomor_urut'), (int) $data['nomor_urut']);
+        abort_if($penanda->isNotEmpty() && (int) $penanda->first() !== $maks, 422,
+            'is_sas hanya penanda TP terakhir. Perbaiki penanda lama terlebih dahulu; alokasi SAS dihitung dari urutan.');
     }
 }

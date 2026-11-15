@@ -269,16 +269,16 @@ class RekapNilaiTest extends TestCase
     public static function variasiTp(): array
     {
         return [
-            '4 TP' => [4, '85.000000'],
-            '6 TP' => [6, '76.666666'],
-            '8 TP' => [8, '72.500000'],
-            '9 TP' => [9, '71.111111'],
-            '10 TP' => [10, '70.000000'],
+            '4 TP' => [4, '85.000000', '85.000000'],
+            '6 TP' => [6, '76.666666', '80.000000'],
+            '8 TP' => [8, '72.500000', '85.000000'],
+            '9 TP' => [9, '71.111111', '85.000000'],
+            '10 TP' => [10, '70.000000', '80.000000'],
         ];
     }
 
     #[DataProvider('variasiTp')]
-    public function test_rumus_sts_dan_sas_memakai_jumlah_tp_aktual(int $jumlah, string $sas): void
+    public function test_rumus_sts_dan_sas_memakai_jumlah_tp_aktual(int $jumlah, string $sas, string $sts): void
     {
         $this->rombel->tp()->delete();
         for ($i = 1; $i <= $jumlah; $i++) {
@@ -288,7 +288,7 @@ class RekapNilaiTest extends TestCase
                 'skor' => [1 => 80, 2 => 90, 3 => 70, 4 => 100][$i] ?? 60]);
         }
         $this->actingAs($this->admin);
-        foreach (['STS' => ['85.000000', 2], 'SAS' => [$sas, $jumlah]] as $jenis => [$expected, $count]) {
+        foreach (['STS' => [$sts, intdiv($jumlah, 2)], 'SAS' => [$sas, $jumlah]] as $jenis => [$expected, $count]) {
             $this->periode->update(['jenis' => $jenis]);
             foreach (['', '/rombel/'.$this->rombel->id] as $suffix) {
                 $response = $this->getJson($this->url($suffix))->assertOk()
@@ -320,8 +320,11 @@ class RekapNilaiTest extends TestCase
         $this->sas->update(['masuk_sts' => true]);
         NilaiTp::create(['tp_id' => $this->sts->id, 'siswa_rombel_id' => $this->peserta->id, 'skor' => '80.01']);
         NilaiTp::create(['tp_id' => $this->sas->id, 'siswa_rombel_id' => $this->peserta->id, 'skor' => '90.02']);
+        $this->periode->update(['jenis' => 'SAS']);
         $this->actingAs($this->admin)->getJson($this->url())->assertOk()->assertJsonPath('data.0.nilai_akhir', '85.015000');
-        $this->rombel->tp()->update(['masuk_sts' => false]);
+        NilaiTp::where('tp_id', $this->sas->id)->delete();
+        $this->sas->delete();
+        $this->periode->update(['jenis' => 'STS']);
         $this->getJson($this->url())->assertOk()->assertJsonPath('data.0.nilai_akhir', null)
             ->assertJsonPath('data.0.alasan_nilai_akhir', 'tidak_ada_tp');
     }
@@ -399,6 +402,7 @@ class RekapNilaiTest extends TestCase
 
     public function test_export_menolak_nomor_tp_di_luar_rentang(): void
     {
+        $this->periode->update(['jenis' => 'SAS']);
         $this->actingAs($this->admin);
         foreach ([0, 11] as $nomor) {
             $this->sts->update(['nomor_urut' => $nomor]);
@@ -449,6 +453,7 @@ class RekapNilaiTest extends TestCase
 
     public function test_multi_role_guru_a_dan_wali_sebagian_b_hanya_gabungan_sah(): void
     {
+        $this->periode->update(['jenis' => 'SAS']);
         [$rombel, $satu, $dua] = $this->rombelLainDenganDuaKelas();
         $this->wali->roles()->attach(Role::where('name', 'guru')->firstOrFail()->id);
         $this->rombel->gurus()->attach($this->wali->guru->id);

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureAccountActive;
+use App\Http\Middleware\EnsureRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,7 +14,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'role' => EnsureRole::class,
+            'account.active' => EnsureAccountActive::class,
+        ]);
+        $middleware->validateCsrfTokens(
+            except: (
+                env('APP_ENV') === 'local'
+                && filter_var(env('SIAKAD_DEV_SKIP_CSRF', false), FILTER_VALIDATE_BOOLEAN)
+            ) ? ['api/*'] : []
+        );
+
+        // Tamu yang belum login mendapat 401 JSON, bukan redirect ke route "login" (tidak ada di API).
+        $middleware->redirectGuestsTo(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

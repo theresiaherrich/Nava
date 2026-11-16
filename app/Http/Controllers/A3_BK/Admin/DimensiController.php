@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\A3_BK\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\A3_BK\Concerns\RecordsA3Activity;
 use App\Models\DimensiRiasec;
 use Illuminate\Http\Request;
 
@@ -11,6 +12,8 @@ use Illuminate\Http\Request;
  */
 class DimensiController extends Controller
 {
+    use RecordsA3Activity;
+
     public function index()
     {
         $dimensi = DimensiRiasec::all();
@@ -29,6 +32,7 @@ class DimensiController extends Controller
     {
         $request->validate(['deskripsi' => 'required|string|min:10']);
         DimensiRiasec::findOrFail($id)->update(['deskripsi' => $request->deskripsi]);
+        $this->recordA3Activity('diperbarui', 'dimensi_riasec', $id);
 
         return redirect()->route('admin.dimensi')->with('success', 'Deskripsi dimensi berhasil diperbarui.');
     }

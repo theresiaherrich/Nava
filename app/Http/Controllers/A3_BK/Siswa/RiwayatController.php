@@ -17,6 +17,9 @@ class RiwayatController extends Controller
     {
         $ctx = $this->getKonteksSiswa();
         $riwayat = $this->rekomendasiService->riwayatTes($ctx['siswa']->id_siswa);
+        if ($ctx['riwayat']->kelas->tingkat === 'XI') {
+            $riwayat = $riwayat->where('tingkat', 'X')->values();
+        }
 
         return view('bk.siswa.riwayat-tes', array_merge($ctx, compact('riwayat')));
     }

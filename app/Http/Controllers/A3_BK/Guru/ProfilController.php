@@ -34,16 +34,20 @@ class ProfilController extends Controller
         $ctx = $this->getKonteksGuru();
 
         $request->validate([
-            'nama' => 'required|string|max:100',
-            'email' => 'nullable|email|max:100',
-            'no_telepon' => 'nullable|string|max:25',
+            'nama'           => 'required|string|max:100',
+            'email'          => 'nullable|email|max:100',
+            'no_telepon'     => 'nullable|string|max:25',
             'jadwal_layanan' => 'nullable|string|max:100',
         ]);
 
-        DB::transaction(function () use ($request, $ctx) {
-            $ctx['guru']->forceFill(['nama' => $request->nama])->save();
-            $ctx['guruBk']->update($request->only('email', 'no_telepon', 'jadwal_layanan'));
-        });
+        $ctx['guru']->update($request->only('nama', 'email', 'no_telepon'));
+
+        if ($request->filled('jadwal_layanan')) {
+            $penugasan = $ctx['guru']->penugasanBkAktif($ctx['semester']->id_semester)->first();
+            if ($penugasan) {
+                $penugasan->update(['jadwal_layanan' => $request->jadwal_layanan]);
+            }
+        }
 
         return redirect()->route('bk.profil')->with('success', 'Profil berhasil diperbarui.');
     }
@@ -64,12 +68,12 @@ class ProfilController extends Controller
         $ctx['user']->update(['password' => Hash::make($request->password_baru)]);
 
         DB::table('log_aktivitas')->insert([
-            'id_user' => $ctx['user']->id_user,
-            'aksi' => 'ubah_password',
+            'id_user'      => $ctx['user']->id_user,
+            'aksi'         => 'ubah_password',
             'nama_entitas' => 'user',
-            'entitas_id' => $ctx['user']->id_user,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'entitas_id'   => $ctx['user']->id_user,
+            'created_at'   => now(),
+            'updated_at'   => now(),
         ]);
 
         return redirect()->route('bk.profil')->with('success', 'Kata sandi berhasil diubah.');

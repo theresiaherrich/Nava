@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\A3_BK\Siswa;
 
 use App\Http\Controllers\Controller;
-use App\Models\GuruBk;
+use App\Models\Guru;
 use App\Models\PengajuanBk;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -16,19 +17,17 @@ class PengajuanController extends Controller
     public function index()
     {
         $ctx = $this->getKonteksSiswa();
-
-        $pengajuan = $ctx['riwayat']->pengajuanBk()
-            ->with('guruBk.guru')
-            ->latest()
-            ->get();
-
         $tingkat = $ctx['riwayat']->kelas->tingkat;
-        $guruBkList = GuruBk::with('guru')
-            ->where('aktif', true)
-            ->where(function ($q) use ($tingkat) {
-                $q->where('tingkat', $tingkat)->orWhereNull('tingkat');
-            })
+        $idSemester = $ctx['semester']->id_semester;
+
+        // Ambil pengajuan siswa di semester ini
+        $pengajuan = PengajuanBk::with('guru')
+            ->where('id_siswa', $ctx['siswa']->id_siswa)
+            ->where('id_semester', $idSemester)
+            ->latest('created_at')
             ->get();
+
+        $guruBkList = $this->guruBkUntukSiswa($idSemester, $tingkat);
 
         $topikList = PengajuanBk::TOPIK_LIST;
 
@@ -43,20 +42,55 @@ class PengajuanController extends Controller
     {
         $ctx = $this->getKonteksSiswa();
 
-        $request->validate([
-            'topik' => 'required|string|in:'.implode(',', PengajuanBk::TOPIK_LIST),
+        $validated = $request->validate([
+            'topik'     => 'required|string|in:' . implode(',', PengajuanBk::TOPIK_LIST),
             'deskripsi' => 'required|string|min:20|max:500',
         ]);
 
+        $guruBk = $this->guruBkUntukSiswa(
+            $ctx['semester']->id_semester,
+            $ctx['riwayat']->kelas->tingkat,
+        )->first();
+
+        if (! $guruBk) {
+            abort(503, 'Guru BK untuk jenjang Anda belum ditugaskan pada semester aktif.');
+        }
+
         PengajuanBk::create([
-            'id_riwayat_kelas' => $ctx['riwayat']->id_riwayat_kelas,
-            'topik' => $request->topik,
-            'deskripsi' => $request->deskripsi,
-            'status' => 'menunggu',
+            'id_siswa'    => $ctx['siswa']->id_siswa,
+            'id_semester' => $ctx['semester']->id_semester,
+            'topik'       => $validated['topik'],
+            'deskripsi'   => $validated['deskripsi'],
+            'status'      => 'menunggu',
+            'id_guru'     => $guruBk->id_guru,
         ]);
 
         return redirect()->route('siswa.pengajuan-bk')
             ->with('success', 'Pengajuan bimbingan konseling berhasil dikirim.');
+    }
+
+    public function riwayat()
+    {
+        $ctx = $this->getKonteksSiswa();
+        $pengajuan = PengajuanBk::with('guru')
+            ->where('id_siswa', $ctx['siswa']->id_siswa)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('bk.siswa.riwayat-bimbingan', array_merge($ctx, compact('pengajuan')));
+    }
+
+    private function guruBkUntukSiswa(int $idSemester, string $tingkat): Collection
+    {
+        return Guru::query()
+            ->whereHas('penugasanBk', function ($query) use ($idSemester, $tingkat): void {
+                $query->where('id_semester', $idSemester)
+                    ->where(function ($query) use ($tingkat): void {
+                        $query->where('tingkat', $tingkat)->orWhereNull('tingkat');
+                    });
+            })
+            ->orderBy('nama')
+            ->get();
     }
 
     private function getKonteksSiswa(): array
@@ -74,7 +108,7 @@ class PengajuanController extends Controller
             abort(503, 'Tidak ada semester aktif saat ini.');
         }
 
-        $riwayat = \App\Models\RiwayatKelas::with('kelas.tahunAjaran', 'semester', 'sesiTes')
+        $riwayat = \App\Models\RiwayatKelas::with('kelas.tahunAjaran', 'semester')
             ->where('id_siswa', $siswa->id_siswa)
             ->where('id_semester', $semester->id_semester)
             ->first();

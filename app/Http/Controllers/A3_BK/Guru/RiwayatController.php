@@ -19,8 +19,8 @@ class RiwayatController extends Controller
         $ctx = $this->getKonteksGuru();
         $idSemester = $ctx['semester']->id_semester;
 
-        $query = PengajuanBk::with('riwayatKelas.siswa', 'riwayatKelas.kelas', 'guruBk.guru')
-            ->whereHas('riwayatKelas', fn ($q) => $q->where('id_semester', $idSemester))
+        $query = PengajuanBk::with(['siswa', 'guru'])
+            ->where('id_semester', $idSemester)
             ->whereIn('status', ['selesai', 'ditolak']);
 
         if ($request->filled('status')) {

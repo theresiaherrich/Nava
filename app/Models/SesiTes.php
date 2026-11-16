@@ -5,9 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Hasil tes RIASEC — satu baris per siswa per semester.
+ * Sesi tes RIASEC — satu baris per pengerjaan tes.
  * Tabel: sesi_tes. PK: id_sesi_tes.
- * Skor: 0-100 per dimensi (jumlah jawaban / (n_soal_dimensi * 5) * 100).
  */
 class SesiTes extends Model
 {
@@ -19,37 +18,82 @@ class SesiTes extends Model
 
     protected $fillable = [
         'id_riwayat_kelas',
-        'skor_r', 'skor_i', 'skor_a', 'skor_s', 'skor_e', 'skor_c',
-        'kode_holland', 'waktu_selesai',
+        'tingkat',
+        'kode_holland',
+        'waktu_mulai',
+        'waktu_selesai',
+        'status',              // 'berlangsung' | 'selesai'
+        'diverifikasi_oleh',
+        'waktu_verifikasi',
     ];
 
     protected $casts = [
-        'waktu_selesai' => 'datetime',
-        'skor_r' => 'float',
-        'skor_i' => 'float',
-        'skor_a' => 'float',
-        'skor_s' => 'float',
-        'skor_e' => 'float',
-        'skor_c' => 'float',
+        'waktu_mulai'       => 'datetime',
+        'waktu_selesai'     => 'datetime',
+        'waktu_verifikasi'  => 'datetime',
     ];
+
+    // Accessor / Mutator untuk alias kode_dominan -> kode_holland
+    public function getKodeDominanAttribute()
+    {
+        return $this->attributes['kode_holland'] ?? null;
+    }
+
+    public function setKodeDominanAttribute($value)
+    {
+        $this->attributes['kode_holland'] = $value;
+    }
+
+    // ─── Relasi ─────────────────────────────────────────────────────────────
 
     public function riwayatKelas()
     {
         return $this->belongsTo(RiwayatKelas::class, 'id_riwayat_kelas', 'id_riwayat_kelas');
     }
 
-    /**
-     * Kembalikan array skor per kode dimensi.
-     */
+    public function hasilTes()
+    {
+        return $this->hasMany(HasilTesRiasec::class, 'id_sesi_tes', 'id_sesi_tes');
+    }
+
+    public function jawaban()
+    {
+        return $this->hasMany(JawabanRiasec::class, 'id_sesi_tes', 'id_sesi_tes');
+    }
+
+    public function rekomendasiSepuluh()
+    {
+        return $this->hasMany(RekomendasiSepuluh::class, 'id_sesi_tes', 'id_sesi_tes');
+    }
+
+    public function rekomendasiDuaBelas()
+    {
+        return $this->hasMany(RekomendasiDuaBelas::class, 'id_sesi_tes', 'id_sesi_tes');
+    }
+
+    public function verifikator()
+    {
+        return $this->belongsTo(User::class, 'diverifikasi_oleh', 'id_user');
+    }
+
+    // ─── Scopes ─────────────────────────────────────────────────────────────
+
+    public function scopeSelesai($query)
+    {
+        return $query->where('status', 'selesai');
+    }
+
+    public function scopeBerlangsung($query)
+    {
+        return $query->where('status', 'berlangsung');
+    }
+
+    // ─── Helper ─────────────────────────────────────────────────────────────
+
     public function skorPerDimensi(): array
     {
-        return [
-            'R' => $this->skor_r,
-            'I' => $this->skor_i,
-            'A' => $this->skor_a,
-            'S' => $this->skor_s,
-            'E' => $this->skor_e,
-            'C' => $this->skor_c,
-        ];
+        return $this->hasilTes
+            ->mapWithKeys(fn ($h) => [$h->dimensi->kode ?? '?' => $h->skor_normal])
+            ->toArray();
     }
 }

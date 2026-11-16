@@ -1,32 +1,42 @@
 @props([
-    'academicYear' => '2026/2027 - Ganjil',
+    'academicYear' => '2025/2026 · Ganjil',
     'searchPlaceholder' => null,
 ])
 
 @php
     $user = auth()->user();
-    $role = $user?->role ?? 'BK';
-    $isGuruBk = in_array(strtoupper($role), ['BK', 'GURU']);
+    $role = strtoupper($user?->role ?? '');
 
-    // Ambil nama dan inisial dari relasi model jika ada
-    if ($isGuruBk) {
+    if ($role === 'ADMIN') {
+        $namaUser = $user->name ?? $user->username ?? 'Administrator';
+        $subtext = 'Administrator SIAKAD';
+        $inisial = 'AD';
+        $avatarBg = '#0284c7';
+        $profileRoute = route('admin.profil');
+        $searchPlaceholder = $searchPlaceholder ?? 'Cari data, menu, atau pertanyaan...';
+    } elseif (in_array($role, ['GURU_BK', 'GURU', 'BK'])) {
         $guru = \App\Models\Guru::where('id_user', $user?->id_user)->first();
         $namaUser = $guru?->nama ?? $user?->name ?? 'Guru BK';
         $subtext = 'Guru Bimbingan dan Konseling';
-        $initials = collect(explode(' ', $namaUser))->take(2)->map(fn($w) => strtoupper(substr($w, 0, 1)))->implode('');
-        $inisial = $initials ?: 'BK';
-        $searchPlaceholder = $searchPlaceholder ?? 'Cari siswa atau NIS...';
-    } else {
-        $siswa = \App\Models\Siswa::where('id_user', $user?->id_user)->first();
+        $initials = collect(explode(' ', trim($namaUser)))->take(2)->map(fn($w) => mb_substr($w, 0, 1))->implode('');
+        $inisial = $initials ?: 'GB';
+        $avatarBg = '#f0408f';
+        $profileRoute = route('bk.profil');
+        $searchPlaceholder = $searchPlaceholder ?? 'Cari siswa, NIS, atau pengajuan...';
+    } else { // SISWA
+        $siswa = \App\Models\Siswa::with('riwayatKelasAktif.kelas')->where('id_user', $user?->id_user)->first();
         $namaUser = $siswa?->nama ?? $user?->name ?? 'Siswa';
-        $subtext = 'Siswa' . ($siswa ? ' - Kelas ' . ($siswa->riwayatKelasAktif?->kelas?->nama ?? '') : '');
-        $initials = collect(explode(' ', $namaUser))->take(2)->map(fn($w) => strtoupper(substr($w, 0, 1)))->implode('');
-        $inisial = $initials ?: 'SW';
+        $kelasNama = $siswa?->riwayatKelasAktif?->kelas?->nama ?? '';
+        $subtext = 'Siswa' . ($kelasNama ? ' · Kelas ' . $kelasNama : '');
+        $initials = collect(explode(' ', trim($namaUser)))->take(2)->map(fn($w) => mb_substr($w, 0, 1))->implode('');
+        $inisial = $initials ?: 'NA';
+        $avatarBg = '#e11d48';
+        $profileRoute = route('siswa.profil');
         $searchPlaceholder = $searchPlaceholder ?? 'Cari menu atau informasi...';
     }
 @endphp
 
-<header class="h-16 px-6 bg-white border-b border-gray-100 flex items-center justify-between sticky top-0 z-30">
+<header class="h-20 px-8 bg-white border-b-[0.80px] border-slate-200 backdrop-blur-[10px] flex items-center justify-between sticky top-0 z-30">
     <!-- Tombol hamburger mobile -->
     <button class="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 mr-2" onclick="document.getElementById('app-sidebar').classList.toggle('is-open')">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,72 +44,79 @@
         </svg>
     </button>
 
-    <!-- Search Input (hanya ikon search) -->
-    <div class="relative flex-1 max-w-md hidden sm:block">
-        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" stroke-width="2"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"></line>
+    <!-- Search Input dengan search icon & shortcut K (Sesuai Figma) -->
+    <div class="relative flex-1 max-w-[538px] hidden sm:block">
+        <div class="w-full h-12 px-3.5 bg-gray-50 rounded-xl outline outline-[0.80px] outline-offset-[-0.80px] outline-zinc-200 flex items-center gap-2.5 transition focus-within:outline-[#089BD5] focus-within:ring-2 focus-within:ring-[#089BD5]/20">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="flex-none">
+                <path d="M14.9987 9.16671C14.9987 12.3884 12.387 15 9.16536 15C5.9437 15 3.33203 12.3884 3.33203 9.16671C3.33203 5.94505 5.9437 3.33337 9.16536 3.33337C12.387 3.33337 14.9987 5.94505 14.9987 9.16671Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#8290A3"/>
+                <path d="M16.6654 16.6667L13.332 13.3334" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#8290A3"/>
             </svg>
-        </span>
-        <input type="text"
-               placeholder="{{ $searchPlaceholder }}"
-               class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+            <input type="text"
+                   placeholder="{{ $searchPlaceholder }}"
+                   class="flex-1 bg-transparent border-0 outline-none text-slate-700 text-xs font-normal font-['Plus_Jakarta_Sans'] placeholder-gray-400">
+            <span class="text-[10px] font-bold text-gray-400 font-['Plus_Jakarta_Sans'] flex-none">
+                ⌘ K
+            </span>
+        </div>
     </div>
 
     <!-- Right Controls: Year selector, Profile -->
-    <div class="flex items-center gap-4 ml-auto">
-        <!-- Dropdown Tahun Ajaran -->
-        <div class="relative hidden sm:block">
-            <select class="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-xs rounded-xl py-2 pl-3 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-                <option selected>{{ $academicYear }}</option>
-                <option>2025/2026 - Genap</option>
-                <option>2025/2026 - Ganjil</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-            </div>
+    <div class="flex items-center gap-3.5 ml-auto">
+        <!-- Badge Semester Aktif (Sesuai Figma) -->
+        <div class="hidden sm:flex items-center justify-between w-40 h-11 px-3 bg-white rounded-lg outline outline-[0.80px] outline-offset-[-0.80px] outline-zinc-200 shadow-2xs">
+            <span class="text-gray-500 text-[10px] font-normal font-['Plus_Jakarta_Sans'] truncate">{{ $academicYear }}</span>
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" class="flex-none ml-2">
+                <path d="M1 1L5 5L9 1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#5F6D7E"/>
+            </svg>
         </div>
 
-        <!-- Profil: klik untuk membuka menu -->
-        <div class="relative pl-4 border-l border-gray-100" id="profile-menu">
+        <!-- Profil Dropdown (Sesuai Figma) -->
+        <div class="relative" id="profile-menu">
             <button type="button" id="profile-menu-btn" aria-haspopup="true" aria-expanded="false"
-                    class="flex items-center gap-2.5 rounded-xl px-2 py-1 hover:bg-gray-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30">
-                <div class="w-8 h-8 rounded-full bg-[#f0408f] text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                    class="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-gray-50 transition focus:outline-none">
+                <div class="w-11 h-11 bg-gradient-to-r from-pink-600 to-rose-400 rounded-3xl shadow-[0px_7px_15px_0px_rgba(231,47,119,0.18)] flex items-center justify-center text-white text-xs font-extrabold font-['Plus_Jakarta_Sans'] flex-none"
+                     style="{{ $role === 'ADMIN' ? 'background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); box-shadow: 0px 7px 15px rgba(2, 132, 199, 0.2);' : '' }}">
                     {{ $inisial }}
                 </div>
                 <div class="hidden lg:block text-left">
-                    <p class="text-xs font-semibold text-gray-800 leading-tight">{{ $namaUser }}</p>
-                    <p class="text-[10px] text-gray-500">{{ $subtext }}</p>
+                    <p class="text-slate-800 text-[11px] font-bold font-['Plus_Jakarta_Sans'] leading-tight">{{ $namaUser }}</p>
+                    <p class="text-slate-500 text-[9px] font-normal font-['Plus_Jakarta_Sans'] leading-tight mt-0.5">{{ $subtext }}</p>
                 </div>
-                <svg id="profile-menu-chevron" class="w-3.5 h-3.5 text-gray-400 hidden sm:block transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg id="profile-menu-chevron" class="w-3.5 h-3.5 text-gray-400 hidden sm:block transition-transform ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
             </button>
 
             <div id="profile-menu-panel" hidden
-                 class="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 z-50">
-                @if ($isGuruBk)
-                    <a href="{{ route('bk.profil') }}"
-                       class="flex items-center gap-2.5 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 transition">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4" stroke-width="2"></circle>
-                        </svg>
-                        Profil Saya
-                    </a>
-                    <div class="my-1 border-t border-gray-100"></div>
-                @endif
+                 class="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-xl py-2 z-50">
+                <div class="px-4 py-2 border-b border-gray-100">
+                    <p class="text-xs font-bold text-slate-800">{{ $namaUser }}</p>
+                    <p class="text-[10px] text-gray-400">{{ $subtext }}</p>
+                </div>
+                <a href="{{ $profileRoute }}"
+                   class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    Profil Saya
+                </a>
+                <a href="{{ $profileRoute }}#keamanan"
+                   class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect>
+                        <path d="M7 11V7a5 5 0 0110 0v4" stroke-width="2"></path>
+                    </svg>
+                    Ubah Kata Sandi
+                </a>
+                <div class="my-1 border-t border-gray-100"></div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit"
-                            class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-red-600 hover:bg-red-50 transition text-left">
+                            class="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition text-left">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                            <polyline points="16 17 21 12 16 7" stroke-width="2"></polyline>
-                            <line x1="21" y1="12" x2="9" y2="12" stroke-width="2"></line>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
                         </svg>
                         Keluar
                     </button>
@@ -120,7 +137,7 @@
         function setOpen(open) {
             panel.hidden = !open;
             btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-            chevron.classList.toggle('rotate-180', open);
+            if (chevron) chevron.classList.toggle('rotate-180', open);
         }
 
         btn.addEventListener('click', function (e) { e.stopPropagation(); setOpen(panel.hidden); });

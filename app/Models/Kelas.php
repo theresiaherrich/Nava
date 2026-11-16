@@ -17,6 +17,11 @@ class Kelas extends Model
 
     protected $fillable = ['nama', 'tingkat', 'fase', 'id_tahun_ajaran'];
 
+    public function getNamaKelasAttribute()
+    {
+        return $this->nama;
+    }
+
     public function tahunAjaran()
     {
         return $this->belongsTo(TahunAjaran::class, 'id_tahun_ajaran', 'id_tahun_ajaran');

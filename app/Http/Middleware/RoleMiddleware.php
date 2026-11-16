@@ -12,10 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Penggunaan di routes:
  *   ->middleware('role:SISWA')
- *   ->middleware('role:GURU')   (Guru BK — GURU yang ada di guru_bk)
+ *   ->middleware('role:GURU')   (Guru BK — GURU yang memiliki penugasan di penugasan_bk atau role GURU_BK)
  *   ->middleware('role:ADMIN')
- *
- * Role GURU BK: user.role = 'GURU' DAN ada row di tabel guru_bk.
  */
 class RoleMiddleware
 {
@@ -32,9 +30,8 @@ class RoleMiddleware
         foreach ($roles as $role) {
             $role = strtoupper($role);
 
-            if ($role === 'GURU') {
-                // GURU BK: role 'GURU' + ada di tabel guru_bk
-                if ($userRole === 'GURU' && $this->isGuruBk($user->id_user)) {
+            if ($role === 'GURU' || $role === 'GURU_BK') {
+                if ($userRole === 'GURU_BK' || ($userRole === 'GURU' && $this->isGuruBk($user->id_user))) {
                     return $next($request);
                 }
             } elseif ($role === $userRole) {
@@ -48,8 +45,8 @@ class RoleMiddleware
 
     private function isGuruBk(int $idUser): bool
     {
-        return DB::table('guru_bk')
-            ->join('guru', 'guru.id_guru', '=', 'guru_bk.id_guru')
+        return DB::table('penugasan_bk')
+            ->join('guru', 'guru.id_guru', '=', 'penugasan_bk.id_guru')
             ->where('guru.id_user', $idUser)
             ->exists();
     }
@@ -59,7 +56,7 @@ class RoleMiddleware
         if ($role === 'SISWA') {
             return redirect()->route('siswa.dashboard');
         }
-        if ($role === 'GURU' && $this->isGuruBk($idUser)) {
+        if ($role === 'GURU_BK' || ($role === 'GURU' && $this->isGuruBk($idUser))) {
             return redirect()->route('bk.dashboard');
         }
         if ($role === 'ADMIN') {

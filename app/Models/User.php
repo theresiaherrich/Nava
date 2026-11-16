@@ -18,7 +18,7 @@ class User extends Authenticatable
 
     public $timestamps = false;
 
-    protected $fillable = ['username', 'password', 'must_change_password', 'role'];
+    protected $fillable = ['username', 'password', 'must_change_password', 'role', 'password_changed_at'];
 
     protected $hidden = ['password'];
 
@@ -37,8 +37,8 @@ class User extends Authenticatable
         return $this->hasOne(Guru::class, 'id_user', 'id_user');
     }
 
-    public function guruBk()
+    public function penugasanBk()
     {
-        return $this->hasOneThrough(GuruBk::class, Guru::class, 'id_user', 'id_guru', 'id_user', 'id_guru');
+        return $this->hasManyThrough(PenugasanBk::class, Guru::class, 'id_user', 'id_guru', 'id_user', 'id_guru');
     }
 }

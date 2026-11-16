@@ -80,10 +80,10 @@ class LoginController extends Controller
             return redirect()->route('siswa.dashboard');
         }
 
-        if ($role === 'GURU') {
-            // Cek apakah guru ini terdaftar sebagai Guru BK
-            $isGuruBk = DB::table('guru_bk')
-                ->join('guru', 'guru.id_guru', '=', 'guru_bk.id_guru')
+        if ($role === 'GURU' || $role === 'GURU_BK') {
+            // Cek apakah guru ini terdaftar sebagai Guru BK (di penugasan_bk) atau role GURU_BK
+            $isGuruBk = $role === 'GURU_BK' || DB::table('penugasan_bk')
+                ->join('guru', 'guru.id_guru', '=', 'penugasan_bk.id_guru')
                 ->where('guru.id_user', $user->id_user)
                 ->exists();
 

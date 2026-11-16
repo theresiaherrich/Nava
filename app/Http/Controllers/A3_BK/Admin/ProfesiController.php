@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\A3_BK\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\A3_BK\Concerns\RecordsA3Activity;
 use App\Models\Profesi;
 use App\Models\ProgramStudi;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
  */
 class ProfesiController extends Controller
 {
+    use RecordsA3Activity;
+
     public function index()
     {
         $profesi = Profesi::with('programStudi')->orderBy('nama')->get();
@@ -44,6 +47,8 @@ class ProfesiController extends Controller
             $profesi->programStudi()->sync($request->prodi);
         }
 
+        $this->recordA3Activity('ditambahkan', 'profesi', $profesi->id_profesi);
+
         return redirect()->route('admin.profesi')->with('success', 'Profesi berhasil ditambahkan.');
     }
 
@@ -69,12 +74,15 @@ class ProfesiController extends Controller
         $profesi->update(['nama' => $request->nama, 'deskripsi' => $request->deskripsi]);
         $profesi->programStudi()->sync($request->prodi ?? []);
 
+        $this->recordA3Activity('diperbarui', 'profesi', $profesi->id_profesi);
+
         return redirect()->route('admin.profesi')->with('success', 'Profesi berhasil diperbarui.');
     }
 
     public function destroy(int $id)
     {
         Profesi::findOrFail($id)->delete();
+        $this->recordA3Activity('dihapus', 'profesi', $id);
 
         return redirect()->route('admin.profesi')->with('success', 'Profesi berhasil dihapus.');
     }

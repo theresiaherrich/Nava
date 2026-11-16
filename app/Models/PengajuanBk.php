@@ -6,32 +6,43 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Pengajuan bimbingan konseling siswa.
- * Tabel: pengajuan_bk. PK: id_pengajuan_bk.
- * Kolom created_at / updated_at ada (tipe DATETIME, bukan TIMESTAMP).
+ * Tabel: pengajuan_bk. PK: id_pengajuan.
+ *
+ * Perubahan dari DB lama:
+ * - PK: id_pengajuan_bk → id_pengajuan
+ * - Relasi: id_riwayat_kelas → id_siswa + id_semester
+ * - balasan_bk → balasan
+ * - jadwal_bimbingan (DATETIME) → tanggal_bimbingan (DATE) + jam_bimbingan (TIME)
  */
 class PengajuanBk extends Model
 {
     protected $table = 'pengajuan_bk';
 
-    protected $primaryKey = 'id_pengajuan_bk';
+    protected $primaryKey = 'id_pengajuan';
 
-    public $timestamps = true;         // ada created_at & updated_at
+    public $timestamps = true;
 
-    // Kolom DATETIME di DB, bukan TIMESTAMP — perlu dateFormat manual
     protected $dateFormat = 'Y-m-d H:i:s';
 
     protected $fillable = [
-        'id_riwayat_kelas', 'topik', 'deskripsi', 'status',
-        'id_guru', 'balasan_bk', 'jadwal_bimbingan',
+        'id_siswa',
+        'id_semester',
+        'topik',
+        'deskripsi',
+        'status',               // menunggu | diproses | dijadwalkan | selesai | ditolak
+        'id_guru',
+        'balasan',              // dulu balasan_bk
+        'tanggal_bimbingan',   // dulu bagian dari jadwal_bimbingan
+        'jam_bimbingan',       // dulu bagian dari jadwal_bimbingan
     ];
 
     protected $casts = [
-        'jadwal_bimbingan' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'tanggal_bimbingan' => 'date',
+        'created_at'        => 'datetime',
+        'updated_at'        => 'datetime',
     ];
 
-    /** Daftar pilihan topik yang valid (sesuai aturan bisnis). */
+    /** Daftar pilihan topik yang valid. */
     public const TOPIK_LIST = [
         'Konsultasi pilihan jurusan',
         'Motivasi belajar menurun',
@@ -42,13 +53,20 @@ class PengajuanBk extends Model
         'Adaptasi belajar',
     ];
 
-    public function riwayatKelas()
+    // ─── Relasi ─────────────────────────────────────────────────────────────
+
+    public function siswa()
     {
-        return $this->belongsTo(RiwayatKelas::class, 'id_riwayat_kelas', 'id_riwayat_kelas');
+        return $this->belongsTo(Siswa::class, 'id_siswa', 'id_siswa');
     }
 
-    public function guruBk()
+    public function semester()
     {
-        return $this->belongsTo(GuruBk::class, 'id_guru', 'id_guru');
+        return $this->belongsTo(Semester::class, 'id_semester', 'id_semester');
+    }
+
+    public function guru()
+    {
+        return $this->belongsTo(Guru::class, 'id_guru', 'id_guru');
     }
 }

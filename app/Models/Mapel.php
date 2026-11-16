@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Master mata pelajaran. Tabel: mapel. PK: id_mapel.
+ * Kolom RIASEC sudah ada langsung di tabel ini (tidak perlu profil_mapel).
  */
 class Mapel extends Model
 {
@@ -15,15 +16,56 @@ class Mapel extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['id_dimensi', 'kode', 'nama'];
+    protected $fillable = [
+        'id_dimensi',
+        'kode',
+        'nama',
+        'rumpun',
+        'deskripsi',
+        'is_pilihan',       // 1 = mapel pilihan (dipakai untuk rekomendasi kelas X)
+        'kode_riasec',      // 3-huruf Holland, misal 'RIS'
+        'aktif',
+        'status_validasi',  // 'draft' | 'diajukan' | 'tervalidasi' | 'ditolak'
+        'catatan_validasi',
+        'divalidasi_oleh',
+        'waktu_validasi',
+    ];
 
-    public function dimensi()
+    protected $casts = [
+        'is_pilihan'     => 'boolean',
+        'aktif'          => 'boolean',
+        'waktu_validasi' => 'datetime',
+    ];
+
+    // ─── Relasi ─────────────────────────────────────────────────────────────
+
+    public function rekomendasiSepuluh()
     {
-        return $this->belongsTo(DimensiRiasec::class, 'id_dimensi', 'id_dimensi');
+        return $this->hasMany(RekomendasiSepuluh::class, 'id_mapel', 'id_mapel');
     }
 
-    public function profilMapel()
+    public function validator()
     {
-        return $this->hasOne(ProfilMapel::class, 'id_mapel', 'id_mapel');
+        return $this->belongsTo(User::class, 'divalidasi_oleh', 'id_user');
+    }
+
+    // ─── Scopes ─────────────────────────────────────────────────────────────
+
+    /** Hanya mapel pilihan (is_pilihan = 1). */
+    public function scopePilihan($query)
+    {
+        return $query->where('is_pilihan', 1);
+    }
+
+    /** Hanya mapel aktif. */
+    public function scopeAktif($query)
+    {
+        return $query->where('aktif', 1);
+    }
+
+    /** Hanya mapel yang sudah tervalidasi. */
+    public function scopeTervalidasi($query)
+    {
+        return $query->where('status_validasi', 'tervalidasi');
     }
 }

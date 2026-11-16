@@ -2,67 +2,164 @@
 
 namespace App\Services;
 
+use App\Models\RekomendasiDuaBelas;
+use App\Models\RekomendasiSepuluh;
+use App\Models\SesiTes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * RekomendasiService — Mengambil data rekomendasi dari view database.
- * Semua komputasi Cosine Similarity diserahkan ke View MySQL agar ringan.
+ * RekomendasiService — Hitung dan simpan rekomendasi mapel/prodi.
+ *
+ * Sesuai ATURAN_A3.md:
+ * - Tidak ada view MySQL — semua dihitung di PHP dari tabel hasil_tes_riasec.
+ * - Rumus skor kecocokan: (3*skor(h1) + 2*skor(h2) + 1*skor(h3)) / 6 * 100
+ *   di mana h1, h2, h3 = 3 kode dari kode_dominan (kode_riasec mapel/prodi).
+ * - Mapel kelas X: hanya is_pilihan=1, aktif=1, status_validasi='tervalidasi'.
+ * - Pivot profesi: prodi_profesi (bukan profesi_prodi).
  */
 class RekomendasiService
 {
     /**
-     * Rekomendasi mapel (5 teratas) untuk sesi tes tertentu (Kelas X dan XI).
+     * Hitung dan simpan 5 rekomendasi mapel untuk sesi tes (Kelas X).
+     * Simpan ke tabel rekomendasi_sepuluh.
+     *
+     * @param  SesiTes  $sesi  Harus sudah di-load dengan hasilTes.dimensi
+     */
+    public function hitungDanSimpanMapel(SesiTes $sesi): Collection
+    {
+        // Ambil skor normal per kode dimensi
+        $skorPerKode = $sesi->load('hasilTes.dimensi')
+            ->hasilTes
+            ->mapWithKeys(fn ($h) => [$h->dimensi->kode ?? '?' => $h->skor_normal]);
+
+        $kodeArr = str_split(strtoupper($sesi->kode_dominan ?? ''), 1); // ['R','I','A']
+
+        // Ambil semua mapel pilihan aktif tervalidasi
+        $mapelList = DB::table('mapel')
+            ->where('is_pilihan', 1)
+            ->where('aktif', 1)
+            ->where('status_validasi', 'tervalidasi')
+            ->whereNotNull('kode_riasec')
+            ->get();
+
+        // Hitung skor kecocokan per mapel
+        $scored = $mapelList->map(function ($mapel) use ($skorPerKode, $kodeArr) {
+            $kodeMapel = str_split(strtoupper($mapel->kode_riasec ?? ''), 1);
+            $skor = $this->hitungSkorKecocokan($kodeArr, $kodeMapel, $skorPerKode);
+            return ['mapel' => $mapel, 'skor' => $skor];
+        })->sortByDesc('skor')->take(5)->values();
+
+        // Hapus rekomendasi lama untuk sesi ini, lalu simpan yang baru
+        RekomendasiSepuluh::where('id_sesi_tes', $sesi->id_sesi_tes)->delete();
+
+        $insert = $scored->map(fn ($item, $idx) => [
+            'id_sesi_tes' => $sesi->id_sesi_tes,
+            'id_mapel'    => $item['mapel']->id_mapel,
+            'peringkat'   => $idx + 1,
+            'skor'        => round($item['skor'], 2),
+            'alasan'      => 'Kode RIASEC: ' . ($item['mapel']->kode_riasec ?? '-'),
+        ])->toArray();
+
+        if (!empty($insert)) {
+            RekomendasiSepuluh::insert($insert);
+        }
+
+        return $this->rekomendasiMapel($sesi->id_sesi_tes);
+    }
+
+    /**
+     * Hitung dan simpan 5 rekomendasi prodi untuk sesi tes (Kelas XII).
+     * Simpan ke tabel rekomendasi_dua_belas.
+     */
+    public function hitungDanSimpanProdi(SesiTes $sesi): Collection
+    {
+        $skorPerKode = $sesi->load('hasilTes.dimensi')
+            ->hasilTes
+            ->mapWithKeys(fn ($h) => [$h->dimensi->kode ?? '?' => $h->skor_normal]);
+
+        $kodeArr = str_split(strtoupper($sesi->kode_dominan ?? ''), 1);
+
+        $prodiList = DB::table('program_studi')
+            ->where('aktif', 1)
+            ->where('status_validasi', 'tervalidasi')
+            ->whereNotNull('kode_riasec')
+            ->get();
+
+        $scored = $prodiList->map(function ($prodi) use ($skorPerKode, $kodeArr) {
+            $kodeProdi = str_split(strtoupper($prodi->kode_riasec ?? ''), 1);
+            $skor = $this->hitungSkorKecocokan($kodeArr, $kodeProdi, $skorPerKode);
+            return ['prodi' => $prodi, 'skor' => $skor];
+        })->sortByDesc('skor')->take(5)->values();
+
+        RekomendasiDuaBelas::where('id_sesi_tes', $sesi->id_sesi_tes)->delete();
+
+        $insert = $scored->map(fn ($item, $idx) => [
+            'id_sesi_tes' => $sesi->id_sesi_tes,
+            'id_prodi'    => $item['prodi']->id_prodi,
+            'peringkat'   => $idx + 1,
+            'skor'        => round($item['skor'], 2),
+            'alasan'      => 'Kode RIASEC: ' . ($item['prodi']->kode_riasec ?? '-'),
+        ])->toArray();
+
+        if (!empty($insert)) {
+            RekomendasiDuaBelas::insert($insert);
+        }
+
+        return $this->rekomendasiProdi($sesi->id_sesi_tes);
+    }
+
+    /**
+     * Ambil rekomendasi mapel (sudah tersimpan) untuk sesi tes tertentu.
      */
     public function rekomendasiMapel(int $idSesiTes): Collection
     {
-        return DB::table('v_rekomendasi_mapel as rm')
-            ->join('mapel as m', 'm.id_mapel', '=', 'rm.id_mapel')
-            ->join('profil_mapel as pm', 'pm.id_mapel', '=', 'rm.id_mapel')
-            ->where('rm.id_sesi_tes', $idSesiTes)
-            ->orderBy('rm.peringkat')
-            ->select(
-                'rm.peringkat',
-                'rm.skor',
-                'm.id_mapel',
-                'm.nama',
-                'm.kode',
-                'pm.rumpun',
-                'pm.kode_holland',
-                'pm.deskripsi'
-            )
-            ->limit(5) // Pastikan dilimit agar konsisten mengambil 5 teratas
-            ->get();
+        return RekomendasiSepuluh::with('mapel')
+            ->where('id_sesi_tes', $idSesiTes)
+            ->orderBy('peringkat')
+            ->get()
+            ->map(fn ($r) => (object) [
+                'peringkat'   => $r->peringkat,
+                'skor'        => $r->skor,
+                'id_mapel'    => $r->id_mapel,
+                'nama'        => $r->mapel->nama ?? '-',
+                'kode'        => $r->mapel->kode ?? '-',
+                'rumpun'      => $r->mapel->rumpun ?? '-',
+                'kode_riasec' => $r->mapel->kode_riasec ?? '-',
+                'deskripsi'   => $r->mapel->deskripsi ?? '',
+                'alasan'      => $r->alasan,
+            ]);
     }
 
     /**
-     * Rekomendasi program studi (5 teratas) untuk sesi tes tertentu (Kelas XII).
+     * Ambil rekomendasi prodi (sudah tersimpan) untuk sesi tes tertentu.
      */
     public function rekomendasiProdi(int $idSesiTes): Collection
     {
-        return DB::table('v_rekomendasi_prodi as rp')
-            ->join('program_studi as ps', 'ps.id_prodi', '=', 'rp.id_prodi')
-            ->where('rp.id_sesi_tes', $idSesiTes)
-            ->orderBy('rp.peringkat')
-            ->select(
-                'rp.peringkat',
-                'rp.skor',
-                'ps.id_prodi',
-                'ps.nama',
-                'ps.kategori',
-                'ps.deskripsi',
-                'ps.kode_holland'
-            )
-            ->limit(5)
-            ->get();
+        return RekomendasiDuaBelas::with(['prodi.profesi'])
+            ->where('id_sesi_tes', $idSesiTes)
+            ->orderBy('peringkat')
+            ->get()
+            ->map(fn ($r) => (object) [
+                'peringkat'   => $r->peringkat,
+                'skor'        => $r->skor,
+                'id_prodi'    => $r->id_prodi,
+                'nama'        => $r->prodi->nama ?? '-',
+                'rumpun'      => $r->prodi->rumpun ?? '-',
+                'tentang'     => $r->prodi->tentang ?? '',
+                'deskripsi'   => $r->prodi->deskripsi ?? '',
+                'kode_riasec' => $r->prodi->kode_riasec ?? '-',
+                'profesi'     => $r->prodi->profesi ?? collect(),
+                'alasan'      => $r->alasan,
+            ]);
     }
 
     /**
-     * Profesi terkait suatu program studi.
+     * Profesi terkait suatu program studi (via pivot prodi_profesi).
      */
     public function profesiProdi(int $idProdi): Collection
     {
-        return DB::table('profesi_prodi as pp')
+        return DB::table('prodi_profesi as pp')
             ->join('profesi as pf', 'pf.id_profesi', '=', 'pp.id_profesi')
             ->where('pp.id_prodi', $idProdi)
             ->select('pf.id_profesi', 'pf.nama', 'pf.deskripsi')
@@ -70,55 +167,58 @@ class RekomendasiService
     }
 
     /**
-     * Kesesuaian mapel pilihan dengan profil siswa (Kelas XI).
-     */
-    public function kecocokanMapel(int $idSesiTes): Collection
-    {
-        return DB::table('v_kecocokan_mapel as km')
-            ->join('mapel as m', 'm.id_mapel', '=', 'km.id_mapel')
-            ->join('profil_mapel as pm', 'pm.id_mapel', '=', 'km.id_mapel')
-            ->where('km.id_sesi_tes', $idSesiTes)
-            ->orderByDesc('km.skor_kecocokan')
-            ->select(
-                'km.skor_kecocokan', 
-                'm.id_mapel', 
-                'm.nama', 
-                'm.kode', 
-                'pm.rumpun', 
-                'pm.kode_holland'
-            )
-            ->limit(5)
-            ->get();
-    }
-
-    /**
-     * Program studi relevan untuk suatu mapel (Mendukung Studi Lanjut).
-     */
-    public function prodiRelevanMapel(int $idMapel): Collection
-    {
-        return DB::table('v_prodi_relevan_mapel as prm')
-            ->join('program_studi as ps', 'ps.id_prodi', '=', 'prm.id_prodi')
-            ->where('prm.id_mapel', $idMapel)
-            ->orderByDesc('prm.skor_relevansi')
-            ->select(
-                'prm.skor_relevansi', 
-                'ps.id_prodi', 
-                'ps.nama', 
-                'ps.kategori', 
-                'ps.kode_holland'
-            )
-            ->limit(3)
-            ->get();
-    }
-
-    /**
-     * Riwayat semua tes siswa dari v_riwayat_tes.
+     * Riwayat semua sesi tes selesai untuk seorang siswa.
      */
     public function riwayatTes(int $idSiswa): Collection
     {
-        return DB::table('v_riwayat_tes')
-            ->where('id_siswa', $idSiswa)
-            ->orderByDesc('waktu_selesai')
+        return DB::table('sesi_tes as st')
+            ->join('riwayat_kelas as rk', 'rk.id_riwayat_kelas', '=', 'st.id_riwayat_kelas')
+            ->join('kelas as k', 'k.id_kelas', '=', 'rk.id_kelas')
+            ->join('semester as s', 's.id_semester', '=', 'rk.id_semester')
+            ->where('rk.id_siswa', $idSiswa)
+            ->where('st.status', 'selesai')
+            ->select(
+                'st.id_sesi_tes',
+                'st.kode_holland as kode_dominan',
+                'st.kode_holland',
+                'st.waktu_mulai',
+                'st.tingkat',
+                'k.nama as kelas',
+                's.nama as semester',
+            )
+            ->orderByDesc('st.waktu_mulai')
             ->get();
+    }
+
+    // ─── Private Helper ───────────────────────────────────────────────────────
+
+    /**
+     * Hitung skor kecocokan antara kode dominan siswa dan kode mapel/prodi.
+     *
+     * Rumus: (3*skor(h1) + 2*skor(h2) + 1*skor(h3)) / 6
+     * di mana h1,h2,h3 adalah kode dari kode_riasec mapel/prodi yang cocok
+     * dengan kode dominan siswa.
+     *
+     * @param  array  $kodeSiswa   ['R','I','A'] — 3 kode dominan siswa
+     * @param  array  $kodeTarget  kode mapel/prodi (bisa 1-6 huruf)
+     * @param  Collection  $skorPerKode  skor_normal per kode
+     */
+    private function hitungSkorKecocokan(
+        array $kodeSiswa,
+        array $kodeTarget,
+        $skorPerKode
+    ): float {
+        $bobot = [3, 2, 1];
+        $total = 0.0;
+        $maxBobot = 6.0; // 3+2+1
+
+        foreach ($kodeTarget as $i => $kode) {
+            if ($i >= 3) break; // maksimal 3 kode
+            $b = $bobot[$i] ?? 1;
+            $skor = $skorPerKode[$kode] ?? 0;
+            $total += $b * $skor;
+        }
+
+        return $maxBobot > 0 ? round($total / $maxBobot, 4) : 0.0;
     }
 }

@@ -16,7 +16,7 @@ class SoalRiasec extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['id_dimensi', 'teks', 'aktif'];
+    protected $fillable = ['id_dimensi', 'teks', 'urutan', 'aktif'];
 
     protected $casts = [
         'aktif' => 'boolean',

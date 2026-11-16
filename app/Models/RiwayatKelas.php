@@ -17,6 +17,8 @@ class RiwayatKelas extends Model
 
     protected $fillable = ['id_siswa', 'id_kelas', 'id_semester'];
 
+    // ─── Relasi ─────────────────────────────────────────────────────────────
+
     public function siswa()
     {
         return $this->belongsTo(Siswa::class, 'id_siswa', 'id_siswa');
@@ -32,13 +34,23 @@ class RiwayatKelas extends Model
         return $this->belongsTo(Semester::class, 'id_semester', 'id_semester');
     }
 
+    /**
+     * Semua sesi tes pada riwayat kelas ini.
+     * Sesuai ATURAN_A3: siswa boleh tes berkali-kali → hasMany.
+     * Gunakan scope 'selesai' untuk mendapatkan yang sudah selesai.
+     */
     public function sesiTes()
     {
-        return $this->hasOne(SesiTes::class, 'id_riwayat_kelas', 'id_riwayat_kelas');
+        return $this->hasMany(SesiTes::class, 'id_riwayat_kelas', 'id_riwayat_kelas');
     }
 
-    public function pengajuanBk()
+    /**
+     * Sesi tes terakhir yang selesai.
+     */
+    public function sesiTesTerakhir()
     {
-        return $this->hasMany(PengajuanBk::class, 'id_riwayat_kelas', 'id_riwayat_kelas');
+        return $this->hasOne(SesiTes::class, 'id_riwayat_kelas', 'id_riwayat_kelas')
+            ->where('status', 'selesai')
+            ->latestOfMany('waktu_mulai');
     }
 }

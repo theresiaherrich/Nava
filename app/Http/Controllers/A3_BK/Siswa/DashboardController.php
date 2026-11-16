@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\A3_BK\Siswa;
 
 use App\Http\Controllers\Controller;
+use App\Models\PengajuanBk;
 use App\Models\RiwayatKelas;
+use App\Models\DimensiRiasec;
 use App\Models\Semester;
+use App\Models\SesiTes;
 use App\Services\RekomendasiService;
 use App\Services\TesRiasecService;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * DashboardController â€” halaman utama area siswa.
+ * DashboardController — halaman utama area siswa.
  */
 class DashboardController extends Controller
 {
@@ -24,47 +27,79 @@ class DashboardController extends Controller
         $ctx = $this->getKonteksSiswa();
         $tingkat = $ctx['riwayat']->kelas->tingkat; // 'X', 'XI', atau 'XII'
 
-        $sesiTes = $ctx['riwayat']->sesiTes;
-        $periodeAktif = $this->tesService->periodeAktifAda($ctx['riwayat']);
+        $sesiTesQuery = SesiTes::with('hasilTes.dimensi')
+            ->where('status', 'selesai');
 
-        // Khusus Kelas XI: jika belum ada sesi tes di semester ini, cari sesi tes sewaktu Kelas X
-        if ($tingkat === 'XI' && ! $sesiTes) {
+        if ($tingkat === 'XI') {
             $riwayatKelasX = RiwayatKelas::where('id_siswa', $ctx['siswa']->id_siswa)
-                ->whereHas('kelas', function ($q) {
-                    $q->where('tingkat', 'X');
-                })
-                ->whereHas('sesiTes')
-                ->latest()
-                ->first();
+                ->whereHas('kelas', fn ($q) => $q->where('tingkat', 'X'))
+                ->pluck('id_riwayat_kelas');
 
-            if ($riwayatKelasX) {
-                $sesiTes = $riwayatKelasX->sesiTes;
-            }
+            $sesiTesQuery->whereIn('id_riwayat_kelas', $riwayatKelasX);
+        } else {
+            $sesiTesQuery->where('id_riwayat_kelas', $ctx['riwayat']->id_riwayat_kelas);
         }
+        $sesiTes = $sesiTesQuery->orderByDesc('waktu_selesai')->first();
+
+        $skorPerDimensi = $sesiTes?->hasilTes->keyBy(fn ($hasil) => $hasil->dimensi?->kode);
+        $profilRiasec = DimensiRiasec::query()
+            ->orderBy('id_dimensi')
+            ->get(['kode', 'nama'])
+            ->map(fn (DimensiRiasec $dimensi): array => [
+                'kode' => $dimensi->kode,
+                'nama' => $dimensi->nama,
+                'nilai' => (float) ($skorPerDimensi?->get($dimensi->kode)?->skor_normal ?? 0),
+            ]);
 
         $rekomendasiMapel = null;
         $rekomendasiProdi = null;
 
         if ($sesiTes) {
             if (in_array($tingkat, ['X', 'XI'])) {
-                $rekomendasiMapel = $this->rekomendasiService->rekomendasiMapel($sesiTes->id_sesi_tes);
+                $rekomendasiMapel = $this->rekomendasiService->rekomendasiMapel($sesiTes->id_sesi_tes)->take(5);
             }
             if ($tingkat === 'XII') {
-                $rekomendasiProdi = $this->rekomendasiService->rekomendasiProdi($sesiTes->id_sesi_tes);
+                $rekomendasiProdi = $this->rekomendasiService->rekomendasiProdi($sesiTes->id_sesi_tes)->take(5);
             }
         }
 
-        $pengajuanTerakhir = $ctx['riwayat']->pengajuanBk()
-            ->latest()
+        $pengajuanTerakhir = PengajuanBk::where('id_siswa', $ctx['siswa']->id_siswa)
+            ->where('id_semester', $ctx['semester']->id_semester)
+            ->latest('created_at')
             ->first();
+        $aktivitas = collect();
+        if ($sesiTes?->waktu_selesai) {
+            $aktivitas->push([
+                'judul' => 'Tes RIASEC selesai',
+                'detail' => 'Profil minat dan rekomendasi diperbarui',
+                'waktu' => $sesiTes->waktu_selesai,
+            ]);
+        }
+        if ($pengajuanTerakhir) {
+            $aktivitas->push([
+                'judul' => 'Pengajuan BK '.str_replace('_', ' ', $pengajuanTerakhir->status),
+                'detail' => $pengajuanTerakhir->topik,
+                'waktu' => $pengajuanTerakhir->updated_at ?? $pengajuanTerakhir->created_at,
+            ]);
+        }
+        $aktivitas = $aktivitas->sortByDesc('waktu')->values();
+        $greeting = match (now()->hour) {
+            0, 1, 2, 3, 4 => 'malam',
+            5, 6, 7, 8, 9, 10 => 'pagi',
+            11, 12, 13, 14 => 'siang',
+            15, 16, 17 => 'sore',
+            default => 'malam',
+        };
 
         return view('bk.siswa.dashboard', array_merge($ctx, compact(
             'tingkat',
             'sesiTes',
-            'periodeAktif',
+            'profilRiasec',
             'rekomendasiMapel',
             'rekomendasiProdi',
-            'pengajuanTerakhir'
+            'pengajuanTerakhir',
+            'aktivitas',
+            'greeting',
         )));
     }
 
@@ -83,7 +118,7 @@ class DashboardController extends Controller
             abort(503, 'Tidak ada semester aktif saat ini.');
         }
 
-        $riwayat = RiwayatKelas::with('kelas.tahunAjaran', 'semester', 'sesiTes')
+        $riwayat = RiwayatKelas::with('kelas.tahunAjaran', 'semester')
             ->where('id_siswa', $siswa->id_siswa)
             ->where('id_semester', $semester->id_semester)
             ->first();

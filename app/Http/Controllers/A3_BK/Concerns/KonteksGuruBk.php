@@ -12,13 +12,12 @@ use Illuminate\Support\Facades\Auth;
 trait KonteksGuruBk
 {
     /**
-     * @return array{user: \App\Models\User, guru: \App\Models\Guru, guruBk: \App\Models\GuruBk, semester: \App\Models\Semester}
+     * @return array{user: \App\Models\User, guru: \App\Models\Guru, semester: \App\Models\Semester, penugasan: \Illuminate\Database\Eloquent\Collection}
      */
     protected function getKonteksGuru(): array
     {
         $user = Auth::user();
-        $guru = Guru::where('id_user', $user->id_user)->with('guruBk')->firstOrFail();
-        $guruBk = $guru->guruBk;
+        $guru = Guru::where('id_user', $user->id_user)->firstOrFail();
 
         $semester = Semester::where('aktif', true)
             ->with('tahunAjaran')
@@ -29,6 +28,8 @@ trait KonteksGuruBk
             abort(503, 'Tidak ada semester aktif saat ini.');
         }
 
-        return compact('user', 'guru', 'guruBk', 'semester');
+        $penugasan = $guru->penugasanBkAktif($semester->id_semester);
+
+        return compact('user', 'guru', 'semester', 'penugasan');
     }
 }

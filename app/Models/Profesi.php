@@ -15,10 +15,23 @@ class Profesi extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['nama', 'deskripsi'];
+    protected $fillable = ['nama', 'deskripsi', 'aktif'];
 
+    protected $casts = [
+        'aktif' => 'boolean',
+    ];
+
+    /**
+     * Program studi yang memiliki profesi ini.
+     * Pivot: prodi_profesi (sesuai DB siakad_sma1).
+     */
     public function programStudi()
     {
-        return $this->belongsToMany(ProgramStudi::class, 'profesi_prodi', 'id_profesi', 'id_prodi');
+        return $this->belongsToMany(ProgramStudi::class, 'prodi_profesi', 'id_profesi', 'id_prodi');
+    }
+
+    public function scopeAktif($query)
+    {
+        return $query->where('aktif', 1);
     }
 }

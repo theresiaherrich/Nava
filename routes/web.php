@@ -3,11 +3,12 @@
 use App\Http\Controllers\A3_BK\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\A3_BK\Admin\DimensiController;
 use App\Http\Controllers\A3_BK\Admin\MapelPilihanController;
-use App\Http\Controllers\A3_BK\Admin\PeriodeTesController;
+// use App\Http\Controllers\A3_BK\Admin\PeriodeTesController;
 use App\Http\Controllers\A3_BK\Admin\ProfesiController;
 use App\Http\Controllers\A3_BK\Admin\ProgramStudiController;
 use App\Http\Controllers\A3_BK\Admin\SoalController;
 use App\Http\Controllers\A3_BK\Admin\ValidasiController;
+use App\Http\Controllers\A3_BK\ProfilController as A3ProfilController;
 use App\Http\Controllers\A3_BK\GuruBkController;
 use App\Http\Controllers\A3_BK\Siswa\DashboardController as SiswaDashboardController;
 use App\Http\Controllers\A3_BK\Siswa\HasilController;
@@ -49,10 +50,16 @@ Route::middleware(['auth', 'role:SISWA'])->prefix('siswa')->name('siswa.')->grou
     // Pengajuan BK
     Route::get('/pengajuan-bk', [PengajuanController::class, 'index'])->name('pengajuan-bk');
     Route::post('/pengajuan-bk', [PengajuanController::class, 'store'])->name('pengajuan-bk.store');
+    Route::get('/riwayat-bimbingan', [PengajuanController::class, 'riwayat'])->name('riwayat-bimbingan');
+
+    // Profil dan pengaturan akun milik siswa yang sedang login.
+    Route::get('/profil', [A3ProfilController::class, 'show'])->name('profil');
+    Route::put('/profil', [A3ProfilController::class, 'update'])->name('profil.update');
+    Route::put('/profil/password', [A3ProfilController::class, 'updatePassword'])->name('profil.password');
 });
 
 // ==========================================
-// 3. AREA GURU BK (role: GURU + ada di guru_bk)
+// 3. AREA GURU BK
 // ==========================================
 Route::middleware(['auth', 'role:GURU'])->prefix('bk')->name('bk.')->group(function () {
     // Dashboard
@@ -70,10 +77,15 @@ Route::middleware(['auth', 'role:GURU'])->prefix('bk')->name('bk.')->group(funct
     // Riwayat Bimbingan
     Route::get('/riwayat', [GuruBkController::class, 'riwayatBimbingan'])->name('riwayat');
 
-    // Profil Guru BK
-    Route::get('/profil', [GuruBkController::class, 'profil'])->name('profil');
-    Route::put('/profil', [GuruBkController::class, 'updateProfil'])->name('profil.update');
-    Route::put('/profil/password', [GuruBkController::class, 'ubahPassword'])->name('profil.password');
+    // Validasi profil mapel dan program studi oleh Guru BK.
+    Route::get('/validasi', [ValidasiController::class, 'index'])->name('validasi');
+    Route::put('/validasi/mapel/{id}', [ValidasiController::class, 'validasiMapel'])->name('validasi.mapel');
+    Route::put('/validasi/prodi/{id}', [ValidasiController::class, 'validasiProdi'])->name('validasi.prodi');
+
+    // Profil dan pengaturan akun milik Guru BK yang sedang login.
+    Route::get('/profil', [A3ProfilController::class, 'show'])->name('profil');
+    Route::put('/profil', [A3ProfilController::class, 'update'])->name('profil.update');
+    Route::put('/profil/password', [A3ProfilController::class, 'updatePassword'])->name('profil.password');
 });
 
 // ==========================================
@@ -97,13 +109,8 @@ Route::middleware(['auth', 'role:ADMIN'])->prefix('admin')->name('admin.')->grou
     Route::delete('/soal/{id}', [SoalController::class, 'destroy'])->name('soal.destroy');
     Route::patch('/soal/{id}/toggle', [SoalController::class, 'toggle'])->name('soal.toggle');
 
-    // Periode Tes
-    Route::get('/periode', [PeriodeTesController::class, 'index'])->name('periode');
-    Route::get('/periode/create', [PeriodeTesController::class, 'create'])->name('periode.create');
-    Route::post('/periode', [PeriodeTesController::class, 'store'])->name('periode.store');
-    Route::get('/periode/{id}/edit', [PeriodeTesController::class, 'edit'])->name('periode.edit');
-    Route::put('/periode/{id}', [PeriodeTesController::class, 'update'])->name('periode.update');
-    Route::delete('/periode/{id}', [PeriodeTesController::class, 'destroy'])->name('periode.destroy');
+    // Periode Tes (Ditiadakan sesuai ATURAN_A3 - tidak ada periode tes serentak)
+    // Route::get('/periode', ...);
 
     // Mapel Pilihan
     Route::get('/mapel', [MapelPilihanController::class, 'index'])->name('mapel');
@@ -111,7 +118,7 @@ Route::middleware(['auth', 'role:ADMIN'])->prefix('admin')->name('admin.')->grou
     Route::post('/mapel', [MapelPilihanController::class, 'store'])->name('mapel.store');
     Route::get('/mapel/{id}/edit', [MapelPilihanController::class, 'edit'])->name('mapel.edit');
     Route::put('/mapel/{id}', [MapelPilihanController::class, 'update'])->name('mapel.update');
-    Route::delete('/mapel/{id}', [MapelPilihanController::class, 'destroy'])->name('admin.mapel.destroy');
+    Route::delete('/mapel/{id}', [MapelPilihanController::class, 'destroy'])->name('mapel.destroy');
 
     // Program Studi
     Route::get('/prodi', [ProgramStudiController::class, 'index'])->name('prodi');
@@ -129,8 +136,8 @@ Route::middleware(['auth', 'role:ADMIN'])->prefix('admin')->name('admin.')->grou
     Route::put('/profesi/{id}', [ProfesiController::class, 'update'])->name('profesi.update');
     Route::delete('/profesi/{id}', [ProfesiController::class, 'destroy'])->name('profesi.destroy');
 
-    // Validasi Profil
-    Route::get('/validasi', [ValidasiController::class, 'index'])->name('validasi');
-    Route::put('/validasi/mapel/{id}', [ValidasiController::class, 'validasiMapel'])->name('validasi.mapel');
-    Route::put('/validasi/prodi/{id}', [ValidasiController::class, 'validasiProdi'])->name('validasi.prodi');
+    // Profil dan pengaturan akun Administrator.
+    Route::get('/profil', [A3ProfilController::class, 'show'])->name('profil');
+    Route::put('/profil', [A3ProfilController::class, 'update'])->name('profil.update');
+    Route::put('/profil/password', [A3ProfilController::class, 'updatePassword'])->name('profil.password');
 });

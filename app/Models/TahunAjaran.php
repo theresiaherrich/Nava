@@ -22,6 +22,11 @@ class TahunAjaran extends Model
         'aktif' => 'boolean',
     ];
 
+    public function getTahunAjaranAttribute()
+    {
+        return $this->nama;
+    }
+
     public function semester()
     {
         return $this->hasMany(Semester::class, 'id_tahun_ajaran', 'id_tahun_ajaran');

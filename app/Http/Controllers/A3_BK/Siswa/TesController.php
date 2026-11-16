@@ -3,85 +3,59 @@
 namespace App\Http\Controllers\A3_BK\Siswa;
 
 use App\Http\Controllers\Controller;
+use App\Services\RekomendasiService;
 use App\Services\TesRiasecService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\DB;
 
 /**
  * TesController — alur tes RIASEC siswa (petunjuk, soal, submit).
  */
 class TesController extends Controller
 {
-    public function __construct(private TesRiasecService $tesService, private \App\Services\RekomendasiService $rekomService) {}
+    public function __construct(
+        private TesRiasecService $tesService,
+        private RekomendasiService $rekomService
+    ) {}
 
     public function petunjuk()
     {
         $ctx = $this->getKonteksSiswa();
+        $tingkat = $ctx['riwayat']->kelas->tingkat;
 
-        // Validasi: Hanya Kelas X dan XII yang boleh ikut tes
-        if (! in_array($ctx['riwayat']->kelas->tingkat, ['X', 'XII'])) {
-            return redirect()->route('siswa.dashboard')
-                ->with('error', 'Siswa Kelas XI tidak dapat mengikuti tes RIASEC baru.');
-        }
-
-        if (! $this->tesService->periodeAktifAda($ctx['riwayat'])) {
-            return view('bk.siswa.tes-tidak-aktif', $ctx);
-        }
-
-        // Cegah pengambilan tes kembali untuk kelas X atau XII (hanya satu kali)
-        if (in_array($ctx['riwayat']->kelas->tingkat, ['X', 'XII']) && $this->tesService->sudahTes($ctx['riwayat'])) {
-            return redirect()->route('siswa.hasil')
-                ->with('error', 'Kamu hanya dapat melakukan tes sekali per semester.');
+        if (! in_array($tingkat, ['X', 'XII'])) {
+            abort(403, 'Jenjang Anda tidak memiliki akses untuk mengerjakan tes RIASEC.');
         }
 
         $jumlahSoal = $this->tesService->getSoalAktif()->count();
 
-        return view('bk.siswa.tes-petunjuk', array_merge($ctx, compact('jumlahSoal')));
+        return view('bk.siswa.tes-petunjuk', array_merge($ctx, compact('jumlahSoal', 'tingkat')));
     }
 
     public function soal()
     {
         $ctx = $this->getKonteksSiswa();
+        $tingkat = $ctx['riwayat']->kelas->tingkat;
 
-        // Validasi: Hanya Kelas X dan XII yang boleh ikut tes
-        if (! in_array($ctx['riwayat']->kelas->tingkat, ['X', 'XII'])) {
-            return redirect()->route('siswa.dashboard')
-                ->with('error', 'Siswa Kelas XI tidak dapat mengikuti tes RIASEC baru.');
-        }
-
-        if (! $this->tesService->periodeAktifAda($ctx['riwayat'])) {
-            return redirect()->route('siswa.tes.petunjuk');
-        }
-
-        // Cegah pengambilan tes kembali untuk kelas X atau XII (hanya satu kali)
-        if (in_array($ctx['riwayat']->kelas->tingkat, ['X', 'XII']) && $this->tesService->sudahTes($ctx['riwayat'])) {
-            return redirect()->route('siswa.hasil')
-                ->with('error', 'Kamu hanya dapat melakukan tes sekali per semester.');
+        if (! in_array($tingkat, ['X', 'XII'])) {
+            abort(403, 'Jenjang Anda tidak memiliki akses untuk mengerjakan tes RIASEC.');
         }
 
         $soal = $this->tesService->getSoalAktif();
 
         Session::forget('jawaban_tes');
 
-        return view('bk.siswa.tes-soal', array_merge($ctx, compact('soal')));
+        return view('bk.siswa.tes-soal', array_merge($ctx, compact('soal', 'tingkat')));
     }
 
     public function submit(Request $request)
     {
         $ctx = $this->getKonteksSiswa();
+        $tingkat = $ctx['riwayat']->kelas->tingkat;
 
-        // Validasi: Hanya Kelas X dan XII yang boleh ikut tes
-        if (! in_array($ctx['riwayat']->kelas->tingkat, ['X', 'XII'])) {
-            return redirect()->route('siswa.dashboard')
-                ->with('error', 'Siswa Kelas XI tidak dapat mengikuti tes RIASEC baru.');
-        }
-
-        // Cegah pengambilan tes kembali untuk kelas X atau XII (hanya satu kali)
-        if (in_array($ctx['riwayat']->kelas->tingkat, ['X', 'XII']) && $this->tesService->sudahTes($ctx['riwayat'])) {
-            return redirect()->route('siswa.hasil')
-                ->with('error', 'Kamu hanya dapat melakukan tes sekali per semester.');
+        if (! in_array($tingkat, ['X', 'XII'])) {
+            abort(403, 'Jenjang Anda tidak memiliki akses untuk mengerjakan tes RIASEC.');
         }
 
         $request->validate([
@@ -91,54 +65,32 @@ class TesController extends Controller
 
         $jawaban = $request->jawaban;
 
-        $soalIds = $this->tesService->getSoalAktif()->pluck('id_soal_riasec')->toArray();
-        foreach ($soalIds as $idSoal) {
-            if (! isset($jawaban[$idSoal])) {
+        $soalAktif = $this->tesService->getSoalAktif();
+        foreach ($soalAktif as $item) {
+            if (! isset($jawaban[$item->id_soal_riasec])) {
                 return back()->withErrors(['jawaban' => 'Semua soal harus dijawab.'])->withInput();
             }
         }
 
         try {
+            // 1. Hitung skor per dimensi
             $skor = $this->tesService->hitungSkor($jawaban);
-            $sesi = $this->tesService->simpanHasil($ctx['riwayat'], $skor);
+
+            // 2. Simpan sesi tes, jawaban, dan hasil skor per dimensi
+            $sesi = $this->tesService->simpanHasil($ctx['riwayat'], $jawaban, $skor, $tingkat);
+
+            // 3. Hitung dan simpan rekomendasi
+            if ($tingkat === 'X') {
+                $this->rekomService->hitungDanSimpanMapel($sesi);
+            } elseif ($tingkat === 'XII') {
+                $this->rekomService->hitungDanSimpanProdi($sesi);
+            }
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
-        }
-
-        $tingkat = $ctx['riwayat']->kelas->tingkat;
-
-        // ── Kelas X → simpan 5 rekomendasi mapel ───────────────────────────
-        if ($tingkat === 'X') {
-            $rekomMapel = $this->rekomService->rekomendasiMapel($sesi->id_sesi_tes);
-            foreach ($rekomMapel as $item) {
-                DB::table('hasil_rekomendasi_kelas_10')->insert([
-                    'id_sesi_tes' => $sesi->id_sesi_tes,
-                    'id_mapel'    => $item->id_mapel,
-                    'ranking'     => $item->peringkat,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
-            }
-        }
-
-        // ── Kelas XII → simpan rekomendasi prodi + profesi (karier) ─────────
-        if ($tingkat === 'XII') {
-            $rekomProdi = $this->rekomService->rekomendasiProdi($sesi->id_sesi_tes);
-            foreach ($rekomProdi as $item) {
-                $profesi = $this->rekomService->profesiProdi($item->id_prodi)->first();
-                DB::table('hasil_rekomendasi_kelas_12')->insert([
-                    'id_sesi_tes' => $sesi->id_sesi_tes,
-                    'id_prodi'    => $item->id_prodi,
-                    'id_profesi'  => $profesi->id_profesi ?? null,
-                    'peringkat'   => $item->peringkat,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]);
-            }
+            return back()->with('error', 'Terjadi kesalahan saat menyimpan tes: ' . $e->getMessage());
         }
 
         return redirect()->route('siswa.hasil')
-            ->with('success', 'Tes selesai! Berikut hasil pemetaan minat RIASEC kamu.');
+            ->with('success', 'Tes RIASEC selesai! Berikut hasil pemetaan minat dan rekomendasi kamu.');
     }
 
     private function getKonteksSiswa(): array
@@ -156,7 +108,7 @@ class TesController extends Controller
             abort(503, 'Tidak ada semester aktif saat ini.');
         }
 
-        $riwayat = \App\Models\RiwayatKelas::with('kelas.tahunAjaran', 'semester', 'sesiTes')
+        $riwayat = \App\Models\RiwayatKelas::with('kelas.tahunAjaran', 'semester')
             ->where('id_siswa', $siswa->id_siswa)
             ->where('id_semester', $semester->id_semester)
             ->first();

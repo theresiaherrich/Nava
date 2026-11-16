@@ -4,6 +4,7 @@ namespace App\Http\Controllers\A3_BK\Siswa;
 
 use App\Http\Controllers\Controller;
 use App\Models\DimensiRiasec;
+use App\Models\RiwayatKelas;
 use App\Models\SesiTes;
 use App\Services\RekomendasiService;
 use Illuminate\Support\Facades\Auth;
@@ -20,11 +21,28 @@ class HasilController extends Controller
         $ctx = $this->getKonteksSiswa();
         $tingkat = $ctx['riwayat']->kelas->tingkat;
 
-        $sesiTes = $ctx['riwayat']->sesiTes;
+        $sesiTesQuery = SesiTes::with(['hasilTes.dimensi'])
+            ->where('status', 'selesai');
+
+        if ($tingkat === 'XI') {
+            $riwayatKelasX = RiwayatKelas::where('id_siswa', $ctx['siswa']->id_siswa)
+                ->whereHas('kelas', fn ($q) => $q->where('tingkat', 'X'))
+                ->pluck('id_riwayat_kelas');
+
+            $sesiTesQuery->whereIn('id_riwayat_kelas', $riwayatKelasX);
+        } else {
+            $sesiTesQuery->where('id_riwayat_kelas', $ctx['riwayat']->id_riwayat_kelas);
+        }
+        $sesiTes = $sesiTesQuery->orderByDesc('waktu_selesai')->first();
 
         if (! $sesiTes) {
+            if ($tingkat === 'XI') {
+                return redirect()->route('siswa.dashboard')
+                    ->with('info', 'Data tes RIASEC kelas X belum tersedia.');
+            }
+
             return redirect()->route('siswa.tes.petunjuk')
-                ->with('info', 'Kamu belum menyelesaikan tes RIASEC pada semester ini.');
+                ->with('info', 'Kamu belum memiliki hasil tes RIASEC untuk jenjang ini. Silakan ikuti tes terlebih dahulu.');
         }
 
         $dimensi = DimensiRiasec::all()->keyBy('kode');
@@ -33,10 +51,10 @@ class HasilController extends Controller
         $rekomendasiProdi = null;
 
         if (in_array($tingkat, ['X', 'XI'])) {
-            $rekomendasiMapel = $this->rekomendasiService->rekomendasiMapel($sesiTes->id_sesi_tes);
+            $rekomendasiMapel = $this->rekomendasiService->rekomendasiMapel($sesiTes->id_sesi_tes)->take(5);
         }
         if ($tingkat === 'XII') {
-            $rekomendasiProdi = $this->rekomendasiService->rekomendasiProdi($sesiTes->id_sesi_tes);
+            $rekomendasiProdi = $this->rekomendasiService->rekomendasiProdi($sesiTes->id_sesi_tes)->take(5);
         }
 
         return view('bk.siswa.hasil', array_merge($ctx, compact(
@@ -51,38 +69,47 @@ class HasilController extends Controller
     public function mapelPilihan()
     {
         $ctx = $this->getKonteksSiswa();
+        $tingkat = $ctx['riwayat']->kelas->tingkat;
 
-        if ($ctx['riwayat']->kelas->tingkat !== 'XI') {
-            abort(403, 'Halaman ini hanya untuk siswa kelas XI.');
+        if (! in_array($tingkat, ['X', 'XI'], true)) {
+            abort(403, 'Rekomendasi mata pelajaran tidak tersedia untuk jenjang Anda.');
         }
 
-        $sesiTes = $ctx['riwayat']->sesiTes;
+        if ($tingkat === 'X') {
+            // Ambil sesi tes kelas X semester aktif
+            $sesiTesX = SesiTes::with(['hasilTes.dimensi'])
+                ->where('id_riwayat_kelas', $ctx['riwayat']->id_riwayat_kelas)
+                ->where('status', 'selesai')
+                ->orderByDesc('waktu_selesai')
+                ->first();
 
-        if (! $sesiTes) {
-            return redirect()->route('siswa.hasil')
-                ->with('info', 'Selesaikan tes RIASEC terlebih dahulu.');
+            if (! $sesiTesX) {
+                return redirect()->route('siswa.tes.petunjuk')
+                    ->with('info', 'Kamu harus menyelesaikan tes RIASEC terlebih dahulu untuk melihat rekomendasi mata pelajaran pilihan.');
+            }
+        } else {
+            $riwayatKelasX = RiwayatKelas::where('id_siswa', $ctx['siswa']->id_siswa)
+                ->whereHas('kelas', fn ($q) => $q->where('tingkat', 'X'))
+                ->pluck('id_riwayat_kelas');
+
+            $sesiTesX = SesiTes::with(['hasilTes.dimensi'])
+                ->whereIn('id_riwayat_kelas', $riwayatKelasX)
+                ->where('status', 'selesai')
+                ->orderByDesc('waktu_selesai')
+                ->first();
+
+            if (! $sesiTesX) {
+                return redirect()->route('siswa.dashboard')
+                    ->with('info', 'Data riwayat tes RIASEC kelas X tidak ditemukan.');
+            }
         }
 
-        $kecocokanMapel = $this->rekomendasiService->kecocokanMapel($sesiTes->id_sesi_tes);
-
-        $prodiRelevan = [];
-        foreach ($kecocokanMapel as $km) {
-            $prodiRelevan[$km->id_mapel] = $this->rekomendasiService->prodiRelevanMapel($km->id_mapel);
-        }
-
-        $sesiTesX = SesiTes::query()
-            ->join('riwayat_kelas as rk', 'rk.id_riwayat_kelas', '=', 'sesi_tes.id_riwayat_kelas')
-            ->join('kelas as k', 'k.id_kelas', '=', 'rk.id_kelas')
-            ->where('rk.id_siswa', $ctx['siswa']->id_siswa)
-            ->where('k.tingkat', 'X')
-            ->select('sesi_tes.*')
-            ->first();
+        $rekomendasiMapel = $this->rekomendasiService->rekomendasiMapel($sesiTesX->id_sesi_tes)->take(5);
 
         return view('bk.siswa.mapel-pilihan', array_merge($ctx, compact(
-            'sesiTes',
+            'tingkat',
             'sesiTesX',
-            'kecocokanMapel',
-            'prodiRelevan',
+            'rekomendasiMapel'
         )));
     }
 
@@ -101,7 +128,7 @@ class HasilController extends Controller
             abort(503, 'Tidak ada semester aktif saat ini.');
         }
 
-        $riwayat = \App\Models\RiwayatKelas::with('kelas.tahunAjaran', 'semester', 'sesiTes')
+        $riwayat = \App\Models\RiwayatKelas::with('kelas.tahunAjaran', 'semester')
             ->where('id_siswa', $siswa->id_siswa)
             ->where('id_semester', $semester->id_semester)
             ->first();

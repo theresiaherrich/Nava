@@ -4,7 +4,7 @@ namespace App\Http\Controllers\A3_BK\Guru;
 
 use App\Http\Controllers\A3_BK\Concerns\KonteksGuruBk;
 use App\Http\Controllers\Controller;
-use App\Models\GuruBk;
+use App\Models\Guru;
 use App\Models\PengajuanBk;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -24,8 +24,8 @@ class PengajuanController extends Controller
         $ctx = $this->getKonteksGuru();
         $idSemester = $ctx['semester']->id_semester;
 
-        $query = PengajuanBk::with('riwayatKelas.siswa', 'riwayatKelas.kelas')
-            ->whereHas('riwayatKelas', fn ($q) => $q->where('id_semester', $idSemester))
+        $query = PengajuanBk::with(['siswa', 'guru'])
+            ->where('id_semester', $idSemester)
             ->whereIn('status', ['menunggu', 'diproses', 'dijadwalkan']);
 
         if ($request->filled('status')) {
@@ -34,7 +34,7 @@ class PengajuanController extends Controller
 
         if ($request->filled('cari')) {
             $cari = $request->cari;
-            $query->whereHas('riwayatKelas.siswa', fn ($q) => $q->where('nama', 'like', "%{$cari}%"));
+            $query->whereHas('siswa', fn ($q) => $q->where('nama', 'like', "%{$cari}%"));
         }
 
         $data = $query->orderBy('created_at')->paginate(15)->withQueryString();
@@ -49,10 +49,8 @@ class PengajuanController extends Controller
     {
         $ctx = $this->getKonteksGuru();
 
-        $pengajuan = PengajuanBk::with('riwayatKelas.siswa', 'riwayatKelas.kelas', 'guruBk.guru')
-            ->findOrFail($id);
-
-        $guruBkList = GuruBk::with('guru')->where('aktif', true)->get();
+        $pengajuan = PengajuanBk::with(['siswa', 'guru'])->findOrFail($id);
+        $guruBkList = Guru::all();
 
         return view('bk.guru.tindak-lanjut', array_merge($ctx, compact('pengajuan', 'guruBkList')));
     }
@@ -65,44 +63,51 @@ class PengajuanController extends Controller
         $pengajuan = PengajuanBk::findOrFail($id);
 
         $rules = [
-            'status' => 'required|in:diproses,dijadwalkan,selesai,ditolak',
-            'id_guru' => 'required|exists:guru_bk,id_guru',
+            'status'  => 'required|in:diproses,dijadwalkan,selesai,ditolak',
+            'id_guru' => 'required|exists:guru,id_guru',
         ];
 
-        // Jadwal wajib untuk status dijadwalkan
         if ($request->status === 'dijadwalkan') {
-            $rules['jadwal_bimbingan'] = 'required|date';
+            $rules['jadwal_bimbingan'] = 'nullable|date';
+            $rules['tanggal_bimbingan'] = 'nullable|date';
         }
 
-        // Balasan wajib untuk dijadwalkan, selesai, ditolak
         if (in_array($request->status, ['dijadwalkan', 'selesai', 'ditolak'])) {
-            $rules['balasan_bk'] = 'required|string|min:5';
+            $rules['balasan'] = 'nullable|string';
+            $rules['balasan_bk'] = 'nullable|string';
         }
 
         $request->validate($rules);
 
         $data = [
-            'status' => $request->status,
+            'status'  => $request->status,
             'id_guru' => $request->id_guru,
         ];
 
-        if ($request->filled('balasan_bk')) {
-            $data['balasan_bk'] = $request->balasan_bk;
+        $balasan = $request->input('balasan', $request->input('balasan_bk'));
+        if ($balasan) {
+            $data['balasan'] = $balasan;
         }
 
         if ($request->filled('jadwal_bimbingan')) {
-            // Input datetime-local mengirim "Y-m-d\TH:i"
-            $data['jadwal_bimbingan'] = Carbon::parse($request->jadwal_bimbingan);
+            $dt = Carbon::parse($request->jadwal_bimbingan);
+            $data['tanggal_bimbingan'] = $dt->toDateString();
+            $data['jam_bimbingan'] = $dt->toTimeString();
+        } elseif ($request->filled('tanggal_bimbingan')) {
+            $data['tanggal_bimbingan'] = $request->tanggal_bimbingan;
+            if ($request->filled('jam_bimbingan')) {
+                $data['jam_bimbingan'] = $request->jam_bimbingan;
+            }
         }
 
         $pengajuan->update($data);
 
         $pesan = match ($request->status) {
-            'diproses' => 'Pengajuan sedang diproses.',
+            'diproses'    => 'Pengajuan sedang diproses.',
             'dijadwalkan' => 'Jadwal bimbingan berhasil ditetapkan.',
-            'selesai' => 'Bimbingan telah diselesaikan.',
-            'ditolak' => 'Pengajuan telah ditolak.',
-            default => 'Status berhasil diperbarui.',
+            'selesai'     => 'Bimbingan telah diselesaikan.',
+            'ditolak'     => 'Pengajuan telah ditolak.',
+            default       => 'Status berhasil diperbarui.',
         };
 
         return redirect()->route('bk.pengajuan')->with('success', $pesan);

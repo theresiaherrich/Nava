@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\A3_BK\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\A3_BK\Concerns\RecordsA3Activity;
 use App\Models\DimensiRiasec;
 use App\Models\SoalRiasec;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
  */
 class SoalController extends Controller
 {
+    use RecordsA3Activity;
+
     public function index()
     {
         $soal = SoalRiasec::with('dimensi')->orderBy('id_soal_riasec')->get();
@@ -35,11 +38,13 @@ class SoalController extends Controller
             'aktif' => 'boolean',
         ]);
 
-        SoalRiasec::create([
+        $soal = SoalRiasec::create([
             'id_dimensi' => $request->id_dimensi,
             'teks' => $request->teks,
             'aktif' => $request->boolean('aktif', true),
         ]);
+
+        $this->recordA3Activity('ditambahkan', 'soal_riasec', $soal->id_soal_riasec);
 
         return redirect()->route('admin.soal')->with('success', 'Soal berhasil ditambahkan.');
     }
@@ -60,18 +65,24 @@ class SoalController extends Controller
             'aktif' => 'boolean',
         ]);
 
-        SoalRiasec::findOrFail($id)->update([
+        $soal = SoalRiasec::findOrFail($id);
+        $soal->update([
             'id_dimensi' => $request->id_dimensi,
             'teks' => $request->teks,
             'aktif' => $request->boolean('aktif', false),
         ]);
+
+        $this->recordA3Activity('diperbarui', 'soal_riasec', $soal->id_soal_riasec);
 
         return redirect()->route('admin.soal')->with('success', 'Soal berhasil diperbarui.');
     }
 
     public function destroy(int $id)
     {
-        SoalRiasec::findOrFail($id)->delete();
+        $soal = SoalRiasec::findOrFail($id);
+        $soal->delete();
+
+        $this->recordA3Activity('dihapus', 'soal_riasec', $id);
 
         return redirect()->route('admin.soal')->with('success', 'Soal berhasil dihapus.');
     }
@@ -81,6 +92,7 @@ class SoalController extends Controller
         $soal = SoalRiasec::findOrFail($id);
         $soal->update(['aktif' => ! $soal->aktif]);
         $status = $soal->aktif ? 'diaktifkan' : 'dinonaktifkan';
+        $this->recordA3Activity($status, 'soal_riasec', $soal->id_soal_riasec);
 
         return redirect()->route('admin.soal')->with('success', "Soal berhasil {$status}.");
     }

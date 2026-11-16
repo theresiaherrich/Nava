@@ -11,16 +11,26 @@
         ];
         $badgeClass = $badgeMap[$status] ?? 'bg-gray-100 text-gray-700';
 
-        $siswa       = $pengajuan->riwayatKelas->siswa ?? null;
+        $siswa       = $pengajuan->siswa ?? $pengajuan->riwayatKelas->siswa ?? null;
         $namaSiswa   = $siswa->nama ?? '-';
-        $namaKelas   = $pengajuan->riwayatKelas->kelas->nama ?? '-';
+        $namaKelas   = $siswa->riwayatKelasAktif?->kelas?->nama ?? '-';
         $nis         = $siswa->nis ?? '-';
         $initials    = collect(explode(' ', $namaSiswa))->take(2)->map(fn($w) => strtoupper(substr($w, 0, 1)))->implode('');
         $idPengajuan = $pengajuan->getKey();
 
         $statusSekarang = old('status', $pengajuan->status ?? '');
-        // Nilai untuk input datetime-local (format Y-m-d\TH:i)
-        $jadwalValue = old('jadwal_bimbingan', $pengajuan->jadwal_bimbingan?->format('Y-m-d\TH:i'));
+        
+        // Tentukan nilai awal jadwal
+        $defaultJadwal = null;
+        if (!empty($pengajuan->tanggal_bimbingan)) {
+            $tgl = \Carbon\Carbon::parse($pengajuan->tanggal_bimbingan)->format('Y-m-d');
+            $jam = substr($pengajuan->jam_bimbingan ?? '08:00:00', 0, 5);
+            $defaultJadwal = $tgl . 'T' . $jam;
+        } elseif (!empty($pengajuan->jadwal_bimbingan)) {
+            $defaultJadwal = \Carbon\Carbon::parse($pengajuan->jadwal_bimbingan)->format('Y-m-d\TH:i');
+        }
+        $jadwalValue = old('jadwal_bimbingan', $defaultJadwal);
+        $balasanValue = old('balasan', $pengajuan->balasan ?? '');
     @endphp
 
     {{-- Breadcrumb & Header --}}
@@ -90,21 +100,13 @@
                         <p class="text-xs font-semibold text-gray-800">{{ $pengajuan->topik ?? '-' }}</p>
                     </div>
                     <div>
-                        <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Tanggal Pengajuan</p>
-                        <p class="text-xs text-gray-700">{{ $pengajuan->created_at?->format('d M Y, H:i') ?? '-' }}</p>
+                        <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Deskripsi Masalah</p>
+                        <p class="text-xs text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100">{{ $pengajuan->deskripsi ?? '-' }}</p>
                     </div>
-                    @if(!empty($pengajuan->deskripsi))
-                        <div>
-                            <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Deskripsi Siswa</p>
-                            <p class="text-xs text-gray-700 leading-relaxed">{{ $pengajuan->deskripsi }}</p>
-                        </div>
-                    @endif
-                    @if($pengajuan->jadwal_bimbingan)
-                        <div class="p-3 bg-purple-50 border border-purple-100 rounded-xl">
-                            <p class="text-[10px] text-purple-700 font-bold uppercase tracking-wider mb-0.5">Jadwal Bimbingan</p>
-                            <p class="text-xs font-semibold text-purple-900">{{ $pengajuan->jadwal_bimbingan->format('d M Y, H:i') }}</p>
-                        </div>
-                    @endif
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Waktu Pengajuan</p>
+                        <p class="text-xs text-gray-700">{{ $pengajuan->created_at ? \Carbon\Carbon::parse($pengajuan->created_at)->isoFormat('D MMMM Y, HH:mm') : '-' }}</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -113,34 +115,26 @@
         <div class="lg:col-span-3">
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h2 class="text-sm font-bold text-slate-900 mb-1">Form Tindak Lanjut</h2>
-                <p class="text-xs text-gray-400 mb-5">Isi data di bawah untuk memproses pengajuan bimbingan ini.</p>
+                <p class="text-xs text-gray-400 mb-5">Perbarui status dan atur jadwal atau catatan bimbingan</p>
 
-                <form method="POST" action="{{ route('bk.pengajuan.update', $idPengajuan) }}" id="form-tindak-lanjut">
+                <form method="POST" action="{{ route('bk.pengajuan.update', $idPengajuan) }}">
                     @csrf
                     @method('PUT')
 
                     <div class="space-y-4">
-                        {{-- Dropdown Guru BK --}}
+                        {{-- Guru BK Penanggung Jawab --}}
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1.5">Guru BK yang Menangani</label>
-                            <select name="id_guru" required
-                                class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                                <option value="">— Pilih Guru BK —</option>
-                                @foreach($guruBkList as $gbk)
-                                    <option value="{{ $gbk->id_guru }}"
-                                        {{ (string) old('id_guru', $pengajuan->id_guru ?? $guruBk->id_guru ?? '') === (string) $gbk->id_guru ? 'selected' : '' }}>
-                                        {{ $gbk->guru->nama ?? '-' }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('id_guru')
-                                <p class="text-[11px] text-red-500 mt-1">{{ $message }}</p>
-                            @enderror
+                            <span class="block text-xs font-bold text-gray-700 mb-1.5">Guru BK Penanggung Jawab</span>
+                            <p class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 bg-gray-50">
+                                {{ $guru->nama }}
+                            </p>
                         </div>
 
-                        {{-- Dropdown Status --}}
+                        {{-- Status Pengajuan --}}
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1.5">Status Pengajuan</label>
+                            <label class="block text-xs font-bold text-gray-700 mb-1.5">
+                                Status Pengajuan <span class="text-red-500">*</span>
+                            </label>
                             <select name="status" id="status-select" required
                                 class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                                 <option value="">— Pilih Status —</option>
@@ -170,12 +164,12 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1.5">
                                 Balasan / Catatan
-                                <span id="catatan-required-mark" class="text-red-500 {{ in_array($statusSekarang, ['dijadwalkan','selesai','ditolak']) ? '' : 'hidden' }}">*</span>
+                                <span id="catatan-required-mark" class="text-red-500 {{ in_array($statusSekarang, ['selesai','ditolak']) ? '' : 'hidden' }}">*</span>
                             </label>
-                            <textarea name="balasan_bk" rows="4"
+                            <textarea name="balasan" rows="4"
                                 placeholder="Tulis catatan, jadwal, atau alasan penolakan..."
-                                class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none">{{ old('balasan_bk', $pengajuan->balasan_bk) }}</textarea>
-                            @error('balasan_bk')
+                                class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none">{{ $balasanValue }}</textarea>
+                            @error('balasan')
                                 <p class="text-[11px] text-red-500 mt-1">{{ $message }}</p>
                             @enderror
                         </div>
@@ -211,7 +205,7 @@
                 var dijadwalkan = val === 'dijadwalkan';
                 jadwalSection.classList.toggle('hidden', !dijadwalkan);
                 jadwalInput.required = dijadwalkan;
-                catatanMark.classList.toggle('hidden', !['dijadwalkan', 'selesai', 'ditolak'].includes(val));
+                catatanMark.classList.toggle('hidden', !['selesai', 'ditolak'].includes(val));
             }
 
             statusSelect.addEventListener('change', updateVisibility);

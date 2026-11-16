@@ -16,7 +16,7 @@ class DimensiRiasec extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['deskripsi']; // kode & nama tidak boleh diubah
+    protected $fillable = ['kode', 'nama', 'deskripsi'];
 
     public function soal()
     {

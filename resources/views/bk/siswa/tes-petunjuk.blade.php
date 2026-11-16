@@ -51,8 +51,8 @@
                         <p class="text-[11px] text-gray-500 mt-1">Menit Pengerjaan</p>
                     </div>
                     <div class="p-4 bg-emerald-50 rounded-xl text-center">
-                        <p class="text-2xl font-black text-emerald-500">1&times;</p>
-                        <p class="text-[11px] text-gray-500 mt-1">Kesempatan Tes</p>
+                        <p class="text-2xl font-black text-emerald-500">Hasil</p>
+                        <p class="text-[11px] text-gray-500 mt-1">Langsung Keluar</p>
                     </div>
                 </div>
             </div>
@@ -115,16 +115,19 @@
         <div class="space-y-5">
 
             {{-- Status Riwayat --}}
+            @php
+                $sesiTerakhir = $riwayat?->sesiTesTerakhir;
+            @endphp
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h2 class="text-sm font-bold text-slate-900 mb-4">Status Tes</h2>
-                @if($riwayat && $riwayat->sesiTes)
+                @if($sesiTerakhir)
                     <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
                         <svg class="w-5 h-5 text-emerald-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <div>
-                            <p class="text-xs font-bold text-emerald-700">Tes Sudah Dikerjakan</p>
-                            <p class="text-[11px] text-emerald-600">{{ \Carbon\Carbon::parse($riwayat->sesiTes->waktu_selesai)->format('d M Y') }}</p>
+                            <p class="text-xs font-bold text-emerald-700">Tes Terakhir Selesai</p>
+                            <p class="text-[11px] text-emerald-600">{{ $sesiTerakhir->waktu_selesai ? \Carbon\Carbon::parse($sesiTerakhir->waktu_selesai)->format('d M Y') : '-' }}</p>
                         </div>
                     </div>
                 @else
@@ -143,14 +146,20 @@
             {{-- Tombol Aksi --}}
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <p class="text-xs text-gray-500 mb-4">Dengan menekan tombol di bawah, kamu menyatakan telah membaca dan memahami semua petunjuk.</p>
-                @if($riwayat && $riwayat->sesiTes)
-                    <a href="{{ route('siswa.hasil') }}"
-                        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 text-white text-xs font-bold rounded-xl hover:bg-emerald-600 transition mb-3">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                        Lihat Hasil Tes
-                    </a>
+                @if($sesiTerakhir)
+                    <div class="space-y-2 mb-3">
+                        <a href="{{ route('siswa.hasil') }}"
+                            class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 text-white text-xs font-bold rounded-xl hover:bg-emerald-600 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            Lihat Hasil Terakhir
+                        </a>
+                        <a href="{{ route('siswa.tes.soal') }}"
+                            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-xl hover:bg-blue-100 transition border border-blue-200">
+                            Ambil Tes Ulang
+                        </a>
+                    </div>
                 @else
                     <a href="{{ route('siswa.tes.soal') }}"
                         class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#009bf2] text-white text-xs font-bold rounded-xl hover:bg-blue-600 transition mb-3">

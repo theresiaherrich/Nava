@@ -196,12 +196,8 @@ class AuthController extends Controller
             // 3. Buat akun orang tua.
             $user = User::create([
                 'username' => $validated['username'],
-
-                // Model User memiliki hashed cast.
                 'password' => $validated['password'],
-
                 'must_change_password' => false,
-
                 'role' => 'ORANG_TUA',
             ]);
 
@@ -236,6 +232,71 @@ class AuthController extends Controller
             'data' => $hasil,
 
         ], 201);
+    }
+
+
+    // ==========================================
+    // GANTI PASSWORD
+    // ==========================================
+
+    public function changePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => [
+                'required',
+                'string',
+            ],
+
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
+        ], [
+            'current_password.required' =>
+                'Password awal wajib diisi.',
+
+            'password.min' =>
+                'Password baru minimal 8 karakter.',
+
+            'password.confirmed' =>
+                'Konfirmasi password baru tidak cocok.',
+        ]);
+
+        $user = $request->user();
+
+        // Periksa password awal.
+        if (!Hash::check(
+            $validated['current_password'],
+            $user->password
+        )) {
+            return response()->json([
+                'message' => 'Password awal yang dimasukkan salah.',
+            ], 422);
+        }
+
+        // Password baru harus berbeda.
+        if (Hash::check(
+            $validated['password'],
+            $user->password
+        )) {
+            return response()->json([
+                'message' => 'Password baru harus berbeda dari password lama.',
+            ], 422);
+        }
+
+        // Simpan password baru.
+        $user->password = $validated['password'];
+        $user->must_change_password = false;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password berhasil diperbarui.',
+            'data' => [
+                'must_change_password' => false,
+            ],
+        ]);
     }
 
 

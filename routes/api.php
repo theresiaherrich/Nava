@@ -12,6 +12,12 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
+     // Ganti password
+    Route::post('/change-password', [
+        AuthController::class,
+        'changePassword',
+    ]);
+
     // Pengelolaan data siswa
     Route::get('/siswa', [SiswaController::class, 'index'])
         ->middleware('role:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU,SISWA');

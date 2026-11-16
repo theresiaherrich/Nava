@@ -1,4 +1,3 @@
-
 @props([
     'menu' => null,
     'academicYear' => '2026/2027 • Ganjil',
@@ -43,14 +42,12 @@
 
     $defaultMenu = [
         [
-            'code' => 'A1',
             'label' => 'Kelola Presensi',
             'icon' => 'calendar',
             'route' => 'presensi.guru',
             'pattern' => 'presensi.guru',
         ],
         [
-            'code' => 'A2',
             'label' => 'Akademik',
             'icon' => 'file',
             'sub_title' => 'Wali Kelas',
@@ -85,13 +82,11 @@
             ],
         ],
         [
-            'code' => 'A3',
             'label' => 'BK',
             'icon' => 'shield',
             'href' => '#',
         ],
         [
-            'code' => 'A4',
             'label' => 'Portal Orang Tua',
             'icon' => 'home',
             'href' => '#',
@@ -106,7 +101,6 @@
 
     $menuSiswa = [
         [
-            'code' => 'A1',
             'label' => 'Presensi',
             'icon' => 'calendar',
             'route' => 'presensi.siswa',
@@ -122,7 +116,6 @@
 
     $menuAdmin = [
         [
-            'code' => 'A1',
             'label' => 'Admin Presensi',
             'icon' => 'check',
             'route' => 'presensi.admin',
@@ -138,7 +131,6 @@
 
     $menuBudayaPositif = [
         [
-            'code' => 'A1',
             'label' => 'Presensi',
             'icon' => 'calendar',
             'sub_title' => 'BUDAYA POSITIF',
@@ -160,27 +152,27 @@
     ];
 
     /*
-|--------------------------------------------------------------------------
-| 6. MENU KURIKULUM
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | 6. MENU KURIKULUM
+    |--------------------------------------------------------------------------
+    */
 
-$menuKurikulum = [
-    [
-        'code' => 'A1',
-        'label' => 'Presensi',
-        'icon' => 'calendar',
-        'sub_title' => 'KURIKULUM',
-        'items' => [
-            [
-                'label' => 'Dashboard',
-                'icon' => 'grid',
-                'route' => 'presensi.kurikulum',
-                'pattern' => 'presensi.kurikulum',
+    $menuKurikulum = [
+        [
+            'label' => 'Presensi',
+            'icon' => 'calendar',
+            'sub_title' => 'KURIKULUM',
+            'items' => [
+                [
+                    'label' => 'Dashboard',
+                    'icon' => 'grid',
+                    'route' => 'presensi.kurikulum',
+                    'pattern' => 'presensi.kurikulum',
+                ],
             ],
         ],
-    ],
-];
+    ];
+
     /*
     |--------------------------------------------------------------------------
     | 7. PEMILIHAN MENU BERDASARKAN ROLE
@@ -201,7 +193,7 @@ $menuKurikulum = [
 
     /*
     |--------------------------------------------------------------------------
-    | 7. RESOLVE ROUTE DAN ACTIVE MENU
+    | 8. RESOLVE ROUTE DAN ACTIVE MENU
     |--------------------------------------------------------------------------
     */
 
@@ -215,7 +207,7 @@ $menuKurikulum = [
 
     /*
     |--------------------------------------------------------------------------
-    | 8. ICON SVG
+    | 9. ICON SVG
     |--------------------------------------------------------------------------
     */
 
@@ -295,10 +287,6 @@ $menuKurikulum = [
                         >
                             {!! $svg($m['icon']) !!}
 
-                            <span class="sb-item__code">
-                                {{ $m['code'] }}
-                            </span>
-
                             <span class="sb-item__text">
                                 {{ $m['label'] }}
                             </span>
@@ -355,10 +343,6 @@ $menuKurikulum = [
                             @if ($active) aria-current="page" @endif
                         >
                             {!! $svg($m['icon']) !!}
-
-                            <span class="sb-item__code">
-                                {{ $m['code'] }}
-                            </span>
 
                             <span class="sb-item__text">
                                 {{ $m['label'] }}

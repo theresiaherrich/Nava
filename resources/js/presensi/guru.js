@@ -8,10 +8,11 @@
    - Kurikulum
    - Budaya Positif
 
-   FRONTEND ONLY:
+   MODE SAAT INI:
    - Data masih menggunakan dummy.
-   - Tidak ada request atau perubahan database.
-   - Integrasi backend ditandai TODO API.
+   - Struktur data dummy disesuaikan dengan backend.
+   - Belum mengirim request API.
+   - Data tambahan biodata tetap berupa simulasi.
    ========================================================== */
 
 const $ = (id) => document.getElementById(id);
@@ -71,9 +72,6 @@ const TGL_INI = iso(sekarang);
    2. IDENTITAS PENGGUNA
    ========================================================== */
 
-// Identitas dibaca dari atribut data pada .gw-page.
-// Nilai dikirim oleh Blade sesuai halaman yang sedang dibuka.
-
 const halamanPresensi = document.querySelector('.gw-page');
 
 const ROLE_AKTIF = halamanPresensi?.dataset.role || 'guru';
@@ -84,9 +82,6 @@ const PROFIL = {
     detail: halamanPresensi?.dataset.profileDetail || 'SMAN 1 Malang'
 };
 
-// Data kelas dummy untuk kebutuhan tampilan dashboard.
-// TODO API: Sesuaikan dengan data kelas dari backend.
-
 const KELAS_AKTIF = ROLE_AKTIF === 'guru'
     ? 'XI MIPA 2'
     : 'SMAN 1 Malang';
@@ -95,11 +90,10 @@ const TAHUN_AJARAN = '2026/2027';
 const SEMESTER = 'Ganjil';
 
 /* ==========================================================
-   3. DATA SISWA
+   3. DATA SISWA DUMMY
+   Struktur identitas mengikuti backend.
+   Data tambahan hanya untuk kebutuhan tampilan.
    ========================================================== */
-
-// TODO API:
-// Ganti dengan data siswa yang benar dari backend.
 
 const SISWA = [
     ['Andini Putri', '245150600', 'Perempuan'],
@@ -114,11 +108,21 @@ const SISWA = [
     ['Nusa Cendana', '245150609', 'Perempuan'],
     ['Rama Segara', '245150610', 'Laki-laki']
 ].map(([nama, nisn, gender], i) => ({
+    // Identitas simulasi mengikuti struktur backend.
+    // ID ini bukan ID siswa asli dari database.
+    id_siswa: i + 1,
+    nis: null,
     nisn,
     nama,
-    gender,
-    kelas: 'XI MIPA 2',
+    jenis_kelamin: gender,
 
+    // Alias untuk kebutuhan tampilan lama.
+    gender,
+    kelas: KELAS_AKTIF === 'SMAN 1 Malang'
+        ? 'XI MIPA 2'
+        : KELAS_AKTIF,
+
+    // Data tambahan berikut masih dummy.
     ttl: i === 0
         ? 'Malang, 17 Agustus 2009'
         : `Malang, ${i + 1} Januari 2009`,
@@ -138,6 +142,7 @@ const SISWA = [
 
 /* ==========================================================
    4. DATA PRESENSI DUMMY
+   Struktur mengikuti field backend Presensi.
    ========================================================== */
 
 // Urutan:
@@ -159,6 +164,28 @@ const HARI_INI = [
 
 const PERSEN_ALPA = [0, 2, 0, 10, 5, 1, 0, 0, 0, 3, 4];
 const PERSEN_IZIN = [0, 3, 7, 20, 16, 0, 2, 0, 0, 5, 3];
+
+// ID simulasi, bukan ID dari database.
+let idPresensiDummy = 1;
+
+// Mengubah format jam tampilan menjadi format waktu backend.
+const jamKeApi = (jam) => {
+    if (!jam || jam === '-') return null;
+
+    const cocok = jam.match(/^(\d{2})\.(\d{2})/);
+
+    return cocok
+        ? `${cocok[1]}:${cocok[2]}:00`
+        : null;
+};
+
+// Mengubah metode tampilan menjadi nilai metode API.
+const metodeKeApi = (metode) => {
+    if (metode === 'QR Code') return 'QR';
+    if (metode === 'Manual') return 'Manual';
+
+    return null;
+};
 
 function buatRiwayatDummy() {
     const hasil = [];
@@ -198,13 +225,23 @@ function buatRiwayatDummy() {
             }
 
             hasil.push({
+                // Field identitas sesuai backend.
+                id_presensi: idPresensiDummy++,
+                id_siswa: s.id_siswa,
                 nisn: s.nisn,
+
+                // Field presensi sesuai backend.
                 tanggal: iso(tanggal),
                 status,
+                waktu_presensi: jamKeApi(jam),
+                metode_api: metodeKeApi(metode),
+                file_bukti: null,
+                keterangan,
+
+                // Alias untuk kebutuhan tampilan lama.
                 jam,
                 metode,
-                berkas: '-',
-                keterangan
+                berkas: '-'
             });
         });
     }
@@ -213,15 +250,30 @@ function buatRiwayatDummy() {
 }
 
 let PRESENSI = [
-    ...SISWA.map((s, i) => ({
-        nisn: s.nisn,
-        tanggal: TGL_INI,
-        status: HARI_INI[i][0],
-        jam: HARI_INI[i][1],
-        metode: HARI_INI[i][2],
-        berkas: '-',
-        keterangan: HARI_INI[i][3] || '-'
-    })),
+    ...SISWA.map((s, i) => {
+        const jam = HARI_INI[i][1];
+        const metode = HARI_INI[i][2];
+
+        return {
+            // Field identitas sesuai backend.
+            id_presensi: idPresensiDummy++,
+            id_siswa: s.id_siswa,
+            nisn: s.nisn,
+
+            // Field presensi sesuai backend.
+            tanggal: TGL_INI,
+            status: HARI_INI[i][0],
+            waktu_presensi: jamKeApi(jam),
+            metode_api: metodeKeApi(metode),
+            file_bukti: null,
+            keterangan: HARI_INI[i][3] || '-',
+
+            // Alias untuk kebutuhan tampilan lama.
+            jam,
+            metode,
+            berkas: '-'
+        };
+    }),
 
     ...buatRiwayatDummy()
 ];
@@ -779,7 +831,7 @@ function isiModal() {
     $('gwFoto').textContent =
         siswa.nama.charAt(0).toUpperCase();
 
-    // Riwayat presensi
+    // Riwayat presensi.
     $('gwHNama').value = siswa.nama;
     $('gwHNisn').value = siswa.nisn;
     $('gwHKelas').value = siswa.kelas;
@@ -790,7 +842,7 @@ function isiModal() {
     $('gwHKet').value = presensi.keterangan;
     $('gwHAlasan').value = '';
 
-    // Biodata siswa
+    // Biodata siswa.
     $('gwBNama').value = siswa.nama;
     $('gwBNisn').value = siswa.nisn;
     $('gwBGender').value = siswa.gender;
@@ -798,12 +850,12 @@ function isiModal() {
     $('gwBAlamat').value = siswa.alamat;
     $('gwBHp').value = siswa.hp;
 
-    // Orang tua siswa
+    // Orang tua siswa.
     $('gwPAyah').value = siswa.ayah;
     $('gwPIbu').value = siswa.ibu;
     $('gwPHp').value = siswa.hpOrtu;
 
-    // Kurikulum siswa
+    // Kurikulum siswa.
     $('gwKKelas').value = siswa.kelas;
     $('gwKTahun').value = TAHUN_AJARAN;
     $('gwKSemester').value = SEMESTER;
@@ -879,7 +931,10 @@ const STATUS_VALID = [
     'Alpa'
 ];
 
-// Perubahan hanya tersimpan sementara di browser.
+// Perubahan masih disimpan sementara di browser.
+// Backend PATCH /api/presensi/{id_presensi} hanya
+// mengizinkan ADMIN, sehingga tidak dipanggil dari
+// halaman bersama Guru, Kurikulum, dan Budaya Positif.
 
 const editRiwayat = siapkanEdit(
     'gwEditHistory',
@@ -911,9 +966,6 @@ const editRiwayat = siapkanEdit(
         if (alasan.length < 5) {
             return 'Alasan perubahan wajib diisi (minimal 5 karakter).';
         }
-
-        // TODO API:
-        // PUT /presensi/{id}/status
 
         if (!presensi.riwayatPerubahan) {
             presensi.riwayatPerubahan = [];

@@ -1,3 +1,4 @@
+
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
@@ -10,18 +11,22 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/css/sidebar.css',
+
+                // Presensi Siswa
                 'resources/css/presensi/siswa.css',
                 'resources/js/presensi/siswa.js',
+
+                // Presensi Guru / Wali Kelas
                 'resources/css/presensi/guru.css',
                 'resources/js/presensi/guru.js',
+
+                // Presensi Admin
                 'resources/css/presensi/admin.css',
                 'resources/js/presensi/admin.js',
+
+                // Budaya Positif
                 'resources/css/presensi/budaya-positif.css',
                 'resources/js/presensi/budaya-positif.js',
-                'resources/css/rekap-nilai.css',
-                'resources/js/rekap-nilai.js',
-                'resources/css/verifikasi-nilai.css',
-                'resources/js/verifikasi-nilai.js',
             ],
             refresh: true,
             fonts: [

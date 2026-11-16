@@ -33,6 +33,9 @@ Route::view('/test-sidebar', 'test-sidebar');
 Route::view('/login', 'auth.login')->name('login');
 Route::view('/register', 'auth.register')->name('register');
 
+Route::view('/ganti-password', 'auth.ganti-password')
+    ->name('password.change');
+
 Route::prefix('presensi')->name('presensi.')->group(function () {
 
     Route::view('/qr-code', 'presensi.qr-code.index')

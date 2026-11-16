@@ -14,4 +14,5 @@ Route::middleware(['auth', 'account.active', 'password.changed'])->group(functio
     require __DIR__.'/api/akun.php';
     require __DIR__.'/api/master.php';
     require __DIR__.'/api/kurikulum.php';
+    require __DIR__.'/api/penilaian.php';
 });

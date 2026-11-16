@@ -120,6 +120,9 @@ return new class extends Migration
             $table->unsignedInteger('id_kelas');
             $table->enum('status', ['draf', 'terkirim', 'perlu_revisi', 'disetujui', 'dikunci'])->default('draf');
             $table->boolean('lengkap')->default(false); // snapshot kelengkapan saat dikirim
+            // true = Kurikulum membuka koreksi: guru boleh mengubah nilai walau periode sudah ditutup.
+            $table->boolean('koreksi')->default(false);
+            $table->text('alasan_koreksi')->nullable();
             $table->unsignedInteger('dikirim_oleh')->nullable();
             $table->dateTime('waktu_kirim')->nullable();
             $table->unsignedInteger('diverifikasi_oleh')->nullable();

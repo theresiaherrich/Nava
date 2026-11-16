@@ -19,7 +19,7 @@ class PaketNilai extends Model
     protected $primaryKey = 'id_paket_nilai';
 
     protected $fillable = [
-        'id_rombel', 'id_periode', 'id_kelas', 'status', 'lengkap',
+        'id_rombel', 'id_periode', 'id_kelas', 'status', 'lengkap', 'koreksi', 'alasan_koreksi',
         'dikirim_oleh', 'waktu_kirim', 'diverifikasi_oleh', 'waktu_verifikasi', 'dikunci_oleh', 'waktu_kunci',
     ];
 
@@ -27,6 +27,7 @@ class PaketNilai extends Model
     {
         return [
             'lengkap' => 'boolean',
+            'koreksi' => 'boolean',
             'waktu_kirim' => 'datetime',
             'waktu_verifikasi' => 'datetime',
             'waktu_kunci' => 'datetime',

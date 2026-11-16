@@ -1,1349 +1,1800 @@
 {
-  "info": {
-    "name": "SIAKAD A2 — backend fondasi",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Isi admin_login, admin_password, applicant_password secara lokal. Jalankan folder 01–04 berurutan pada database latihan. Cookie aktif. Tahun 2026/2027 dan kelas X-1 diasumsikan belum ada; untuk mengulang, gunakan ID lama dan skip create record yang sudah ada. Tidak menggunakan bearer token. Jangan bagikan nilai password."
-  },
-  "variable": [
-    {
-      "key": "base_url",
-      "value": "http://127.0.0.1:8000",
-      "type": "string"
+    "info": {
+        "name": "SIAKAD A2 — API konsolidasi",
+        "description": "Dibangkitkan dari route final. Alur: 00 Auth → GET csrf-token → POST auth/login (username/password dari variabel). Token CSRF disimpan otomatis dari setiap respons yang memuat data.csrf_token dan dikirim sebagai X-CSRF-TOKEN pada POST/PUT/PATCH/DELETE. Ganti peran aktif lewat POST auth/switch-role. Kontrak: docs/02_KONTRAK_API.md.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
-    {
-      "key": "admin_login",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "admin_password",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "applicant_password",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "csrf_token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "run_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "applicant_username",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "applicant_email",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "applicant_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "tahun_ajaran_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "semester_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "kelas_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "mapel_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "siswa_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "guru_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "siswa_kelas_id",
-      "value": "",
-      "type": "string"
-    }
-  ],
-  "event": [
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "let body = {};",
-          "try { body = pm.response.json(); } catch (e) {}",
-          "if (body.csrf_token) pm.collectionVariables.set(\"csrf_token\", body.csrf_token);",
-          "if (pm.request.url.toString().endsWith(\"/logout\") && pm.response.code === 200) pm.collectionVariables.unset(\"csrf_token\");"
-        ]
-      }
-    }
-  ],
-  "item": [
-    {
-      "name": "01 - Register dan login sebelum persetujuan",
-      "item": [
+    "event": [
         {
-          "name": "Ambil CSRF (cookie disimpan otomatis)",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/csrf-token"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
+            "listen": "prerequest",
+            "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                    "pm.request.headers.upsert({ key: 'Accept', value: 'application/json' });",
+                    "if (['POST','PUT','PATCH','DELETE'].includes(pm.request.method)) {",
+                    "  pm.request.headers.upsert({ key: 'X-CSRF-TOKEN', value: pm.collectionVariables.get('csrf_token') || '' });",
+                    "}"
                 ]
-              }
-            },
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const runId = Date.now().toString();",
-                  "pm.collectionVariables.set(\"applicant_username\", \"demo_\" + runId);",
-                  "pm.collectionVariables.set(\"applicant_email\", \"demo_\" + runId + \"@example.test\");",
-                  "pm.collectionVariables.set(\"run_id\", runId);"
-                ]
-              }
             }
-          ]
         },
         {
-          "name": "Register akun pending",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/register",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Siswa Demo\",\n  \"username\": \"{{applicant_username}}\",\n  \"email\": \"{{applicant_email}}\",\n  \"password\": \"{{applicant_password}}\",\n  \"password_confirmation\": \"{{applicant_password}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
+            "listen": "test",
+            "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
-                  "if (pm.response.code === 201) pm.collectionVariables.set(\"applicant_id\", pm.response.json().data.id);"
+                    "try {",
+                    "  const j = pm.response.json();",
+                    "  if (j && j.data && j.data.csrf_token) pm.collectionVariables.set('csrf_token', j.data.csrf_token);",
+                    "  if (j && j.data && j.data.token && pm.request.url.toString().includes('siswa-impor/pratinjau')) pm.collectionVariables.set('impor_token', j.data.token);",
+                    "} catch (e) {}"
                 ]
-              }
             }
-          ]
-        },
-        {
-          "name": "Login pendaftar",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/login",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"login\": \"{{applicant_username}}\",\n  \"password\": \"{{applicant_password}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 401\", function () { pm.response.to.have.status(401); });"
-                ]
-              }
-            }
-          ]
         }
-      ]
-    },
-    {
-      "name": "02 - Admin menyetujui akun",
-      "item": [
+    ],
+    "variable": [
         {
-          "name": "Ambil CSRF (cookie disimpan otomatis)",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/csrf-token"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000"
         },
         {
-          "name": "Login admin",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/login",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"login\": \"{{admin_login}}\",\n  \"password\": \"{{admin_password}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
+            "key": "username",
+            "value": "superadmin"
         },
         {
-          "name": "Akun saya",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/me"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
+            "key": "password",
+            "value": ""
         },
         {
-          "name": "Daftar akun nonaktif",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/admin/users?is_active=0"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
+            "key": "csrf_token",
+            "value": ""
         },
         {
-          "name": "Setujui sebagai siswa",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/admin/users/{{applicant_id}}/access",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"roles\": [\n    \"siswa\"\n  ],\n  \"is_active\": true,\n  \"alasan\": \"Identitas telah diverifikasi sekolah\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
+            "key": "impor_token",
+            "value": ""
         },
         {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/logout",
-            "body": {
-              "mode": "raw",
-              "raw": "{}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
+            "key": "id_user",
+            "value": "1"
+        },
+        {
+            "key": "id_siswa",
+            "value": "1"
+        },
+        {
+            "key": "id_guru",
+            "value": "1"
+        },
+        {
+            "key": "id_kelas",
+            "value": "2"
+        },
+        {
+            "key": "id_riwayat_kelas",
+            "value": "1"
+        },
+        {
+            "key": "id_orang_tua",
+            "value": "1"
+        },
+        {
+            "key": "id_semester",
+            "value": "1"
+        },
+        {
+            "key": "id_mapel",
+            "value": "1"
+        },
+        {
+            "key": "id_rombel",
+            "value": "1"
+        },
+        {
+            "key": "id_peserta",
+            "value": "1"
+        },
+        {
+            "key": "id_wali_kelas",
+            "value": "1"
+        },
+        {
+            "key": "id_periode",
+            "value": "1"
+        },
+        {
+            "key": "id_paket_nilai",
+            "value": "1"
+        },
+        {
+            "key": "id_tp",
+            "value": "1"
+        },
+        {
+            "key": "id_template",
+            "value": "1"
+        },
+        {
+            "key": "id_rapor",
+            "value": "1"
+        },
+        {
+            "key": "id_ekskul",
+            "value": "1"
+        },
+        {
+            "key": "id_notifikasi",
+            "value": "1"
         }
-      ]
-    },
-    {
-      "name": "03 - Siswa login dan uji pembatasan akses",
-      "item": [
+    ],
+    "item": [
         {
-          "name": "Ambil CSRF (cookie disimpan otomatis)",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/csrf-token"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Login pendaftar",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/login",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"login\": \"{{applicant_username}}\",\n  \"password\": \"{{applicant_password}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+            "name": "00 Auth",
+            "item": [
+                {
+                    "name": "POST /auth/login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/auth/login",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /auth/logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{base_url}}/api/auth/logout"
+                    }
+                },
+                {
+                    "name": "GET /auth/me",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/auth/me"
+                    }
+                },
+                {
+                    "name": "POST /auth/password/change",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/auth/password/change",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"password_lama\": \"{{password}}\",\n    \"password_baru\": \"Sandi-Baru-123!\",\n    \"password_baru_confirmation\": \"Sandi-Baru-123!\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /auth/switch-role",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/auth/switch-role",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"peran\": \"WALI_KELAS\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /csrf-token",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/csrf-token"
+                    }
+                },
+                {
+                    "name": "GET /notifikasi",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/notifikasi?belum_dibaca=1"
+                    }
+                },
+                {
+                    "name": "POST /notifikasi/baca-semua",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{base_url}}/api/notifikasi/baca-semua"
+                    }
+                },
+                {
+                    "name": "POST /notifikasi/{id}/baca",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{base_url}}/api/notifikasi/{{id_notifikasi}}/baca"
+                    }
+                },
+                {
+                    "name": "GET /referensi/agama",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/referensi/agama"
+                    }
                 }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
+            ]
         },
         {
-          "name": "Me sebagai siswa",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/me"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Siswa dilarang membaca daftar akun",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/admin/users"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 403\", function () { pm.response.to.have.status(403); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Siswa dilarang membaca semua siswa",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/siswa"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 403\", function () { pm.response.to.have.status(403); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/logout",
-            "body": {
-              "mode": "raw",
-              "raw": "{}",
-              "options": {
-                "raw": {
-                  "language": "json"
+            "name": "01 Akun (SUPERADMIN/ADMIN)",
+            "item": [
+                {
+                    "name": "GET /akun",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/akun?q=&role=&status_akun="
+                    }
+                },
+                {
+                    "name": "POST /akun",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/akun",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"operator2\",\n    \"nama\": \"Operator Dua\",\n    \"roles\": [\n        \"ADMIN\"\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /akun/massal",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/akun/massal",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jenis\": \"siswa\",\n    \"format\": \"json\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /akun/{user}",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/akun/{{id_user}}"
+                    }
+                },
+                {
+                    "name": "PUT /akun/{user}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/akun/{{id_user}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama\": \"Nama Baru\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "PUT /akun/{user}/peran",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/akun/{{id_user}}/peran",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"roles\": [\n        \"GURU\"\n    ],\n    \"id_guru\": 1\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /akun/{user}/reset-password",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{base_url}}/api/akun/{{id_user}}/reset-password"
+                    }
+                },
+                {
+                    "name": "PATCH /akun/{user}/status",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/akun/{{id_user}}/status",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status_akun\": \"nonaktif\",\n    \"alasan\": \"Pindah tugas\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /audit-log",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/audit-log"
+                    }
+                },
+                {
+                    "name": "GET /roles",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/roles"
+                    }
                 }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
+            ]
         },
         {
-          "name": "Me setelah logout",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/me"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 401\", function () { pm.response.to.have.status(401); });"
-                ]
-              }
-            }
-          ]
+            "name": "02 Operator — data master",
+            "item": [
+                {
+                    "name": "DELETE /master/anggota-kelas/{anggota}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/anggota-kelas/{{id_riwayat_kelas}}"
+                    }
+                },
+                {
+                    "name": "POST /master/anggota-kelas/{anggota}/pindah",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/anggota-kelas/{{id_riwayat_kelas}}/pindah",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_kelas\": 2,\n    \"alasan\": \"Permintaan orang tua\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /master/dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/dashboard"
+                    }
+                },
+                {
+                    "name": "GET /master/guru",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/guru"
+                    }
+                },
+                {
+                    "name": "POST /master/guru",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/guru",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama\": \"Guru Baru\",\n    \"status_kepegawaian\": \"GTT\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /master/guru/{guru}",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/guru/{{id_guru}}"
+                    }
+                },
+                {
+                    "name": "PUT /master/guru/{guru}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/guru/{{id_guru}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"no_telepon\": \"0812000000\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /master/kelas",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/kelas"
+                    }
+                },
+                {
+                    "name": "POST /master/kelas",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/kelas",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_tahun_ajaran\": 1,\n    \"nama\": \"X-C\",\n    \"tingkat\": \"X\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "PUT /master/kelas/{kelas}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/kelas/{{id_kelas}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama\": \"X-C\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "DELETE /master/kelas/{kelas}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/kelas/{{id_kelas}}"
+                    }
+                },
+                {
+                    "name": "GET /master/kelas/{kelas}/anggota",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/kelas/{{id_kelas}}/anggota"
+                    }
+                },
+                {
+                    "name": "POST /master/kelas/{kelas}/anggota",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/kelas/{{id_kelas}}/anggota",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_siswa\": [\n        1,\n        2\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /master/orang-tua",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/orang-tua"
+                    }
+                },
+                {
+                    "name": "POST /master/orang-tua",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/orang-tua",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama\": \"Ibu Contoh\",\n    \"jenis_kelamin\": \"P\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "PUT /master/orang-tua/{orangTua}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/orang-tua/{{id_orang_tua}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"no_telepon\": \"0812111111\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /master/sekolah",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/sekolah"
+                    }
+                },
+                {
+                    "name": "PUT /master/sekolah",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/sekolah",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"npsn\": \"20533708\",\n    \"nama\": \"SMA Negeri 1 Kota Malang\",\n    \"kota\": \"Malang\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /master/siswa",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/siswa?q=&tanpa_akun=0"
+                    }
+                },
+                {
+                    "name": "POST /master/siswa",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/siswa",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nis\": \"2001\",\n    \"nisn\": \"0012345678\",\n    \"nama\": \"Dewi Lestari\",\n    \"jenis_kelamin\": \"P\",\n    \"id_agama\": 1\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /master/siswa-impor/pratinjau",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/siswa-impor/pratinjau",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "POST /master/siswa-impor/simpan",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/siswa-impor/simpan",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"token\": \"{{impor_token}}\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /master/siswa-impor/template",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/siswa-impor/template"
+                    }
+                },
+                {
+                    "name": "GET /master/siswa/{siswa}",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/siswa/{{id_siswa}}"
+                    }
+                },
+                {
+                    "name": "PUT /master/siswa/{siswa}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/siswa/{{id_siswa}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama\": \"Dewi Lestari\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "DELETE /master/siswa/{siswa}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/siswa/{{id_siswa}}"
+                    }
+                },
+                {
+                    "name": "POST /master/siswa/{siswa}/orang-tua",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/master/siswa/{{id_siswa}}/orang-tua",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_orang_tua\": 1,\n    \"hubungan\": \"Ibu\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "DELETE /master/siswa/{siswa}/orang-tua/{orangTua}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{base_url}}/api/master/siswa/{{id_siswa}}/orang-tua/{{id_orang_tua}}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "03 Kurikulum",
+            "item": [
+                {
+                    "name": "GET /kurikulum/dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/dashboard"
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/dkn",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/dkn?id_kelas={{id_kelas}}&id_periode={{id_periode}}"
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/dkn/ekspor",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/dkn/ekspor?id_kelas={{id_kelas}}&id_periode={{id_periode}}&format=pdf"
+                    }
+                },
+                {
+                    "name": "PUT /kurikulum/kelas/{kelas}/wali",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/kelas/{{id_kelas}}/wali",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_guru\": 2\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/mapel",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/mapel"
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/mapel",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/mapel",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"kode\": \"FIS\",\n    \"nama\": \"Fisika\",\n    \"urutan_rapor\": 5,\n    \"kktp_default\": 75\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "PUT /kurikulum/mapel/{mapel}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/mapel/{{id_mapel}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"kktp_default\": 78\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/paket/{paket}/buka-koreksi",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/paket/{{id_paket_nilai}}/buka-koreksi",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"catatan\": \"Salah input nilai TP 2\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/periode",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/periode"
+                    }
+                },
+                {
+                    "name": "PUT /kurikulum/periode/{periode}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/periode/{{id_periode}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"tgl_buka\": \"2026-11-01 07:00\",\n    \"tgl_tutup\": \"2026-11-30 23:59\",\n    \"tingkat\": [\n        \"X\",\n        \"XI\",\n        \"XII\"\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/periode/{periode}/kelas/{kelas}/kunci",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/periode/{{id_periode}}/kelas/{{id_kelas}}/kunci"
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/periode/{periode}/kunci-semua-siap",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/periode/{{id_periode}}/kunci-semua-siap"
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/periode/{periode}/ringkasan",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/periode/{{id_periode}}/ringkasan"
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/periode/{periode}/tutup",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/periode/{{id_periode}}/tutup"
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/rapor",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/rapor?id_kelas={{id_kelas}}&id_periode={{id_periode}}"
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/rapor/cetak",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/rapor/cetak",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_periode\": \"{{id_periode}}\",\n    \"id_riwayat_kelas\": \"{{id_riwayat_kelas}}\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/rapor/cetak-kelas",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/rapor/cetak-kelas",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_periode\": \"{{id_periode}}\",\n    \"id_kelas\": \"{{id_kelas}}\",\n    \"format\": \"pdf\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/rapor/riwayat-cetak",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/rapor/riwayat-cetak?id_kelas={{id_kelas}}"
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/rapor/terbitkan",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/rapor/terbitkan",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_periode\": \"{{id_periode}}\",\n    \"id_kelas\": \"{{id_kelas}}\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/rapor/{rapor}/cabut",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/rapor/{{id_rapor}}/cabut",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"alasan\": \"Ada kesalahan data\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/rapor/{rapor}/unduh",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/rapor/{{id_rapor}}/unduh"
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/rombel",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/rombel"
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/rombel",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/rombel",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_semester\": \"{{id_semester}}\",\n    \"id_mapel\": 1,\n    \"nama\": \"Fisika X\",\n    \"id_guru\": [\n        1\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/rombel/{rombel}",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/rombel/{{id_rombel}}"
+                    }
+                },
+                {
+                    "name": "PUT /kurikulum/rombel/{rombel}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/rombel/{{id_rombel}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama\": \"Matematika X (campuran)\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "DELETE /kurikulum/rombel/{rombel}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/rombel/{{id_rombel}}"
+                    }
+                },
+                {
+                    "name": "PUT /kurikulum/rombel/{rombel}/guru",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/rombel/{{id_rombel}}/guru",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_guru\": [\n        1\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/rombel/{rombel}/peserta",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/rombel/{{id_rombel}}/peserta",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_kelas\": [\n        \"{{id_kelas}}\"\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "DELETE /kurikulum/rombel/{rombel}/peserta/{peserta}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/rombel/{{id_rombel}}/peserta/{{id_peserta}}"
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/rombel/{rombel}/rekap",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/rombel/{{id_rombel}}/rekap"
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/semester/{semester}/aktifkan",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/semester/{{id_semester}}/aktifkan"
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/tahun-ajaran",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/tahun-ajaran"
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/tahun-ajaran",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/tahun-ajaran",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama\": \"2027/2028\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/template-rapor",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/template-rapor"
+                    }
+                },
+                {
+                    "name": "POST /kurikulum/template-rapor",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/template-rapor",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"jenis\": \"SAS\",\n    \"nama\": \"Rapor Semester 2026\",\n    \"view\": \"rapor.semester\",\n    \"aktif\": true\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "PUT /kurikulum/template-rapor/{template}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/template-rapor/{{id_template}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"tempat_cetak\": \"Malang\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "PUT /kurikulum/tp/{tp}/kktp",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kurikulum/tp/{{id_tp}}/kktp",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"kktp\": 75\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /kurikulum/wali-kelas",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/wali-kelas"
+                    }
+                },
+                {
+                    "name": "DELETE /kurikulum/wali-kelas/{waliKelas}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{base_url}}/api/kurikulum/wali-kelas/{{id_wali_kelas}}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "04 Guru mapel",
+            "item": [
+                {
+                    "name": "GET /guru/dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/guru/dashboard"
+                    }
+                },
+                {
+                    "name": "GET /guru/periode",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/guru/periode"
+                    }
+                },
+                {
+                    "name": "GET /guru/rombel",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/guru/rombel"
+                    }
+                },
+                {
+                    "name": "GET /guru/rombel/{rombel}",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}"
+                    }
+                },
+                {
+                    "name": "GET /guru/rombel/{rombel}/nilai",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}/nilai?id_periode={{id_periode}}"
+                    }
+                },
+                {
+                    "name": "PUT /guru/rombel/{rombel}/nilai",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}/nilai",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_periode\": \"{{id_periode}}\",\n    \"items\": [\n        {\n            \"id_siswa_rombel\": 1,\n            \"id_tp\": 3,\n            \"nilai\": 85\n        }\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /guru/rombel/{rombel}/nilai/pratinjau",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}/nilai/pratinjau",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_periode\": \"{{id_periode}}\",\n    \"items\": [\n        {\n            \"id_siswa_rombel\": 1,\n            \"id_tp\": 3,\n            \"nilai\": 85\n        },\n        {\n            \"id_siswa_rombel\": 2,\n            \"id_tp\": 3,\n            \"nilai\": null\n        }\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /guru/rombel/{rombel}/paket",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}/paket?id_periode={{id_periode}}"
+                    }
+                },
+                {
+                    "name": "POST /guru/rombel/{rombel}/paket/kirim",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}/paket/kirim",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_periode\": \"{{id_periode}}\",\n    \"id_kelas\": \"{{id_kelas}}\",\n    \"konfirmasi_belum_lengkap\": false\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /guru/rombel/{rombel}/rekap",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}/rekap"
+                    }
+                },
+                {
+                    "name": "GET /guru/rombel/{rombel}/rekap/ekspor",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}/rekap/ekspor"
+                    }
+                },
+                {
+                    "name": "GET /guru/rombel/{rombel}/tp",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}/tp"
+                    }
+                },
+                {
+                    "name": "POST /guru/rombel/{rombel}/tp",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}/tp",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"deskripsi\": \"Menganalisis fungsi eksponen\",\n    \"hanya_sts\": false\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /guru/rombel/{rombel}/tp-salin",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}/tp-salin",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_tp\": [\n        1,\n        2\n    ],\n    \"id_rombel_tujuan\": [\n        2\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "PUT /guru/rombel/{rombel}/tp-urutan",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/guru/rombel/{{id_rombel}}/tp-urutan",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_tp\": [\n        2,\n        1,\n        3,\n        4\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "PUT /guru/tp/{tp}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/guru/tp/{{id_tp}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"deskripsi\": \"Menganalisis fungsi eksponen dan logaritma\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "DELETE /guru/tp/{tp}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{base_url}}/api/guru/tp/{{id_tp}}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "05 Wali kelas",
+            "item": [
+                {
+                    "name": "GET /wali/dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/wali/dashboard"
+                    }
+                },
+                {
+                    "name": "GET /wali/dkn",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/wali/dkn?id_kelas={{id_kelas}}&id_periode={{id_periode}}"
+                    }
+                },
+                {
+                    "name": "GET /wali/dkn/ekspor",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/wali/dkn/ekspor?id_kelas={{id_kelas}}&id_periode={{id_periode}}&format=xlsx"
+                    }
+                },
+                {
+                    "name": "GET /wali/paket",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/wali/paket?id_periode={{id_periode}}"
+                    }
+                },
+                {
+                    "name": "GET /wali/paket/{paket}",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/wali/paket/{{id_paket_nilai}}"
+                    }
+                },
+                {
+                    "name": "POST /wali/paket/{paket}/revisi",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/wali/paket/{{id_paket_nilai}}/revisi",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"catatan\": \"Nilai TP 2 siswa Andi perlu dicek\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /wali/paket/{paket}/setujui",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/wali/paket/{{id_paket_nilai}}/setujui",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"catatan\": null\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /wali/pelengkap",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/wali/pelengkap?id_kelas={{id_kelas}}&id_periode={{id_periode}}"
+                    }
+                },
+                {
+                    "name": "PUT /wali/pelengkap",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/wali/pelengkap",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_periode\": \"{{id_periode}}\",\n    \"id_kelas\": \"{{id_kelas}}\",\n    \"items\": [\n        {\n            \"id_riwayat_kelas\": \"{{id_riwayat_kelas}}\",\n            \"sakit\": 1,\n            \"izin\": 0,\n            \"alpha\": 0,\n            \"catatan_wali\": \"Pertahankan prestasimu.\"\n        }\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /wali/pelengkap/tarik-presensi",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/wali/pelengkap/tarik-presensi",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_periode\": \"{{id_periode}}\",\n    \"id_kelas\": \"{{id_kelas}}\",\n    \"dari\": \"2026-07-14\",\n    \"sampai\": \"2026-09-30\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /wali/periode",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/wali/periode"
+                    }
+                },
+                {
+                    "name": "GET /wali/rapor",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/wali/rapor?id_kelas={{id_kelas}}&id_periode={{id_periode}}"
+                    }
+                },
+                {
+                    "name": "POST /wali/rapor/cetak",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/wali/rapor/cetak",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_periode\": \"{{id_periode}}\",\n    \"id_riwayat_kelas\": \"{{id_riwayat_kelas}}\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "POST /wali/rapor/cetak-kelas",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/wali/rapor/cetak-kelas",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_periode\": \"{{id_periode}}\",\n    \"id_kelas\": \"{{id_kelas}}\",\n    \"format\": \"zip\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "GET /wali/rapor/riwayat-cetak",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/wali/rapor/riwayat-cetak?id_kelas={{id_kelas}}"
+                    }
+                },
+                {
+                    "name": "GET /wali/rapor/{rapor}/unduh",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/wali/rapor/{{id_rapor}}/unduh"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "06 Kesiswaan",
+            "item": [
+                {
+                    "name": "GET /kesiswaan/dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kesiswaan/dashboard"
+                    }
+                },
+                {
+                    "name": "GET /kesiswaan/ekskul",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kesiswaan/ekskul"
+                    }
+                },
+                {
+                    "name": "POST /kesiswaan/ekskul",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kesiswaan/ekskul",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"nama\": \"Karya Ilmiah Remaja\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "PUT /kesiswaan/ekskul/{ekskul}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kesiswaan/ekskul/{{id_ekskul}}",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"aktif\": true\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "DELETE /kesiswaan/ekskul/{ekskul}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{base_url}}/api/kesiswaan/ekskul/{{id_ekskul}}"
+                    }
+                },
+                {
+                    "name": "GET /kesiswaan/ekskul/{ekskul}/peserta",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/kesiswaan/ekskul/{{id_ekskul}}/peserta"
+                    }
+                },
+                {
+                    "name": "POST /kesiswaan/ekskul/{ekskul}/peserta",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kesiswaan/ekskul/{{id_ekskul}}/peserta",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"id_riwayat_kelas\": [\n        \"{{id_riwayat_kelas}}\"\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "PUT /kesiswaan/ekskul/{ekskul}/predikat",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": "{{base_url}}/api/kesiswaan/ekskul/{{id_ekskul}}/predikat",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"items\": [\n        {\n            \"id_peserta_ekskul\": 1,\n            \"predikat\": \"SB\",\n            \"catatan\": \"Aktif\"\n        }\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "DELETE /kesiswaan/peserta-ekskul/{peserta}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": "{{base_url}}/api/kesiswaan/peserta-ekskul/{{id_peserta}}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "07 Siswa & orang tua",
+            "item": [
+                {
+                    "name": "GET /portal/anak",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/portal/anak"
+                    }
+                },
+                {
+                    "name": "GET /portal/analitik/tren",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/portal/analitik/tren"
+                    }
+                },
+                {
+                    "name": "GET /portal/beranda",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/portal/beranda"
+                    }
+                },
+                {
+                    "name": "GET /portal/nilai",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/portal/nilai"
+                    }
+                },
+                {
+                    "name": "GET /portal/nilai/{rombel}",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/portal/nilai/{{id_rombel}}"
+                    }
+                },
+                {
+                    "name": "GET /portal/rapor",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/portal/rapor"
+                    }
+                },
+                {
+                    "name": "GET /portal/rapor/{rapor}/unduh",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/portal/rapor/{{id_rapor}}/unduh"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "08 Analitik",
+            "item": [
+                {
+                    "name": "GET /analitik/early-warning",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/analitik/early-warning?id_kelas={{id_kelas}}&id_periode={{id_periode}}"
+                    }
+                },
+                {
+                    "name": "GET /analitik/ketuntasan",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/analitik/ketuntasan?id_rombel={{id_rombel}}&id_periode={{id_periode}}"
+                    }
+                },
+                {
+                    "name": "GET /analitik/sebaran",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/analitik/sebaran?id_kelas={{id_kelas}}&id_periode={{id_periode}}"
+                    }
+                },
+                {
+                    "name": "GET /analitik/siswa/{siswa}/tren",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": "{{base_url}}/api/analitik/siswa/{{id_siswa}}/tren"
+                    }
+                }
+            ]
         }
-      ]
-    },
-    {
-      "name": "04 - Admin mengisi data akademik",
-      "item": [
-        {
-          "name": "Ambil CSRF (cookie disimpan otomatis)",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/csrf-token"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Login admin",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/login",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"login\": \"{{admin_login}}\",\n  \"password\": \"{{admin_password}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Identitas sekolah",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/sekolah",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"npsn\": \"12345678\",\n  \"nama\": \"SMA Demo\",\n  \"alamat\": \"Alamat dummy\",\n  \"nama_kepala_sekolah\": \"Kepala Demo\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Buat tahun ajaran",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/tahun-ajaran",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nama\": \"2026/2027\",\n  \"aktif\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
-                  "if (pm.response.code === 201) pm.collectionVariables.set(\"tahun_ajaran_id\", pm.response.json().data.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Buat semester",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/semester",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"tahun_ajaran_id\": \"{{tahun_ajaran_id}}\",\n  \"nama\": \"ganjil\",\n  \"aktif\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
-                  "if (pm.response.code === 201) pm.collectionVariables.set(\"semester_id\", pm.response.json().data.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Buat kelas",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/kelas",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"semester_id\": \"{{semester_id}}\",\n  \"nama\": \"X-1\",\n  \"tingkat\": 10,\n  \"fase\": \"E\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
-                  "if (pm.response.code === 201) pm.collectionVariables.set(\"kelas_id\", pm.response.json().data.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Buat mapel",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/mapel",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"kode\": \"IF-{{run_id}}\",\n  \"nama\": \"Informatika\",\n  \"aktif\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
-                  "if (pm.response.code === 201) pm.collectionVariables.set(\"mapel_id\", pm.response.json().data.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Buat siswa",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/siswa",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nis\": \"S-{{run_id}}\",\n  \"nisn\": null,\n  \"nama\": \"Siswa Demo\",\n  \"agama\": null,\n  \"aktif\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
-                  "if (pm.response.code === 201) pm.collectionVariables.set(\"siswa_id\", pm.response.json().data.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Hubungkan akun ke siswa",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/admin/users/{{applicant_id}}/profile",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"jenis\": \"siswa\",\n  \"profil_id\": \"{{siswa_id}}\",\n  \"alasan\": \"Identitas cocok dengan data induk siswa\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Buat guru",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/guru",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nama\": \"Guru Demo\",\n  \"nip\": null,\n  \"status_kepegawaian\": \"Honorer\",\n  \"aktif\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
-                  "if (pm.response.code === 201) pm.collectionVariables.set(\"guru_id\", pm.response.json().data.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Tempatkan siswa ke kelas",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/siswa-kelas",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"siswa_id\": \"{{siswa_id}}\",\n  \"kelas_id\": \"{{kelas_id}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
-                  "if (pm.response.code === 201) pm.collectionVariables.set(\"siswa_kelas_id\", pm.response.json().data.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Penempatan duplikat harus ditolak",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/siswa-kelas",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"siswa_id\": \"{{siswa_id}}\",\n  \"kelas_id\": \"{{kelas_id}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 422\", function () { pm.response.to.have.status(422); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Baca anggota kelas",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/siswa-kelas?kelas_id={{kelas_id}}"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Arsipkan mapel",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/mapel/{{mapel_id}}",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"kode\": \"IF-{{run_id}}\",\n  \"nama\": \"Informatika\",\n  \"aktif\": false\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Baca audit log",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/admin/logs"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-CSRF-TOKEN",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": "{{base_url}}/api/logout",
-            "body": {
-              "mode": "raw",
-              "raw": "{}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    }
-  ]
+    ]
 }

@@ -2,163 +2,126 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Exceptions\AturanBisnisException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Master\AnggotaKelasRequest;
+use App\Http\Requests\Master\KelasRequest;
+use App\Http\Requests\Master\PindahKelasRequest;
 use App\Models\Kelas;
 use App\Models\RiwayatKelas;
 use App\Models\Semester;
-use App\Models\Siswa;
+use App\Models\TahunAjaran;
+use App\Services\AnggotaKelasService;
 use App\Services\AuditService;
+use App\Support\AcademicAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class KelasController extends Controller
 {
-    public function __construct(private AuditService $audit) {}
+    public function __construct(private AuditService $audit, private AnggotaKelasService $anggota) {}
 
     public function index(Request $request): JsonResponse
     {
-        $semester = $this->semesterDari($request);
+        $request->validate([
+            'id_tahun_ajaran' => ['nullable', 'integer', 'exists:tahun_ajaran,id_tahun_ajaran'],
+            'tingkat' => ['nullable', 'in:'.implode(',', Kelas::TINGKAT)],
+            'q' => ['nullable', 'string', 'max:50'],
+        ]);
+        $ta = $request->integer('id_tahun_ajaran') ?: TahunAjaran::where('aktif', true)->value('id_tahun_ajaran');
+        $semester = Semester::aktif();
 
-        $kelas = Kelas::where('id_tahun_ajaran', $semester->id_tahun_ajaran)
-            ->withCount(['riwayat as jumlah_siswa' => fn ($q) => $q->where('id_semester', $semester->id_semester)])
-            ->with(['waliKelas' => fn ($q) => $q->where('id_semester', $semester->id_semester)->with('guru:id_guru,nama')])
-            ->orderBy('tingkat')
-            ->orderBy('nama')
-            ->get();
+        $kelas = Kelas::where('id_tahun_ajaran', $ta)
+            ->when($request->tingkat, fn ($q, $v) => $q->where('tingkat', $v))
+            ->when($request->q, fn ($q, $v) => $q->where('nama', 'like', "%{$v}%"))
+            ->withCount(['anggota as jumlah_siswa' => fn ($q) => $q->where('id_semester', $semester?->id_semester)])
+            ->with(['wali' => fn ($q) => $q->where('id_semester', $semester?->id_semester)->with('guru:id_guru,nama')])
+            ->orderByRaw("CASE tingkat WHEN 'X' THEN 1 WHEN 'XI' THEN 2 ELSE 3 END")->orderBy('nama')
+            ->paginate($this->perPage());
 
-        return response()->json($kelas);
+        return $this->paginated($kelas, fn (Kelas $k) => $k->only(['id_kelas', 'id_tahun_ajaran', 'nama', 'tingkat', 'fase', 'jumlah_siswa']) + [
+            'wali_kelas' => $k->wali->first()?->guru?->only(['id_guru', 'nama']),
+        ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(KelasRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'nama' => ['required', 'string', 'max:50', Rule::unique('kelas', 'nama')->where('id_tahun_ajaran', $request->integer('id_tahun_ajaran'))],
-            'tingkat' => ['required', Rule::in(['X', 'XI', 'XII'])],
-            'fase' => ['nullable', Rule::in(['E', 'F'])],
-            'id_tahun_ajaran' => ['required', 'exists:tahun_ajaran,id_tahun_ajaran'],
-        ]);
+        $data = $request->validated() + ['fase' => Kelas::faseUntuk($request->string('tingkat'))];
+        $kelas = DB::transaction(function () use ($data) {
+            $k = Kelas::create($data);
+            $this->audit->catat('buat_kelas', 'kelas', $k->id_kelas, null, $data);
 
-        $data['fase'] ??= $data['tingkat'] === 'X' ? 'E' : 'F';
+            return $k;
+        });
 
-        $kelas = Kelas::create($data);
-
-        $this->audit->catat('buat_kelas', 'kelas', $kelas->id_kelas, null, null, $kelas->only(['nama', 'tingkat', 'fase']));
-
-        return response()->json($kelas, 201);
+        return $this->created($kelas, 'Kelas ditambahkan.');
     }
 
-    public function update(Request $request, Kelas $kelas): JsonResponse
+    public function update(KelasRequest $request, Kelas $kelas): JsonResponse
     {
-        $data = $request->validate([
-            'nama' => ['sometimes', 'string', 'max:50', Rule::unique('kelas', 'nama')->where('id_tahun_ajaran', $kelas->id_tahun_ajaran)->ignore($kelas->id_kelas, 'id_kelas')],
-            'tingkat' => ['sometimes', Rule::in(['X', 'XI', 'XII'])],
-            'fase' => ['sometimes', Rule::in(['E', 'F'])],
-        ]);
+        $data = $request->validated();
+        if (isset($data['tingkat'])) {
+            if ($data['tingkat'] !== $kelas->tingkat && $kelas->anggota()->exists()) {
+                throw AturanBisnisException::terkunci('Tingkat kelas yang sudah memiliki anggota tidak dapat diubah.');
+            }
+            $data['fase'] = Kelas::faseUntuk($data['tingkat']);
+        }
 
-        $sebelum = $kelas->only(array_keys($data));
-        $kelas->update($data);
+        DB::transaction(function () use ($kelas, $data) {
+            $sebelum = $kelas->only(array_keys($data));
+            $kelas->update($data);
+            $this->audit->catat('ubah_kelas', 'kelas', $kelas->id_kelas, $sebelum, $data);
+        });
 
-        $this->audit->catat('ubah_kelas', 'kelas', $kelas->id_kelas, null, $sebelum, $kelas->only(array_keys($data)));
+        return $this->ok($kelas->fresh(), 'Kelas diperbarui.');
+    }
 
-        return response()->json($kelas);
+    public function destroy(Kelas $kelas): JsonResponse
+    {
+        if ($kelas->anggota()->exists() || $kelas->wali()->exists()) {
+            throw AturanBisnisException::terkunci('Kelas yang sudah memiliki anggota atau wali tidak dapat dihapus.');
+        }
+        DB::transaction(function () use ($kelas) {
+            $kelas->delete();
+            $this->audit->catat('hapus_kelas', 'kelas', $kelas->id_kelas, $kelas->only(['nama', 'tingkat', 'id_tahun_ajaran']));
+        });
+
+        return $this->ok(null, 'Kelas dihapus.');
     }
 
     public function anggota(Request $request, Kelas $kelas): JsonResponse
     {
-        $semester = $this->semesterDari($request);
+        $semester = AcademicAccess::semester($request->integer('id_semester') ?: null);
+        $this->anggota->pastikanSemesterKelas($kelas, $semester);
 
-        return response()->json(
-            RiwayatKelas::with('siswa:id_siswa,nis,nisn,nama')
-                ->where('id_kelas', $kelas->id_kelas)
-                ->where('id_semester', $semester->id_semester)
-                ->get()
-        );
+        $data = RiwayatKelas::with('siswa:id_siswa,nis,nisn,nama,jenis_kelamin,status,id_user')
+            ->where('id_kelas', $kelas->id_kelas)->where('id_semester', $semester->id_semester)
+            ->get()->sortBy('siswa.nama', SORT_NATURAL | SORT_FLAG_CASE)->values()
+            ->map(fn (RiwayatKelas $r) => ['id_riwayat_kelas' => $r->id_riwayat_kelas] + $r->siswa->only(['id_siswa', 'nis', 'nisn', 'nama', 'jenis_kelamin', 'status']));
+
+        return $this->ok(['kelas' => $kelas->only(['id_kelas', 'nama', 'tingkat']), 'id_semester' => $semester->id_semester, 'anggota' => $data]);
     }
 
-    /** Menambahkan siswa ke kelas asal pada semester tertentu. Siswa yang sudah punya kelas dilewati. */
-    public function tambahSiswa(Request $request, Kelas $kelas): JsonResponse
+    public function tambahAnggota(AnggotaKelasRequest $request, Kelas $kelas): JsonResponse
     {
-        $data = $request->validate([
-            'id_semester' => ['required', 'exists:semester,id_semester'],
-            'siswa_ids' => ['required', 'array', 'min:1'],
-            'siswa_ids.*' => ['integer', 'exists:siswa,id_siswa'],
-        ]);
+        $semester = AcademicAccess::semester($request->integer('id_semester') ?: null);
+        $hasil = $this->anggota->tambah($kelas, $semester, $request->input('id_siswa'));
 
-        $semester = Semester::findOrFail($data['id_semester']);
-        $this->pastikanSatuTahunAjaran($kelas, $semester);
-
-        $hasil = DB::transaction(function () use ($kelas, $semester, $data) {
-            $ditambahkan = 0;
-            $dilewati = [];
-
-            foreach ($data['siswa_ids'] as $idSiswa) {
-                $sudah = RiwayatKelas::where('id_siswa', $idSiswa)->where('id_semester', $semester->id_semester)->first();
-
-                if ($sudah) {
-                    $dilewati[] = ['id_siswa' => $idSiswa, 'id_kelas_sekarang' => $sudah->id_kelas];
-                    continue;
-                }
-
-                RiwayatKelas::create([
-                    'id_siswa' => $idSiswa,
-                    'id_kelas' => $kelas->id_kelas,
-                    'id_semester' => $semester->id_semester,
-                ]);
-                $ditambahkan++;
-            }
-
-            $this->audit->catat('tambah_anggota_kelas', 'kelas', $kelas->id_kelas, null, null, [
-                'id_semester' => $semester->id_semester,
-                'jumlah' => $ditambahkan,
-            ]);
-
-            return ['ditambahkan' => $ditambahkan, 'dilewati' => $dilewati];
-        });
-
-        return response()->json($hasil);
+        return $this->ok($hasil, "{$hasil['ditambahkan']} siswa ditambahkan ke {$kelas->nama}.");
     }
 
-    /** Memindahkan kelas asal siswa pada satu semester. Alasan opsional, tercatat di log. */
-    public function pindahSiswa(Request $request, Siswa $siswa): JsonResponse
+    public function pindah(PindahKelasRequest $request, RiwayatKelas $anggota): JsonResponse
     {
-        $data = $request->validate([
-            'id_semester' => ['required', 'exists:semester,id_semester'],
-            'id_kelas' => ['required', 'exists:kelas,id_kelas'],
-            'alasan' => ['nullable', 'string', 'max:500'],
-        ]);
+        $hasil = $this->anggota->pindah($anggota->load('kelas'), Kelas::findOrFail($request->integer('id_kelas')), $request->string('alasan'));
 
-        $semester = Semester::findOrFail($data['id_semester']);
-        $kelas = Kelas::findOrFail($data['id_kelas']);
-        $this->pastikanSatuTahunAjaran($kelas, $semester);
+        return $this->ok(['id_riwayat_kelas' => $hasil->id_riwayat_kelas, 'kelas' => $hasil->kelas->only(['id_kelas', 'nama'])], 'Siswa dipindahkan.');
+    }
 
-        DB::transaction(function () use ($siswa, $semester, $kelas, $data) {
-            $riwayat = RiwayatKelas::where('id_siswa', $siswa->id_siswa)
-                ->where('id_semester', $semester->id_semester)
-                ->first();
+    public function keluarkan(RiwayatKelas $anggota): JsonResponse
+    {
+        $this->anggota->keluarkan($anggota);
 
-            $sebelum = null;
-
-            if ($riwayat) {
-                $sebelum = ['id_kelas' => $riwayat->id_kelas];
-                $riwayat->update(['id_kelas' => $kelas->id_kelas]);
-            } else {
-                RiwayatKelas::create([
-                    'id_siswa' => $siswa->id_siswa,
-                    'id_kelas' => $kelas->id_kelas,
-                    'id_semester' => $semester->id_semester,
-                ]);
-            }
-
-            // Perpindahan kelas asal dapat mengubah paket nilai; sinkronisasi dilakukan saat periode dibuka.
-            $this->audit->catat('pindah_kelas', 'siswa', $siswa->id_siswa, $data['alasan'] ?? null, $sebelum, [
-                'id_kelas' => $kelas->id_kelas,
-                'id_semester' => $semester->id_semester,
-            ]);
-        });
-
-        return response()->json(['message' => 'Siswa dipindahkan ke kelas ' . $kelas->nama . '.']);
+        return $this->ok(null, 'Siswa dikeluarkan dari kelas.');
     }
 }

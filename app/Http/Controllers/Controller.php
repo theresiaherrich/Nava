@@ -2,39 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Kelas;
-use App\Models\Semester;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\JsonResponse;
 
-abstract class Controller extends BaseController
+/**
+ * Bentuk respons seragam:
+ *   sukses  : { data, message }
+ *   daftar  : { data: [...], meta: { current_page, per_page, total, last_page }, message }
+ *   error   : { message, errors?, code? }  (lihat bootstrap/app.php)
+ */
+abstract class Controller
 {
-    use AuthorizesRequests, ValidatesRequests;
-
-    /** Semester dari query ?id_semester=, atau semester yang sedang aktif. */
-    protected function semesterDari(Request $request): Semester
+    protected function ok(mixed $data = null, ?string $message = null, int $status = 200): JsonResponse
     {
-        $id = $request->integer('id_semester') ?: Semester::where('aktif', true)->value('id_semester');
-        $semester = $id ? Semester::find($id) : null;
-
-        if (! $semester) {
-            throw ValidationException::withMessages([
-                'id_semester' => 'Semester tidak ditemukan. Aktifkan semester terlebih dahulu.',
-            ]);
-        }
-
-        return $semester;
+        return response()->json(['data' => $data, 'message' => $message], $status);
     }
 
-    protected function pastikanSatuTahunAjaran(Kelas $kelas, Semester $semester): void
+    protected function created(mixed $data = null, string $message = 'Data berhasil dibuat.'): JsonResponse
     {
-        if ((int) $kelas->id_tahun_ajaran !== (int) $semester->id_tahun_ajaran) {
-            throw ValidationException::withMessages([
-                'id_semester' => 'Kelas dan semester berasal dari tahun ajaran yang berbeda.',
-            ]);
-        }
+        return $this->ok($data, $message, 201);
+    }
+
+    protected function paginated(LengthAwarePaginator $page, ?callable $map = null, ?string $message = null): JsonResponse
+    {
+        $items = collect($page->items());
+
+        return response()->json([
+            'data' => ($map ? $items->map($map) : $items)->values(),
+            'meta' => [
+                'current_page' => $page->currentPage(),
+                'per_page' => $page->perPage(),
+                'total' => $page->total(),
+                'last_page' => $page->lastPage(),
+            ],
+            'message' => $message,
+        ]);
+    }
+
+    protected function perPage(): int
+    {
+        return max(1, min(100, (int) request('per_page', 20)));
     }
 }

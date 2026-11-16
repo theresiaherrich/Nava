@@ -3,114 +3,92 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\SwitchRoleRequest;
+use App\Http\Resources\AkunResource;
 use App\Models\User;
-use App\Services\AccountService;
+use App\Services\AuditService;
+use App\Support\AcademicAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    public function __construct(private AccountService $accounts) {}
+    public function __construct(private AuditService $audit) {}
 
-    public function register(Request $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'nama' => ['required', 'string', 'max:120'],
-            'username' => ['required', 'string', 'max:50', 'alpha_dash', 'unique:user,username'],
-            'email' => ['nullable', 'email', 'max:100', 'unique:user,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'peran' => ['required', 'in:SISWA,GURU,ORANG_TUA'],
-            'nip' => ['nullable', 'string', 'max:30', 'unique:guru,nip'],
-        ]);
+        $user = User::where('username', Str::lower(trim($request->string('username'))))->first();
 
-        $this->accounts->daftar($data);
+        // Hash::check tetap dijalankan agar waktu respons tidak membocorkan username yang ada.
+        $cocok = Hash::check($request->string('password'), $user?->password ?? '$2y$12$'.str_repeat('x', 53));
 
-        return response()->json([
-            'message' => 'Pendaftaran diterima. Akun akan aktif setelah disetujui admin sekolah.',
-        ], 201);
-    }
-
-    public function login(Request $request): JsonResponse
-    {
-        $data = $request->validate([
-            'username' => ['required', 'string'],
-            'password' => ['required', 'string'],
-        ]);
-
-        $user = User::where('username', $data['username'])->first();
-
-        if (! $user || ! Hash::check($data['password'], $user->password)) {
-            throw ValidationException::withMessages(['username' => 'Username atau kata sandi salah.']);
+        if (! $user || ! $cocok) {
+            return response()->json(['message' => 'Username atau kata sandi salah.', 'code' => 'INVALID_CREDENTIALS'], 401);
         }
 
-        if (! $user->isAktif()) {
+        if ($user->status_akun !== 'aktif') {
+            $belum = $user->status_akun === 'belum_aktif';
+
             return response()->json([
-                'message' => $user->status_akun === 'pending'
-                    ? 'Akun Anda menunggu persetujuan admin sekolah.'
-                    : 'Akun Anda nonaktif. Hubungi operator sekolah.',
+                'message' => $belum
+                    ? 'Akun Anda belum diaktifkan. Hubungi operator sekolah.'
+                    : 'Akun Anda dinonaktifkan. Hubungi operator sekolah.',
+                'code' => $belum ? 'ACCOUNT_NOT_ACTIVATED' : 'ACCOUNT_DISABLED',
             ], 403);
+        }
+
+        if ($user->kodeRoles() === []) {
+            return response()->json(['message' => 'Akun Anda belum memiliki peran. Hubungi operator sekolah.', 'code' => 'NO_ROLE'], 403);
         }
 
         Auth::login($user);
         $request->session()->regenerate();
+        AcademicAccess::setPeranAktif($user->kodeRoles()[0]);
 
         $user->forceFill(['last_login_at' => now()])->save();
+        $this->audit->catat('login', 'user', $user->id_user, null, null, null, $user->id_user);
 
-        $peran = $user->kodeRoles();
-        $request->session()->put('active_role', count($peran) === 1 ? $peran[0] : null);
-
-        return response()->json($this->payload($user, $request));
+        return $this->ok($this->sesi($user), 'Login berhasil.');
     }
 
     public function logout(Request $request): JsonResponse
     {
-        Auth::logout();
+        if ($id = Auth::id()) {
+            $this->audit->catat('logout', 'user', $id);
+        }
+
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json(['message' => 'Berhasil keluar.']);
+        return $this->ok(['csrf_token' => csrf_token()], 'Logout berhasil.');
     }
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json($this->payload($request->user(), $request));
+        return $this->ok($this->sesi($request->user()));
     }
 
-    /** Dipakai saat akun punya beberapa peran (dropdown "Pilih Peran" / "Ganti Peran"). */
-    public function switchRole(Request $request): JsonResponse
+    public function switchRole(SwitchRoleRequest $request): JsonResponse
     {
-        $data = $request->validate(['role' => ['required', 'string']]);
-        $user = $request->user();
+        $sebelum = AcademicAccess::peranAktif();
+        AcademicAccess::setPeranAktif($request->string('peran'));
+        $this->audit->catat('ganti_peran', 'user', Auth::id(), ['peran_aktif' => $sebelum], ['peran_aktif' => (string) $request->string('peran')]);
 
-        if (! $user->hasRole($data['role'])) {
-            return response()->json(['message' => 'Anda tidak memiliki peran tersebut.'], 403);
-        }
-
-        $request->session()->put('active_role', $data['role']);
-
-        return response()->json($this->payload($user, $request));
+        return $this->ok($this->sesi($request->user()), 'Peran aktif diganti.');
     }
 
-    private function payload(User $user, Request $request): array
+    private function sesi(User $user): array
     {
         return [
-            'id_user' => $user->id_user,
-            'username' => $user->username,
-            'nama' => $user->nama,
-            'email' => $user->email,
-            'status_akun' => $user->status_akun,
+            'user' => AkunResource::make($user)->resolve(),
+            'peran_aktif' => AcademicAccess::peranAktif(),
             'must_change_password' => $user->must_change_password,
-            'roles' => $user->roles()->get(['kode', 'nama'])
-                ->map(fn ($r) => ['kode' => $r->kode, 'nama' => $r->nama])
-                ->values(),
-            'active_role' => $request->session()->get('active_role'),
-            'profil' => [
-                'id_siswa' => $user->siswa?->id_siswa,
-                'id_guru' => $user->guru?->id_guru,
-            ],
+            'csrf_token' => csrf_token(),
         ];
     }
 }

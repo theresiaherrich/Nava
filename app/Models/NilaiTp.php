@@ -9,20 +9,27 @@ class NilaiTp extends Model
 {
     protected $table = 'nilai_tp';
 
-    protected $fillable = ['tp_id', 'siswa_rombel_id', 'skor', 'diubah_oleh'];
+    protected $primaryKey = 'id_nilai_tp';
+
+    protected $fillable = ['id_tp', 'id_siswa_rombel', 'id_periode', 'nilai', 'diubah_oleh'];
 
     protected function casts(): array
     {
-        return ['skor' => 'decimal:2'];
+        return ['nilai' => 'float'];
     }
 
     public function tp(): BelongsTo
     {
-        return $this->belongsTo(Tp::class, 'tp_id');
+        return $this->belongsTo(Tp::class, 'id_tp', 'id_tp');
     }
 
     public function siswaRombel(): BelongsTo
     {
-        return $this->belongsTo(SiswaRombel::class, 'siswa_rombel_id');
+        return $this->belongsTo(SiswaRombel::class, 'id_siswa_rombel', 'id_siswa_rombel');
+    }
+
+    public function periode(): BelongsTo
+    {
+        return $this->belongsTo(PeriodeNilai::class, 'id_periode', 'id_periode');
     }
 }

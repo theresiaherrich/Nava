@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/** Anggota kelas (ERD: anggota_kelas) untuk satu semester. */
 class RiwayatKelas extends Model
 {
     protected $table = 'riwayat_kelas';
@@ -26,5 +28,15 @@ class RiwayatKelas extends Model
     public function semester(): BelongsTo
     {
         return $this->belongsTo(Semester::class, 'id_semester', 'id_semester');
+    }
+
+    public function siswaRombel(): HasMany
+    {
+        return $this->hasMany(SiswaRombel::class, 'id_riwayat_kelas', 'id_riwayat_kelas');
+    }
+
+    public function mutasi(): HasMany
+    {
+        return $this->hasMany(MutasiKelas::class, 'id_riwayat_kelas', 'id_riwayat_kelas');
     }
 }

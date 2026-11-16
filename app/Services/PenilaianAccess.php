@@ -2,70 +2,56 @@
 
 namespace App\Services;
 
-use App\Models\NilaiTp;
+use App\Exceptions\AturanBisnisException;
 use App\Models\PaketNilai;
-use App\Models\PeriodeNilai;
 use App\Models\Rombel;
-use App\Models\Tp;
-use App\Models\User;
 use App\Models\WaliKelas;
-use Illuminate\Support\Collection;
+use App\Support\AcademicAccess;
 
 /**
- * Satu tempat untuk aturan akses dan aturan nilai. Controller memanggil ini,
- * bukan mengulang pengecekan sendiri, supaya tidak ada celah di satu endpoint.
+ * Satu tempat aturan akses data penilaian, supaya tidak ada endpoint yang lupa memeriksa.
+ * Guru hanya rombel yang ia ampu; wali hanya kelasnya; Kurikulum semua.
  */
 class PenilaianAccess
 {
-    public const MAKS_TP = 10;
-
-    public static function guruId(User $user): ?int
+    public static function pastikanPengampu(Rombel $rombel): void
     {
-        return $user->guru?->id;
+        $guru = AcademicAccess::guru();
+        $mengampu = $rombel->guru()->where('guru.id_guru', $guru->id_guru)->exists();
+
+        if (! AcademicAccess::peranIs('GURU') || ! $mengampu) {
+            throw AturanBisnisException::dilarang('Rombel ini bukan rombel yang Anda ampu.', 'NOT_PENGAMPU');
+        }
     }
 
-    /** Admin/Kurikulum boleh mengelola TP; guru hanya rombel yang ia ampu. */
-    public static function bisaKelolaRombel(User $user, Rombel $rombel): bool
+    /** Boleh membaca rekap rombel: Kurikulum, pengampu, atau wali dari kelas peserta. */
+    public static function pastikanBolehBacaRombel(Rombel $rombel): void
     {
-        if ($user->hasAnyRole(['admin', 'kurikulum'])) {
-            return true;
+        if (AcademicAccess::peranIs('KURIKULUM')) {
+            return;
+        }
+        if (AcademicAccess::peranIs('GURU')) {
+            self::pastikanPengampu($rombel);
+
+            return;
         }
 
-        return $user->hasAnyRole(['guru']) && $rombel->dapatDiampuOleh(self::guruId($user));
+        throw AturanBisnisException::dilarang('Anda tidak memiliki akses ke rombel ini.');
     }
 
-    /** Hanya guru pengampu yang mengisi nilai (admin/kurikulum tidak mengisi nilai). */
-    public static function bisaInputNilai(User $user, Rombel $rombel): bool
+    public static function pastikanWaliPaket(PaketNilai $paket): void
     {
-        return $user->hasAnyRole(['guru']) && $rombel->dapatDiampuOleh(self::guruId($user));
+        self::pastikanWaliKelas($paket->id_kelas, $paket->rombel->id_semester);
     }
 
-    public static function bisaMemeriksaKelas(User $user, int $kelasId): bool
+    public static function pastikanWaliKelas(int $idKelas, int $idSemester): void
     {
-        $guruId = self::guruId($user);
+        $guru = AcademicAccess::user()->guru;
+        $wali = $guru && WaliKelas::where('id_kelas', $idKelas)->where('id_semester', $idSemester)
+            ->where('id_guru', $guru->id_guru)->exists();
 
-        return $guruId !== null
-            && $user->hasAnyRole(['wali_kelas'])
-            && WaliKelas::where('kelas_id', $kelasId)->where('guru_id', $guruId)->exists();
-    }
-
-    /** Seluruh TP rombel harus diberikan; jangan memakai subset sel request. */
-    public static function tpDapatDiisi(PeriodeNilai $periode, Tp $tp, Collection $semuaTp): bool
-    {
-        return AlokasiTpService::untukInput($semuaTp, $periode->jenis)->contains('id', $tp->id);
-    }
-
-    /** TP tidak boleh diubah/dihapus ketika nilai sedang dikirim, disetujui, atau sudah dikunci. */
-    public static function pastikanRombelBisaDiubah(Rombel $rombel): void
-    {
-        abort_if(NilaiTp::whereHas('tp', fn ($q) => $q->where('rombel_id', $rombel->id))->whereNotNull('skor')->exists(),
-            422, 'Struktur TP tidak dapat diubah karena rombel sudah memiliki skor (termasuk 0).');
-        abort_if(PeriodeNilai::where('semester_id', $rombel->semester_id)->orderBy('id')->lockForUpdate()->get()->contains('dikunci', true),
-            422, 'Struktur TP tidak dapat diubah pada semester yang memiliki periode terkunci.');
-        $terkunci = PaketNilai::where('rombel_id', $rombel->id)
-            ->whereIn('status', ['dikirim', 'disetujui', 'dikunci'])
-            ->exists();
-
-        abort_if($terkunci, 422, 'Ada paket nilai yang sedang dikirim atau dikunci. Minta Kurikulum membuka koreksi terlebih dahulu.');
+        if (! AcademicAccess::peranIs('WALI_KELAS') || ! $wali) {
+            throw AturanBisnisException::dilarang('Anda bukan wali kelas dari kelas ini.', 'NOT_WALI_KELAS');
+        }
     }
 }

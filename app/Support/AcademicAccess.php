@@ -2,50 +2,105 @@
 
 namespace App\Support;
 
-use Illuminate\Support\Facades\DB;
+use App\Exceptions\AturanBisnisException;
+use App\Models\Guru;
+use App\Models\OrangTua;
+use App\Models\Semester;
+use App\Models\Siswa;
+use App\Models\User;
+use App\Models\WaliKelas;
+use Illuminate\Support\Facades\Auth;
 
+/**
+ * Konteks akses pengguna yang sedang login: peran aktif, profil, dan cakupan data.
+ * Aturan per objek (rombel, kelas, siswa) ada di PenilaianAccess dan RaporAccess.
+ */
 class AcademicAccess
 {
-    public static function role(): string
+    public const SESSION_KEY = 'active_role';
+
+    public static function user(): User
     {
-        abort_unless(auth()->check(), 401, 'Login diperlukan.');
-        return strtoupper((string) auth()->user()->role);
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            throw new AturanBisnisException('Silakan login terlebih dahulu.', 'UNAUTHENTICATED', 401);
+        }
+
+        return $user;
     }
 
-    public static function manage(): void
+    /** Peran aktif dari sesi; bila belum dipilih/tidak valid, pakai peran prioritas tertinggi. */
+    public static function peranAktif(): ?string
     {
-        abort_unless(in_array(self::role(), ['ADMIN', 'KURIKULUM'], true), 403, 'Hanya admin/kurikulum.');
+        $user = Auth::user();
+        if (! $user instanceof User) {
+            return null;
+        }
+
+        $kode = $user->kodeRoles();
+        $session = request()->hasSession() ? request()->session() : null;
+        $aktif = $session?->get(self::SESSION_KEY);
+
+        if (! in_array($aktif, $kode, true)) {
+            $aktif = $kode[0] ?? null;
+            $session?->put(self::SESSION_KEY, $aktif);
+        }
+
+        return $aktif;
     }
 
-    public static function teacherId(): ?int
+    public static function setPeranAktif(string $kode): void
     {
-        $id = DB::table('guru')->where('id_user', auth()->id())->value('id_guru');
-        return $id === null ? null : (int) $id;
+        request()->session()->put(self::SESSION_KEY, $kode);
     }
 
-    public static function canTeach(int $rombelId): void
+    public static function peranIs(string ...$kode): bool
     {
-        if (in_array(self::role(), ['ADMIN', 'KURIKULUM'], true)) return;
-        $id = self::teacherId();
-        abort_unless($id !== null && DB::table('guru_rombel')->where('id_guru', $id)->where('id_rombel', $rombelId)->exists(), 403, 'Bukan guru pengampu rombel ini.');
+        return in_array(self::peranAktif(), $kode, true);
     }
 
-    public static function canReadRombel(int $rombelId): void
+    public static function guru(): Guru
     {
-        $role = self::role();
-        if (in_array($role, ['ADMIN', 'KURIKULUM'], true)) return;
-        self::canTeach($rombelId);
+        return self::user()->guru ?? throw AturanBisnisException::dilarang('Akun Anda belum ditautkan ke data guru.', 'PROFILE_NOT_LINKED');
     }
 
-    public static function editable(int $rombelId): void
+    public static function siswa(): Siswa
     {
-        $rombel = DB::table('rombel')->where('id_rombel', $rombelId)->first();
-        abort_unless($rombel !== null, 404, 'Rombel tidak ditemukan.');
-        $blocked = DB::table('periode_nilai')->where('id_semester', $rombel->id_semester)
-            ->where('tingkat', $rombel->tingkat)
-            ->whereIn('status', ['ditutup', 'terkunci'])->exists();
-        abort_if($blocked, 409, 'Periode nilai sudah ditutup/terkunci.');
-        abort_if(DB::table('paket_nilai')->where('id_rombel', $rombelId)
-            ->whereIn('status', ['terkirim', 'disetujui', 'terkunci'])->exists(), 409, 'Paket nilai tidak dapat diubah.');
+        return self::user()->siswa ?? throw AturanBisnisException::dilarang('Akun Anda belum ditautkan ke data siswa.', 'PROFILE_NOT_LINKED');
+    }
+
+    public static function orangTua(): OrangTua
+    {
+        return self::user()->orangTua ?? throw AturanBisnisException::dilarang('Akun Anda belum ditautkan ke data orang tua.', 'PROFILE_NOT_LINKED');
+    }
+
+    /** @return list<int> id_siswa anak yang tertaut ke akun orang tua. */
+    public static function idAnak(): array
+    {
+        return self::orangTua()->anak()->pluck('siswa.id_siswa')->map(fn ($id) => (int) $id)->all();
+    }
+
+    public static function semesterAktif(): Semester
+    {
+        return Semester::aktif() ?? throw new AturanBisnisException('Belum ada semester aktif. Minta Kurikulum mengaktifkan semester.', 'NO_ACTIVE_SEMESTER');
+    }
+
+    /** Semester dari id (jika diisi) atau semester aktif. */
+    public static function semester(?int $id = null): Semester
+    {
+        return $id ? Semester::findOrFail($id) : self::semesterAktif();
+    }
+
+    /** @return list<int> id_kelas yang diwalikan guru login pada semester tersebut. */
+    public static function idKelasWali(int $idSemester): array
+    {
+        $guru = self::user()->guru;
+        if (! $guru) {
+            return [];
+        }
+
+        return WaliKelas::where('id_guru', $guru->id_guru)->where('id_semester', $idSemester)
+            ->pluck('id_kelas')->map(fn ($id) => (int) $id)->all();
     }
 }

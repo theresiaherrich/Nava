@@ -2,272 +2,262 @@
 
 namespace App\Services;
 
+use App\Exceptions\AturanBisnisException;
 use App\Models\Kelas;
 use App\Models\PaketNilai;
 use App\Models\PeriodeNilai;
+use App\Models\PeriodeTingkat;
+use App\Models\Semester;
+use App\Models\SiswaRombel;
+use App\Models\VerifikasiNilai;
 use App\Models\WaliKelas;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 /**
- * Periode STS/SAS per tingkat, ringkasan kelengkapan per kelas, dan penguncian.
- * Penguncian TIDAK menerbitkan rapor; itu langkah terpisah (modul rapor).
+ * Periode STS/SAS per semester: jadwal, tingkat peserta, ringkasan kelas, dan penguncian.
+ * Penguncian TIDAK menerbitkan rapor (itu modul rapor).
  */
 class PeriodeService
 {
-    public const STATUS_SIAP = ['disetujui', 'terkunci'];
+    public const SIAP_DIKUNCI = ['disetujui', 'dikunci'];
 
-    public function __construct(private AuditService $audit) {}
+    public function __construct(
+        private AuditService $audit,
+        private NotifikasiService $notif,
+    ) {}
 
-    public function buat(array $data): PeriodeNilai
+    /** Setiap semester selalu punya periode STS & SAS (status awal belum_diatur). */
+    public function pastikanAda(Semester $semester): Collection
     {
-        $sudahAda = PeriodeNilai::where('id_semester', $data['id_semester'])
-            ->where('tingkat', $data['tingkat'])
-            ->where('jenis', $data['jenis'])
-            ->exists();
-
-        if ($sudahAda) {
-            throw ValidationException::withMessages(['jenis' => 'Periode untuk tingkat dan jenis ini sudah ada.']);
+        foreach (PeriodeNilai::JENIS as $jenis) {
+            $p = PeriodeNilai::firstOrCreate(['id_semester' => $semester->id_semester, 'jenis' => $jenis], ['status' => 'belum_diatur']);
+            if ($p->wasRecentlyCreated) {
+                // Default: kelas XII hanya ikut periode semester ganjil.
+                $tingkat = $semester->nama === 'GENAP' ? ['X', 'XI'] : Kelas::TINGKAT;
+                foreach ($tingkat as $t) {
+                    PeriodeTingkat::create(['id_periode' => $p->id_periode, 'tingkat' => $t]);
+                }
+            }
         }
 
-        return DB::transaction(function () use ($data) {
-            $periode = PeriodeNilai::create($data + ['status' => 'draf']);
+        return PeriodeNilai::where('id_semester', $semester->id_semester)->orderBy('jenis', 'desc')->get();
+    }
 
-            $this->audit->catat('buat_periode', 'periode_nilai', $periode->id_periode, null, null,
-                $periode->only(['id_semester', 'tingkat', 'jenis', 'tanggal_mulai', 'tanggal_selesai', 'status']));
+    /** @param list<string>|null $tingkat */
+    public function atur(PeriodeNilai $periode, string $buka, string $tutup, ?array $tingkat): PeriodeNilai
+    {
+        $this->pastikanBelumDikunci($periode);
+
+        return DB::transaction(function () use ($periode, $buka, $tutup, $tingkat) {
+            $sebelum = $periode->only(['tgl_buka', 'tgl_tutup', 'status']) + ['tingkat' => $periode->tingkat];
+            $baruDibuka = $periode->status === 'belum_diatur';
+
+            $periode->update(['tgl_buka' => Carbon::parse($buka), 'tgl_tutup' => Carbon::parse($tutup), 'status' => 'dibuka']);
+
+            if ($tingkat !== null) {
+                $dilepas = array_diff($periode->tingkat, $tingkat);
+                if ($dilepas !== [] && $this->adaPaketTerkirim($periode, $dilepas)) {
+                    throw AturanBisnisException::terkunci('Tingkat yang sudah memiliki nilai terkirim tidak dapat dikeluarkan dari periode.');
+                }
+                PeriodeTingkat::where('id_periode', $periode->id_periode)->delete();
+                foreach (array_unique($tingkat) as $t) {
+                    PeriodeTingkat::create(['id_periode' => $periode->id_periode, 'tingkat' => $t]);
+                }
+            }
+            $periode = $periode->fresh();
+
+            $this->audit->catat('atur_periode', 'periode_nilai', $periode->id_periode, $sebelum,
+                $periode->only(['tgl_buka', 'tgl_tutup', 'status']) + ['tingkat' => $periode->tingkat]);
+
+            $this->notif->kirim($this->notif->userGuruSemester($periode->id_semester), $baruDibuka ? 'periode_dibuka' : 'periode_diubah',
+                "Periode {$periode->jenis} ".($baruDibuka ? 'dibuka' : 'diubah'),
+                "Input nilai {$periode->jenis} dapat dilakukan {$periode->tgl_buka->format('d/m/Y H:i')} s.d. {$periode->tgl_tutup->format('d/m/Y H:i')}.",
+                ['id_periode' => $periode->id_periode]);
 
             return $periode;
         });
     }
 
-    public function ubahJadwal(PeriodeNilai $periode, string $mulai, string $selesai): PeriodeNilai
+    /** Tutup sekarang: input berhenti, verifikasi & penguncian tetap berjalan. */
+    public function tutup(PeriodeNilai $periode): PeriodeNilai
     {
-        return DB::transaction(function () use ($periode, $mulai, $selesai) {
-            $sebelum = $periode->only(['tanggal_mulai', 'tanggal_selesai']);
+        $this->pastikanBelumDikunci($periode);
+        if ($periode->status_efektif !== 'dibuka') {
+            throw new AturanBisnisException('Periode tidak sedang dibuka.');
+        }
 
-            $periode->update(['tanggal_mulai' => $mulai, 'tanggal_selesai' => $selesai]);
+        return DB::transaction(function () use ($periode) {
+            $sebelum = ['tgl_tutup' => $periode->tgl_tutup];
+            $periode->update(['tgl_tutup' => now()->subSecond()]);
+            $this->audit->catat('tutup_periode', 'periode_nilai', $periode->id_periode, $sebelum, ['tgl_tutup' => $periode->tgl_tutup]);
+            $this->notif->kirim($this->notif->userGuruSemester($periode->id_semester), 'periode_ditutup',
+                "Periode {$periode->jenis} ditutup", 'Input nilai sudah ditutup oleh Kurikulum.', ['id_periode' => $periode->id_periode]);
 
-            $this->audit->catat('ubah_jadwal_periode', 'periode_nilai', $periode->id_periode, null, $sebelum,
-                $periode->only(['tanggal_mulai', 'tanggal_selesai']));
-
-            return $periode;
-        });
-    }
-
-    public function ubahStatus(PeriodeNilai $periode, string $status): PeriodeNilai
-    {
-        return DB::transaction(function () use ($periode, $status) {
-            $sebelum = ['status' => $periode->status];
-
-            $periode->update(['status' => $status]);
-
-            $this->audit->catat('ubah_status_periode', 'periode_nilai', $periode->id_periode, null, $sebelum, ['status' => $status]);
-
-            return $periode;
+            return $periode->fresh();
         });
     }
 
     /**
-     * Membentuk paket (rombel x kelas asal) untuk periode ini dari data peserta rombel.
-     * Idempoten: paket yang sudah ada tidak diubah.
+     * Buat paket draf untuk setiap pasangan rombel × kelas peserta periode (idempoten).
      */
-    public function sinkronkanPaket(PeriodeNilai $periode): int
+    public function sinkronkanPaket(PeriodeNilai $periode): void
     {
-        $pasangan = DB::table('siswa_rombel as sr')
-            ->join('riwayat_kelas as rk', 'rk.id_riwayat_kelas', '=', 'sr.id_riwayat_kelas')
+        $pasangan = SiswaRombel::query()
+            ->join('rombel as r', 'r.id_rombel', '=', 'siswa_rombel.id_rombel')
+            ->join('riwayat_kelas as rk', 'rk.id_riwayat_kelas', '=', 'siswa_rombel.id_riwayat_kelas')
             ->join('kelas as k', 'k.id_kelas', '=', 'rk.id_kelas')
-            ->join('rombel as r', 'r.id_rombel', '=', 'sr.id_rombel')
-            ->where('rk.id_semester', $periode->id_semester)
             ->where('r.id_semester', $periode->id_semester)
-            ->where('k.tingkat', $periode->tingkat)
-            ->select('r.id_rombel', 'rk.id_kelas')
-            ->distinct()
-            ->get();
-
-        $dibuat = 0;
+            ->whereIn('k.tingkat', $periode->tingkat ?: ['-'])
+            ->select('r.id_rombel', 'rk.id_kelas')->distinct()->get();
 
         foreach ($pasangan as $p) {
-            $paket = PaketNilai::firstOrCreate(
-                ['id_periode' => $periode->id_periode, 'id_rombel' => $p->id_rombel, 'id_kelas' => $p->id_kelas],
-                ['status' => 'draf'],
-            );
-
-            if ($paket->wasRecentlyCreated) {
-                $dibuat++;
-            }
+            PaketNilai::firstOrCreate(['id_periode' => $periode->id_periode, 'id_rombel' => $p->id_rombel, 'id_kelas' => $p->id_kelas], ['status' => 'draf']);
         }
-
-        return $dibuat;
     }
 
-    /** @return array<int, array<string, mixed>> */
+    /** Ringkasan per kelas untuk layar "Periode & Penguncian". */
     public function ringkasan(PeriodeNilai $periode): array
     {
         $this->sinkronkanPaket($periode);
+        $semester = $periode->semester;
 
-        $semester = $periode->semester()->with('tahunAjaran')->first();
+        $kelas = Kelas::where('id_tahun_ajaran', $semester->id_tahun_ajaran)->whereIn('tingkat', $periode->tingkat ?: ['-'])
+            ->orderByRaw("CASE tingkat WHEN 'X' THEN 1 WHEN 'XI' THEN 2 ELSE 3 END")->orderBy('nama')->get();
+        $wali = WaliKelas::with('guru:id_guru,nama')->where('id_semester', $semester->id_semester)->get()->keyBy('id_kelas');
+        $paket = PaketNilai::with(['rombel.mapel:id_mapel,nama', 'rombel.guru:id_guru,nama'])->where('id_periode', $periode->id_periode)->get()->groupBy('id_kelas');
 
-        $kelasList = Kelas::where('id_tahun_ajaran', $semester->id_tahun_ajaran)
-            ->where('tingkat', $periode->tingkat)
-            ->orderBy('nama')
-            ->get();
-
-        $wali = WaliKelas::with('guru:id_guru,nama')
-            ->where('id_semester', $periode->id_semester)
-            ->get()
-            ->keyBy('id_kelas');
-
-        $paketPerKelas = PaketNilai::with('rombel.mapel')
-            ->where('id_periode', $periode->id_periode)
-            ->get()
-            ->groupBy('id_kelas');
-
-        return $kelasList->map(function (Kelas $kelas) use ($wali, $paketPerKelas) {
-            $paket = $paketPerKelas->get($kelas->id_kelas, collect());
+        return $kelas->map(function (Kelas $k) use ($wali, $paket) {
+            $p = $paket->get($k->id_kelas, collect());
 
             return [
-                'id_kelas' => $kelas->id_kelas,
-                'kelas' => $kelas->nama,
-                'wali_kelas' => $wali->get($kelas->id_kelas)?->guru?->nama,
-                'mapel_siap' => $paket->filter(fn ($p) => in_array($p->status, self::STATUS_SIAP, true))->count(),
-                'mapel_total' => $paket->count(),
-                'status' => $this->statusKelas($paket),
-                // Dipakai FE untuk detail per mapel dan tombol "Buka Koreksi" (id_paket_nilai).
-                'paket' => $paket->map(fn ($p) => [
-                    'id_paket_nilai' => $p->id_paket_nilai,
-                    'mapel' => $p->rombel?->mapel?->nama,
-                    'status' => $p->status,
-                    'alasan_koreksi' => $p->alasan_koreksi,
-                ])->values()->all(),
+                'id_kelas' => $k->id_kelas,
+                'kelas' => $k->nama,
+                'tingkat' => $k->tingkat,
+                'wali_kelas' => $wali->get($k->id_kelas)?->guru?->nama,
+                'mapel_siap' => $p->whereIn('status', self::SIAP_DIKUNCI)->count(),
+                'mapel_total' => $p->count(),
+                'status' => $this->statusKelas($p),
+                'paket' => $p->map(fn (PaketNilai $x) => [
+                    'id_paket_nilai' => $x->id_paket_nilai,
+                    'mapel' => $x->rombel->mapel->nama,
+                    'rombel' => $x->rombel->nama,
+                    'guru' => $x->rombel->guru->pluck('nama')->values(),
+                    'status' => $x->status,
+                    'lengkap' => $x->lengkap,
+                    'koreksi' => $x->koreksi,
+                ])->sortBy('mapel')->values(),
             ];
         })->values()->all();
     }
 
-    /** Status agregat kelas dari status paket-paketnya. */
     public function statusKelas(Collection $paket): string
     {
-        if ($paket->isEmpty()) {
-            return 'belum_ada_mapel';
-        }
-
-        if ($paket->every(fn ($p) => $p->status === 'terkunci')) {
-            return 'terkunci';
-        }
-
-        if ($paket->contains(fn ($p) => $p->status === 'revisi' && filled($p->alasan_koreksi))) {
-            return 'dibuka_koreksi';
-        }
-
-        if ($paket->contains(fn ($p) => $p->status === 'revisi')) {
-            return 'perlu_revisi';
-        }
-
-        if ($paket->contains(fn ($p) => $p->status === 'terkirim')) {
-            return 'menunggu_verifikasi';
-        }
-
-        if ($paket->every(fn ($p) => in_array($p->status, self::STATUS_SIAP, true))) {
-            return 'siap_dikunci';
-        }
-
-        return 'terbuka';
+        return match (true) {
+            $paket->isEmpty() => 'belum_ada_mapel',
+            $paket->every(fn ($p) => $p->status === 'dikunci') => 'dikunci',
+            $paket->contains(fn ($p) => $p->koreksi) => 'dibuka_koreksi',
+            $paket->contains(fn ($p) => $p->status === 'perlu_revisi') => 'perlu_revisi',
+            $paket->every(fn ($p) => in_array($p->status, self::SIAP_DIKUNCI, true)) => 'siap_dikunci',
+            $paket->contains(fn ($p) => $p->status === 'terkirim') => 'menunggu_verifikasi',
+            default => 'pengisian',
+        };
     }
 
+    /** Kunci seluruh mapel satu kelas. Semua paket wajib sudah disetujui wali kelas. */
     public function kunciKelas(PeriodeNilai $periode, Kelas $kelas): int
     {
-        if ((string) $kelas->tingkat !== (string) $periode->tingkat) {
-            throw ValidationException::withMessages(['kelas' => 'Tingkat kelas tidak sesuai dengan periode.']);
+        if (! $periode->ikutTingkat($kelas->tingkat)) {
+            throw new AturanBisnisException('Tingkat kelas tidak ikut periode ini.');
         }
+        $this->sinkronkanPaket($periode);
 
         return DB::transaction(function () use ($periode, $kelas) {
-            $paket = PaketNilai::where('id_periode', $periode->id_periode)
-                ->where('id_kelas', $kelas->id_kelas)
-                ->lockForUpdate()
-                ->get();
+            $paket = PaketNilai::with('rombel:id_rombel,nama')->where('id_periode', $periode->id_periode)
+                ->where('id_kelas', $kelas->id_kelas)->lockForUpdate()->get();
 
             if ($paket->isEmpty()) {
-                throw ValidationException::withMessages(['kelas' => 'Belum ada mapel pada kelas ini.']);
+                throw new AturanBisnisException('Belum ada mapel pada kelas ini.');
+            }
+            $belum = $paket->reject(fn ($p) => in_array($p->status, self::SIAP_DIKUNCI, true));
+            if ($belum->isNotEmpty()) {
+                throw new AturanBisnisException('Masih ada mapel yang belum disetujui wali kelas: '.$belum->pluck('rombel.nama')->implode(', ').'.', 'PAKET_BELUM_SIAP');
             }
 
-            if ($paket->contains(fn ($p) => ! in_array($p->status, self::STATUS_SIAP, true))) {
-                throw ValidationException::withMessages(['kelas' => 'Masih ada mapel yang belum disetujui.']);
+            $now = now();
+            foreach ($paket->where('status', 'disetujui') as $p) {
+                $p->update(['status' => 'dikunci', 'koreksi' => false, 'dikunci_oleh' => Auth::id(), 'waktu_kunci' => $now]);
+                VerifikasiNilai::create(['id_paket_nilai' => $p->id_paket_nilai, 'id_user' => Auth::id(), 'aksi' => 'kunci']);
             }
 
-            $sebelum = $paket->countBy('status')->all();
-            $pelaku = Auth::id();
-            $sekarang = now();
-
-            foreach ($paket as $p) {
-                if ($p->status === 'disetujui') {
-                    $p->update(['status' => 'terkunci', 'dikunci_oleh' => $pelaku, 'waktu_kunci' => $sekarang]);
-                }
-            }
-
-            $this->audit->catat('kunci_nilai', 'periode_nilai', $periode->id_periode, null, $sebelum, [
-                'kelas' => $kelas->nama,
-                'jumlah_mapel' => $paket->count(),
-                'status' => 'terkunci',
-            ]);
-
-            $this->tutupPeriodeBilaSelesai($periode);
+            $this->audit->catat('kunci_nilai_kelas', 'periode_nilai', $periode->id_periode, null, ['id_kelas' => $kelas->id_kelas, 'jumlah_mapel' => $paket->count()]);
+            $this->kunciPeriodeBilaSelesai($periode);
 
             return $paket->count();
         });
     }
 
-    /** @return array<int, string> nama kelas yang berhasil dikunci */
+    /** @return list<string> nama kelas yang berhasil dikunci */
     public function kunciSemuaSiap(PeriodeNilai $periode): array
     {
-        $terkunci = [];
-
+        $dikunci = [];
         foreach ($this->ringkasan($periode) as $baris) {
-            if ($baris['status'] !== 'siap_dikunci') {
-                continue;
+            if ($baris['status'] === 'siap_dikunci') {
+                $this->kunciKelas($periode, Kelas::findOrFail($baris['id_kelas']));
+                $dikunci[] = $baris['kelas'];
             }
-
-            $this->kunciKelas($periode, Kelas::findOrFail($baris['id_kelas']));
-            $terkunci[] = $baris['kelas'];
         }
 
-        return $terkunci;
+        return $dikunci;
     }
 
-    /** Membuka koreksi satu paket terkunci. Wajib beralasan; nilai final lama tetap ada di log. */
+    /** Buka koreksi satu paket terkunci; wajib beralasan, nilai lama tetap tercatat di riwayat & rapor terarsip. */
     public function bukaKoreksi(PaketNilai $paket, string $alasan): PaketNilai
     {
         return DB::transaction(function () use ($paket, $alasan) {
-            $paket = PaketNilai::lockForUpdate()->findOrFail($paket->id_paket_nilai);
-
-            if ($paket->status !== 'terkunci') {
-                throw ValidationException::withMessages(['paket' => 'Hanya mapel yang sudah terkunci yang bisa dibuka koreksinya.']);
+            $paket = PaketNilai::with(['rombel', 'periode'])->lockForUpdate()->findOrFail($paket->id_paket_nilai);
+            if ($paket->status !== 'dikunci') {
+                throw new AturanBisnisException('Hanya nilai yang sudah dikunci yang dapat dibuka koreksinya.');
             }
 
-            $sebelum = ['status' => $paket->status, 'alasan_koreksi' => $paket->alasan_koreksi];
-
-            $paket->update(['status' => 'revisi', 'alasan_koreksi' => $alasan]);
-
-            $periode = $paket->periode;
-            if ($periode->status === 'terkunci') {
-                $periode->update(['status' => 'ditutup']);
+            $paket->update(['status' => 'perlu_revisi', 'koreksi' => true, 'alasan_koreksi' => $alasan]);
+            VerifikasiNilai::create(['id_paket_nilai' => $paket->id_paket_nilai, 'id_user' => Auth::id(), 'aksi' => 'buka_koreksi', 'catatan' => $alasan]);
+            if ($paket->periode->status === 'dikunci') {
+                $paket->periode->update(['status' => 'dibuka']);
             }
 
-            $this->audit->catat('buka_koreksi', 'paket_nilai', $paket->id_paket_nilai, $alasan, $sebelum,
-                ['status' => 'revisi', 'alasan_koreksi' => $alasan]);
+            $this->audit->catat('buka_koreksi', 'paket_nilai', $paket->id_paket_nilai, ['status' => 'dikunci'], ['status' => 'perlu_revisi'], $alasan);
+            $this->notif->kirim(
+                [...$this->notif->userGuruRombel($paket->rombel), ...$this->notif->userWaliKelas($paket->id_kelas, $paket->rombel->id_semester)],
+                'koreksi_dibuka', 'Koreksi nilai dibuka', "Kurikulum membuka koreksi {$paket->rombel->nama}: {$alasan}",
+                ['id_paket_nilai' => $paket->id_paket_nilai],
+            );
 
             return $paket->fresh();
         });
     }
 
-    private function tutupPeriodeBilaSelesai(PeriodeNilai $periode): void
+    public function pastikanBelumDikunci(PeriodeNilai $periode): void
     {
-        $masihTerbuka = PaketNilai::where('id_periode', $periode->id_periode)
-            ->where('status', '!=', 'terkunci')
-            ->exists();
-
-        if (! $masihTerbuka) {
-            $periode->update(['status' => 'terkunci']);
+        if ($periode->status === 'dikunci') {
+            throw AturanBisnisException::terkunci('Periode sudah dikunci.');
         }
+    }
+
+    private function kunciPeriodeBilaSelesai(PeriodeNilai $periode): void
+    {
+        $sisa = PaketNilai::where('id_periode', $periode->id_periode)->where('status', '!=', 'dikunci')->exists();
+        if (! $sisa) {
+            $periode->update(['status' => 'dikunci']);
+            $this->audit->catat('kunci_periode', 'periode_nilai', $periode->id_periode, null, ['status' => 'dikunci']);
+        }
+    }
+
+    private function adaPaketTerkirim(PeriodeNilai $periode, array $tingkat): bool
+    {
+        return PaketNilai::where('id_periode', $periode->id_periode)->whereNotIn('status', PaketNilai::BISA_DIEDIT)
+            ->whereHas('kelas', fn ($q) => $q->whereIn('tingkat', $tingkat))->exists();
     }
 }

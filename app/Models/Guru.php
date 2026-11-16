@@ -13,24 +13,7 @@ class Guru extends Model
 
     protected $primaryKey = 'id_guru';
 
-    protected $fillable = [
-        'id_user', 'nip', 'status_kepegawaian', 'nama', 'agama', 'jenis_kelamin', 'alamat',
-    ];
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'id_user', 'id_user');
-    }
-
-    public function waliKelas(): HasMany
-    {
-        return $this->hasMany(WaliKelas::class, 'id_guru', 'id_guru');
-    }
-
-    public function rombel(): BelongsToMany
-    {
-        return $this->belongsToMany(Rombel::class, 'guru_rombel', 'id_guru', 'id_rombel');
-    protected $fillable = ['nama', 'nip', 'status_kepegawaian', 'aktif'];
+    protected $fillable = ['nip', 'status_kepegawaian', 'nama', 'jenis_kelamin', 'id_agama', 'no_telepon', 'aktif'];
 
     protected function casts(): array
     {
@@ -39,6 +22,16 @@ class Guru extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    public function rombel(): BelongsToMany
+    {
+        return $this->belongsToMany(Rombel::class, 'guru_rombel', 'id_guru', 'id_rombel')->withTimestamps();
+    }
+
+    public function waliKelas(): HasMany
+    {
+        return $this->hasMany(WaliKelas::class, 'id_guru', 'id_guru');
     }
 }

@@ -3,37 +3,38 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Master\SekolahRequest;
+use App\Models\Agama;
 use App\Models\Sekolah;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
+/** Identitas sekolah (satu mitra, id 1) dan data referensi. */
 class SekolahController extends Controller
 {
     public function __construct(private AuditService $audit) {}
 
     public function show(): JsonResponse
     {
-        return response()->json(Sekolah::first());
+        return $this->ok(Sekolah::find(1));
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(SekolahRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'nama' => ['required', 'string', 'max:120'],
-            'alamat' => ['nullable', 'string'],
-            'telepon' => ['nullable', 'string', 'max:25'],
-            'email' => ['nullable', 'email', 'max:100'],
-            'npsn' => ['nullable', 'string', 'max:10'],
-        ]);
+        $sekolah = DB::transaction(function () use ($request) {
+            $lama = Sekolah::find(1);
+            $s = Sekolah::updateOrCreate(['id_sekolah' => 1], $request->validated());
+            $this->audit->catat('ubah_sekolah', 'sekolah', 1, $lama?->only(array_keys($request->validated())), $request->validated());
 
-        $sekolah = Sekolah::first() ?? new Sekolah();
-        $sebelum = $sekolah->exists ? $sekolah->only(array_keys($data)) : null;
+            return $s;
+        });
 
-        $sekolah->fill($data)->save();
+        return $this->ok($sekolah, 'Identitas sekolah disimpan.');
+    }
 
-        $this->audit->catat('ubah_sekolah', 'sekolah', $sekolah->id_sekolah, null, $sebelum, $sekolah->only(array_keys($data)));
-
-        return response()->json($sekolah);
+    public function agama(): JsonResponse
+    {
+        return $this->ok(Agama::orderBy('id_agama')->get());
     }
 }

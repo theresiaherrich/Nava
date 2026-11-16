@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PelengkapRapor extends Model
 {
@@ -11,16 +10,13 @@ class PelengkapRapor extends Model
 
     protected $primaryKey = 'id_pelengkap_rapor';
 
-    /** Kolom sakit/izin/alpha/id_presensi milik A1: sengaja tidak fillable, A2 tidak menulisnya. */
-    protected $fillable = ['id_riwayat_kelas', 'id_periode', 'catatan_wali', 'kokurikuler'];
+    protected $fillable = [
+        'id_riwayat_kelas', 'id_periode', 'sakit', 'izin', 'alpha', 'sumber_presensi',
+        'catatan_wali', 'kokurikuler', 'diisi_oleh',
+    ];
 
-    public function siswaKelas(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(SiswaKelas::class, 'id_riwayat_kelas');
-    }
-
-    public function periode(): BelongsTo
-    {
-        return $this->belongsTo(PeriodeNilai::class, 'id_periode');
+        return ['sakit' => 'integer', 'izin' => 'integer', 'alpha' => 'integer'];
     }
 }

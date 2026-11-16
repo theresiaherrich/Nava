@@ -1,3 +1,5 @@
+> **ARSIP — tidak berlaku lagi.** Dokumen ini menjelaskan implementasi sebelum konsolidasi (`users`, `siswa_kelas`, alokasi TP posisi `floor(n/2)`, endpoint lama). Aturan dan endpoint terkini ada di `02_KONTRAK_API.md`, `03_ROADMAP_ERD.md`, dan `05_CATATAN_PERUBAHAN.md`.
+
 # Penyelarasan TP, Input Nilai, Paket Nilai, dan DKN
 
 Aturan ini menggantikan pemilihan berdasarkan flag pada panduan lama.

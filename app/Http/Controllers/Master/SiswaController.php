@@ -2,17 +2,15 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Exceptions\AturanBisnisException;
 use App\Http\Controllers\Controller;
-use App\Models\OrangTua;
+use App\Http\Requests\Master\SiswaRequest;
+use App\Models\Semester;
 use App\Models\Siswa;
-use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class SiswaController extends Controller
 {
@@ -20,101 +18,94 @@ class SiswaController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = Siswa::query()->orderBy('nama');
+        $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', 'in:'.implode(',', Siswa::STATUS)],
+            'id_kelas' => ['nullable', 'integer'],
+            'id_semester' => ['nullable', 'integer', 'exists:semester,id_semester'],
+            'id_agama' => ['nullable', 'integer'],
+            'jenis_kelamin' => ['nullable', 'in:L,P'],
+            'tanpa_kelas' => ['nullable', 'boolean'],
+            'tanpa_akun' => ['nullable', 'boolean'],
+        ]);
+        $idSemester = $request->integer('id_semester') ?: Semester::aktif()?->id_semester;
 
-        if ($q = trim((string) $request->query('q', ''))) {
-            $query->where(fn ($w) => $w->where('nama', 'like', "%{$q}%")
-                ->orWhere('nis', 'like', "%{$q}%")
-                ->orWhere('nisn', 'like', "%{$q}%"));
-        }
+        $page = Siswa::query()
+            ->with(['agama:id_agama,nama', 'riwayatKelas' => fn ($q) => $q->where('id_semester', $idSemester)->with('kelas:id_kelas,nama,tingkat')])
+            ->when($request->q, fn ($q, $s) => $q->where(fn ($w) => $w->where('nama', 'like', "%{$s}%")->orWhere('nis', 'like', "%{$s}%")->orWhere('nisn', 'like', "%{$s}%")))
+            ->when($request->status, fn ($q, $v) => $q->where('status', $v))
+            ->when($request->id_agama, fn ($q, $v) => $q->where('id_agama', $v))
+            ->when($request->jenis_kelamin, fn ($q, $v) => $q->where('jenis_kelamin', $v))
+            ->when($request->id_kelas, fn ($q, $v) => $q->whereHas('riwayatKelas', fn ($w) => $w->where('id_kelas', $v)->where('id_semester', $idSemester)))
+            ->when($request->boolean('tanpa_kelas'), fn ($q) => $q->whereDoesntHave('riwayatKelas', fn ($w) => $w->where('id_semester', $idSemester)))
+            ->when($request->boolean('tanpa_akun'), fn ($q) => $q->whereNull('id_user'))
+            ->orderBy('nama')
+            ->paginate($this->perPage());
 
-        return response()->json($query->paginate(25));
+        return $this->paginated($page, fn (Siswa $s) => $this->bentuk($s));
     }
 
-    public function store(Request $request): JsonResponse
+    public function show(Siswa $siswa): JsonResponse
     {
-        $data = $request->validate([
-            'nis' => ['required', 'string', 'max:30', 'unique:siswa,nis'],
-            'nisn' => ['nullable', 'string', 'max:30', 'unique:siswa,nisn'],
-            'nama' => ['required', 'string', 'max:120'],
-            'agama' => ['nullable', 'string', 'max:30'],
-            'jenis_kelamin' => ['nullable', Rule::in(['L', 'P'])],
-            'tahun_masuk' => ['nullable', 'integer', 'digits:4'],
-            'urutan_masuk' => ['nullable', 'integer', 'min:1'],
-            'alamat' => ['nullable', 'string'],
+        $siswa->load(['agama', 'orangTua', 'riwayatKelas.kelas', 'riwayatKelas.semester.tahunAjaran']);
+
+        return $this->ok($this->bentuk($siswa) + [
+            'orang_tua' => $siswa->orangTua->map(fn ($o) => ['id_orang_tua' => $o->id_orang_tua, 'nama' => $o->nama, 'hubungan' => $o->pivot->hubungan, 'punya_akun' => $o->id_user !== null]),
+            'riwayat_kelas' => $siswa->riwayatKelas->map(fn ($r) => [
+                'id_riwayat_kelas' => $r->id_riwayat_kelas, 'kelas' => $r->kelas->nama,
+                'semester' => $r->semester->nama, 'tahun_ajaran' => $r->semester->tahunAjaran->nama,
+            ]),
         ]);
-
-        $siswa = Siswa::create($data);
-
-        $this->audit->catat('buat_siswa', 'siswa', $siswa->id_siswa, null, null, $siswa->only(['nis', 'nama']));
-
-        return response()->json($siswa, 201);
     }
 
-    public function update(Request $request, Siswa $siswa): JsonResponse
+    public function store(SiswaRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'nis' => ['sometimes', 'string', 'max:30', Rule::unique('siswa', 'nis')->ignore($siswa->id_siswa, 'id_siswa')],
-            'nisn' => ['sometimes', 'nullable', 'string', 'max:30', Rule::unique('siswa', 'nisn')->ignore($siswa->id_siswa, 'id_siswa')],
-            'nama' => ['sometimes', 'string', 'max:120'],
-            'agama' => ['sometimes', 'nullable', 'string', 'max:30'],
-            'jenis_kelamin' => ['sometimes', 'nullable', Rule::in(['L', 'P'])],
-            'tahun_masuk' => ['sometimes', 'nullable', 'integer', 'digits:4'],
-            'urutan_masuk' => ['sometimes', 'nullable', 'integer', 'min:1'],
-            'alamat' => ['sometimes', 'nullable', 'string'],
-        ]);
+        $siswa = DB::transaction(function () use ($request) {
+            $s = Siswa::create($request->validated());
+            $this->audit->catat('buat_siswa', 'siswa', $s->id_siswa, null, $request->validated());
 
-        $sebelum = $siswa->only(array_keys($data));
-        $siswa->update($data);
-
-        $this->audit->catat('ubah_siswa', 'siswa', $siswa->id_siswa, null, $sebelum, $siswa->only(array_keys($data)));
-
-        return response()->json($siswa);
-    }
-
-    /**
-     * Relasi orang tua-anak. Admin menghubungkan akun berperan ORANG_TUA ke siswa
-     * dan langsung memverifikasinya. Pendaftaran orang tua mandiri adalah ranah A4.
-     */
-    public function hubungkanOrangTua(Request $request, Siswa $siswa): JsonResponse
-    {
-        $data = $request->validate([
-            'hubungan' => ['required', Rule::in(['Ayah', 'Ibu', 'Wali'])],
-            'user_id' => ['required', 'integer', 'exists:user,id_user'],
-            'nama' => ['nullable', 'string', 'max:120'],
-        ]);
-
-        $user = User::findOrFail($data['user_id']);
-
-        if (! $user->hasRole('ORANG_TUA')) {
-            throw ValidationException::withMessages(['user_id' => 'Akun harus memiliki peran Orang Tua.']);
-        }
-
-        $cari = fn () => OrangTua::where('id_siswa', $siswa->id_siswa)->where('hubungan', $data['hubungan']);
-
-        $payload = [
-            'id_user' => $user->id_user,
-            'nama' => $data['nama'] ?? $user->nama,
-            'status_verifikasi' => 'verified',
-            'diverifikasi_oleh' => Auth::id(),
-            'waktu_verifikasi' => now(),
-        ];
-
-        DB::transaction(function () use ($siswa, $data, $payload, $cari) {
-            $sebelum = $cari()->first()?->only(['id_user', 'status_verifikasi']);
-
-            if ($sebelum !== null) {
-                $cari()->update($payload);
-            } else {
-                OrangTua::create(['id_siswa' => $siswa->id_siswa, 'hubungan' => $data['hubungan']] + $payload);
-            }
-
-            $this->audit->catat('hubungkan_orang_tua', 'siswa', $siswa->id_siswa, null, $sebelum, [
-                'hubungan' => $data['hubungan'],
-                'id_user' => $data['user_id'],
-            ]);
+            return $s;
         });
 
-        return response()->json(['message' => 'Orang tua terhubung ke siswa.']);
+        return $this->created($this->bentuk($siswa->fresh('agama')), 'Siswa ditambahkan.');
+    }
+
+    public function update(SiswaRequest $request, Siswa $siswa): JsonResponse
+    {
+        DB::transaction(function () use ($request, $siswa) {
+            $sebelum = $siswa->only(array_keys($request->validated()));
+            $siswa->update($request->validated());
+            $this->audit->catat('ubah_siswa', 'siswa', $siswa->id_siswa, $sebelum, $request->validated());
+        });
+
+        return $this->ok($this->bentuk($siswa->fresh('agama')), 'Data siswa diperbarui.');
+    }
+
+    /** Hapus hanya untuk data salah input yang belum pernah ditempatkan di kelas. */
+    public function destroy(Siswa $siswa): JsonResponse
+    {
+        if ($siswa->riwayatKelas()->exists() || $siswa->id_user) {
+            throw AturanBisnisException::terkunci('Siswa sudah memiliki riwayat kelas atau akun. Ubah status menjadi pindah/keluar, bukan dihapus.');
+        }
+
+        DB::transaction(function () use ($siswa) {
+            $siswa->orangTua()->detach();
+            $siswa->delete();
+            $this->audit->catat('hapus_siswa', 'siswa', $siswa->id_siswa, $siswa->only(['nis', 'nisn', 'nama']));
+        });
+
+        return $this->ok(null, 'Siswa dihapus.');
+    }
+
+    private function bentuk(Siswa $s): array
+    {
+        $kelas = $s->relationLoaded('riwayatKelas') ? $s->riwayatKelas->sortByDesc('id_semester')->first() : null;
+
+        return $s->only(['id_siswa', 'nis', 'nisn', 'nama', 'jenis_kelamin', 'id_agama', 'tempat_lahir', 'alamat', 'tahun_masuk', 'status']) + [
+            'tanggal_lahir' => $s->tanggal_lahir?->format('Y-m-d'),
+            'agama' => $s->agama?->nama,
+            'punya_akun' => $s->id_user !== null,
+            'kelas' => $kelas ? ['id_riwayat_kelas' => $kelas->id_riwayat_kelas, 'id_kelas' => $kelas->id_kelas, 'nama' => $kelas->kelas?->nama] : null,
+        ];
     }
 }

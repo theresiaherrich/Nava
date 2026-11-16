@@ -10,7 +10,15 @@ class TemplateRapor extends Model
 
     protected $primaryKey = 'id_template';
 
-    public $timestamps = false;
+    protected $fillable = ['jenis', 'nama', 'versi', 'view', 'judul', 'tempat_cetak', 'tampilkan_deskripsi', 'aktif'];
 
-    protected $fillable = ['id_sekolah', 'jenis', 'versi', 'nama', 'identitas_cetak', 'lokasi_template'];
+    protected function casts(): array
+    {
+        return ['aktif' => 'boolean', 'tampilkan_deskripsi' => 'boolean'];
+    }
+
+    public static function aktifUntuk(string $jenis): ?self
+    {
+        return static::where('jenis', $jenis)->where('aktif', true)->orderByDesc('id_template')->first();
+    }
 }

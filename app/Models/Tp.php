@@ -6,24 +6,34 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/** Tujuan Pembelajaran. Maksimal 10 per rombel (pengajaran per semester). */
 class Tp extends Model
 {
+    public const MAKS_PER_ROMBEL = 10;
+
     protected $table = 'tp';
 
-    protected $fillable = ['rombel_id', 'nomor_urut', 'deskripsi', 'masuk_sts', 'is_sas'];
+    protected $primaryKey = 'id_tp';
+
+    protected $fillable = ['id_rombel', 'urutan', 'kode', 'deskripsi', 'kktp', 'hanya_sts'];
 
     protected function casts(): array
     {
-        return ['masuk_sts' => 'boolean', 'is_sas' => 'boolean', 'nomor_urut' => 'integer'];
+        return ['urutan' => 'integer', 'kktp' => 'float', 'hanya_sts' => 'boolean'];
     }
 
     public function rombel(): BelongsTo
     {
-        return $this->belongsTo(Rombel::class, 'rombel_id');
+        return $this->belongsTo(Rombel::class, 'id_rombel', 'id_rombel');
     }
 
     public function nilai(): HasMany
     {
-        return $this->hasMany(NilaiTp::class, 'tp_id');
+        return $this->hasMany(NilaiTp::class, 'id_tp', 'id_tp');
+    }
+
+    public function kktpEfektif(?Mapel $mapel = null): float
+    {
+        return $this->kktp ?? $mapel?->kktp_default ?? (float) config('siakad.kktp_default');
     }
 }

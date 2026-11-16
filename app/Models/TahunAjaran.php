@@ -20,14 +20,11 @@ class TahunAjaran extends Model
 
     public function semester(): HasMany
     {
-        return $this->hasMany(Semester::class, 'id_tahun_ajaran', 'id_tahun_ajaran');
+        return $this->hasMany(Semester::class, 'id_tahun_ajaran', 'id_tahun_ajaran')->orderBy('nama');
     }
 
     public function kelas(): HasMany
     {
         return $this->hasMany(Kelas::class, 'id_tahun_ajaran', 'id_tahun_ajaran');
-    public function semesters(): HasMany
-    {
-        return $this->hasMany(Semester::class, 'tahun_ajaran_id');
     }
 }

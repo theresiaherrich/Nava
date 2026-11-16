@@ -12,32 +12,30 @@ class Rapor extends Model
     protected $primaryKey = 'id_rapor';
 
     protected $fillable = [
-        'id_riwayat_kelas', 'id_periode', 'id_template', 'versi', 'data_final', 'file_pdf',
-        'tanggal_cetak', 'status', 'diterbitkan_oleh', 'waktu_terbit',
+        'id_riwayat_kelas', 'id_periode', 'id_template', 'versi', 'data_final', 'file_pdf', 'status',
+        'dicetak_oleh', 'diterbitkan_oleh', 'waktu_terbit', 'alasan_cabut',
     ];
+
+    // Path file privat dan snapshot tidak dikirim di daftar; unduh lewat endpoint berizin.
+    protected $hidden = ['file_pdf', 'data_final'];
 
     protected function casts(): array
     {
-        return ['data_final' => 'array', 'tanggal_cetak' => 'date', 'waktu_terbit' => 'datetime'];
+        return ['data_final' => 'array', 'waktu_terbit' => 'datetime', 'versi' => 'integer'];
     }
 
-    public function siswaKelas(): BelongsTo
+    public function riwayatKelas(): BelongsTo
     {
-        return $this->belongsTo(SiswaKelas::class, 'id_riwayat_kelas');
+        return $this->belongsTo(RiwayatKelas::class, 'id_riwayat_kelas', 'id_riwayat_kelas');
     }
 
     public function periode(): BelongsTo
     {
-        return $this->belongsTo(PeriodeNilai::class, 'id_periode');
+        return $this->belongsTo(PeriodeNilai::class, 'id_periode', 'id_periode');
     }
 
     public function template(): BelongsTo
     {
         return $this->belongsTo(TemplateRapor::class, 'id_template', 'id_template');
-    }
-
-    public function pencetak(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'diterbitkan_oleh');
     }
 }

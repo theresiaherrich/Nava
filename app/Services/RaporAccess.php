@@ -2,40 +2,86 @@
 
 namespace App\Services;
 
-use App\Models\User;
-use App\Models\WaliKelas;
-use Illuminate\Support\Collection;
+use App\Exceptions\AturanBisnisException;
+use App\Models\Kelas;
+use App\Models\RiwayatKelas;
+use App\Models\Siswa;
+use App\Models\SiswaRombel;
+use App\Support\AcademicAccess;
 
 /**
- * Aturan akses bagian 4.7 dan 4.8. Memakai PenilaianAccess untuk pengecekan wali kelas
- * (tanpa mengubahnya), karena middleware role saja tidak cukup: wali hanya boleh kelasnya.
+ * Akses data per siswa/kelas:
+ *  SISWA     → dirinya sendiri;
+ *  ORANG_TUA → anak yang tertaut;
+ *  WALI_KELAS→ siswa di kelas yang ia walikan (semester terkait);
+ *  GURU      → siswa yang menjadi peserta rombel yang ia ampu;
+ *  KURIKULUM → semua.
+ * Pelanggaran → 403.
  */
 class RaporAccess
 {
-    /** Admin/kurikulum melihat semua kelas; wali kelas hanya kelas yang ia pegang. */
-    public static function bisaMelihatKelas(User $user, int $kelasId): bool
+    public static function pastikanBolehLihatSiswa(Siswa $siswa, ?int $idSemester = null): void
     {
-        return $user->hasAnyRole(['admin', 'kurikulum']) || PenilaianAccess::bisaMemeriksaKelas($user, $kelasId);
+        $peran = AcademicAccess::peranAktif();
+
+        $boleh = match ($peran) {
+            'KURIKULUM' => true,
+            'SISWA' => (int) AcademicAccess::siswa()->id_siswa === (int) $siswa->id_siswa,
+            'ORANG_TUA' => in_array((int) $siswa->id_siswa, AcademicAccess::idAnak(), true),
+            'WALI_KELAS' => self::siswaDiKelasWali($siswa, $idSemester),
+            'GURU' => self::siswaDiRombelGuru($siswa),
+            default => false,
+        };
+
+        if (! $boleh) {
+            throw AturanBisnisException::dilarang('Anda tidak memiliki akses ke data siswa ini.', 'STUDENT_FORBIDDEN');
+        }
     }
 
-    /** Hanya wali kelas dari kelas tersebut (untuk menulis catatan wali). */
-    public static function bisaMengisiKelas(User $user, int $kelasId): bool
+    /** Wali kelas hanya kelasnya; Kurikulum semua. */
+    public static function pastikanKelolaKelas(Kelas $kelas, int $idSemester): void
     {
-        return PenilaianAccess::bisaMemeriksaKelas($user, $kelasId);
+        if (AcademicAccess::peranIs('KURIKULUM')) {
+            return;
+        }
+        PenilaianAccess::pastikanWaliKelas($kelas->id_kelas, $idSemester);
     }
 
-    public static function istimewa(User $user): bool
+    /** Siswa milik akun (SISWA) atau anak pilihan (ORANG_TUA, ?id_siswa=). */
+    public static function siswaPortal(?int $idSiswa): Siswa
     {
-        return $user->hasAnyRole(['admin', 'kurikulum']);
+        if (AcademicAccess::peranIs('SISWA')) {
+            return AcademicAccess::siswa();
+        }
+
+        $anak = AcademicAccess::idAnak();
+        if ($anak === []) {
+            throw AturanBisnisException::dilarang('Belum ada anak yang tertaut ke akun Anda.', 'NO_CHILD_LINKED');
+        }
+        $id = $idSiswa ?? (count($anak) === 1 ? $anak[0] : null);
+        if ($id === null) {
+            throw new AturanBisnisException('Pilih anak terlebih dahulu (parameter id_siswa).', 'CHILD_REQUIRED', 422, ['id_siswa' => ['Wajib diisi bila anak lebih dari satu.']]);
+        }
+        if (! in_array($id, $anak, true)) {
+            throw AturanBisnisException::dilarang('Siswa ini bukan anak yang tertaut ke akun Anda.', 'STUDENT_FORBIDDEN');
+        }
+
+        return Siswa::findOrFail($id);
     }
 
-    /** @return Collection<int, int> ID kelas yang dipegang user sebagai wali kelas. */
-    public static function kelasIdsWali(User $user): Collection
+    private static function siswaDiKelasWali(Siswa $siswa, ?int $idSemester): bool
     {
-        $guruId = PenilaianAccess::guruId($user);
+        $semester = $idSemester ?? AcademicAccess::semesterAktif()->id_semester;
+        $kelas = AcademicAccess::idKelasWali($semester);
 
-        return $guruId !== null && $user->hasAnyRole(['wali_kelas'])
-            ? WaliKelas::where('guru_id', $guruId)->pluck('kelas_id')
-            : collect();
+        return $kelas !== [] && RiwayatKelas::where('id_siswa', $siswa->id_siswa)->where('id_semester', $semester)->whereIn('id_kelas', $kelas)->exists();
+    }
+
+    private static function siswaDiRombelGuru(Siswa $siswa): bool
+    {
+        $guru = AcademicAccess::user()->guru;
+
+        return $guru !== null && SiswaRombel::whereHas('riwayatKelas', fn ($q) => $q->where('id_siswa', $siswa->id_siswa))
+            ->whereHas('rombel.guru', fn ($q) => $q->where('guru.id_guru', $guru->id_guru))->exists();
     }
 }

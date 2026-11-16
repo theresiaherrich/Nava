@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Kurikulum\DashboardKurikulumController;
 use App\Http\Controllers\Kurikulum\MapelController;
 use App\Http\Controllers\Kurikulum\RombelController;
 use App\Http\Controllers\Kurikulum\TahunAjaranController;
@@ -14,6 +15,7 @@ Route::prefix('kurikulum')->group(function () {
     });
 
     Route::middleware('role:KURIKULUM')->group(function () {
+        Route::get('/dashboard', DashboardKurikulumController::class);
         Route::post('/tahun-ajaran', [TahunAjaranController::class, 'store']);
         Route::post('/semester/{semester}/aktifkan', [TahunAjaranController::class, 'aktifkanSemester']);
 

@@ -76,6 +76,11 @@ body .sb button {
     font-family: var(--font-sans);
 }
 
+/* Kode modul (A1, A2, A3) tidak ditampilkan di sidebar — cukup nama modulnya. */
+body .sb .sb-item__code {
+    display: none;
+}
+
 @layer base {
     [x-cloak] {
         display: none !important;

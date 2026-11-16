@@ -93,8 +93,11 @@ class Navigation
     }
 
     /**
-     * Menu lengkap (A1–A4) dalam format prop `menu` komponen sidebar.
-     * Item A2 yang halamannya belum dibuat (route belum terdaftar) disembunyikan.
+     * Menu sidebar dalam format prop `menu` komponen sidebar.
+     * - Item A2 yang halamannya belum dibuat (route belum terdaftar) disembunyikan.
+     * - Portal Orang Tua (A4) tidak masuk sidebar: orang tua memakai web tersendiri.
+     * - Kode modul (A1, A2, …) tetap dikirim karena dibutuhkan komponen, tetapi
+     *   disembunyikan lewat CSS (lihat resources/css/app.css).
      */
     public static function menu(string $peran): array
     {
@@ -105,7 +108,6 @@ class Navigation
             ['code' => 'A1', 'label' => 'Presensi', 'icon' => 'calendar', 'sub_title' => 'Presensi', 'items' => self::presensi($peran)],
             ['code' => 'A2', 'label' => 'Akademik', 'icon' => 'file', 'sub_title' => $a2['judul'], 'items' => $tersedia],
             ['code' => 'A3', 'label' => 'BK', 'icon' => 'shield', 'href' => '#'],
-            ['code' => 'A4', 'label' => 'Portal Orang Tua', 'icon' => 'home', 'href' => '#'],
         ];
     }
 

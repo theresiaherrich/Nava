@@ -6,6 +6,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,11 +14,18 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Login: 5 percobaan/menit per (username, IP), ditambah batas kasar per IP.
         RateLimiter::for('login', function (Request $request) {
-            $identity = strtolower(trim((string) $request->input('login')));
+            $username = mb_strtolower(trim((string) $request->input('username')));
 
-            return [Limit::perMinute(20)->by('ip:'.$request->ip()), Limit::perMinute(5)->by('identity:'.hash('sha256', $identity))];
+            return [
+                Limit::perMinute(5)->by('login:'.hash('sha256', $username.'|'.$request->ip())),
+                Limit::perMinute(30)->by('login-ip:'.$request->ip()),
+            ];
         });
-        RateLimiter::for('register', fn (Request $r) => Limit::perMinute(5)->by($r->ip()));
+
+        // Kebijakan kata sandi kuat untuk semua pembuatan/penggantian sandi.
+        Password::defaults(fn () => Password::min((int) config('siakad.password.min', 10))
+            ->letters()->mixedCase()->numbers()->symbols());
     }
 }

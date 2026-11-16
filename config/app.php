@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend Preview
+    |--------------------------------------------------------------------------
+    |
+    | Selama frontend belum tersambung ke API, halaman bisa dibuka tanpa login
+    | dan halaman /preview aktif. Hanya berlaku bila APP_ENV=local.
+    |
+    */
+
+    'frontend_preview' => (bool) env('FRONTEND_PREVIEW', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

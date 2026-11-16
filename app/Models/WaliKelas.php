@@ -9,6 +9,13 @@ class WaliKelas extends Model
 {
     protected $table = 'wali_kelas';
 
+    protected $primaryKey = 'id_wali_kelas';
+
+    protected $fillable = ['id_kelas', 'id_guru', 'id_semester'];
+
+    public function kelas(): BelongsTo
+    {
+        return $this->belongsTo(Kelas::class, 'id_kelas', 'id_kelas');
     protected $fillable = ['kelas_id', 'guru_id'];
 
     public function kelas(): BelongsTo
@@ -18,6 +25,7 @@ class WaliKelas extends Model
 
     public function guru(): BelongsTo
     {
+        return $this->belongsTo(Guru::class, 'id_guru', 'id_guru');
         return $this->belongsTo(Guru::class);
     }
 }

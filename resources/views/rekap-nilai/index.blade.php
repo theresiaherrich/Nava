@@ -17,7 +17,7 @@
 @section('title', 'Rekap Nilai (DKN)')
 
 @push('styles')
-    @vite(['resources/css/rekap-nilai.css', 'resources/js/rekap-nilai.js'])
+    @vite(['resources/css/rekap-nilai.css'])
 @endpush
 
 @php

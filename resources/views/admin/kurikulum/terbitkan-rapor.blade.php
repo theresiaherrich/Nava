@@ -4,7 +4,7 @@
 <style>
     [x-cloak] { display: none !important; }
 
-    .tb-wrap { padding: 24px; max-width: 1280px; margin: 0 auto; color: #111827; font-size: 12px; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .tb-wrap { padding: 24px; max-width: 1280px; margin: 0 auto; color: #111827; font-size: 12px; font-family: var(--font-sans); }
     .tb-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .08em; color: #0ea5e9; text-transform: uppercase; }
     .tb-title { font-size: 22px; font-weight: 700; margin-top: 2px; }
     .tb-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }

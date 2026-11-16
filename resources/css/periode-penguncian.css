@@ -15,7 +15,7 @@
     --pk-blue-soft: #e0f2fe;
     --pk-ok: #15803d;
     --pk-warn: #b45309;
-    --pk-font: "Instrument Sans", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --pk-font: var(--font-sans);
 
     min-width: 0;
     min-height: 100%;

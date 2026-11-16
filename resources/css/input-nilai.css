@@ -19,7 +19,7 @@
     --iv-err: #dc2626;
     --iv-sas-bg: #fffdf4;
     --iv-sas-head: #fef9c3;
-    --iv-font: "Instrument Sans", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --iv-font: var(--font-sans);
 
     min-width: 0;
     min-height: 100%;

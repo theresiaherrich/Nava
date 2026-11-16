@@ -18,7 +18,7 @@
     min-height: calc(100vh - 60px);
     background: #f6f8fb;
     padding: 24px 28px 32px;
-    font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+    font-family: var(--font-sans);
     color: var(--dkl-text);
     box-sizing: border-box;
 }

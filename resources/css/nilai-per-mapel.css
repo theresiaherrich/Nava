@@ -4,7 +4,7 @@
     min-height: 100vh;
     background: #f6f8fb;
     padding: 28px 32px;
-    font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
     color: #0f172a;
     box-sizing: border-box;
 }

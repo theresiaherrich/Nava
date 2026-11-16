@@ -1,7 +1,7 @@
 /* =========================================================
    Rekap Nilai (DKN)
    resources/css/rekap-nilai.css
-   Prefix: rn-   Font: Inter   Radius: 8px   Toast: navy #1F2A44
+   Prefix: rn-   Font: Plus Jakarta Sans   Radius: 8px   Toast: navy #1F2A44
    ========================================================= */
 
 :root {
@@ -38,7 +38,7 @@
     background: var(--rn-bg);
     min-height: 100vh;
     padding: 28px 32px 48px;
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     color: var(--rn-text);
     font-size: 14px;
     line-height: 1.5;

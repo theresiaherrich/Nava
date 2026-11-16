@@ -6,7 +6,7 @@
 <style>
     [x-cloak] { display: none !important; }
 
-    .ar-wrap { padding: 24px; max-width: 1200px; margin: 0 auto; color: #111827; font-size: 12px; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .ar-wrap { padding: 24px; max-width: 1200px; margin: 0 auto; color: #111827; font-size: 12px; font-family: var(--font-sans); }
     .ar-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .08em; color: #0ea5e9; text-transform: uppercase; }
     .ar-title { font-size: 22px; font-weight: 700; margin-top: 2px; }
     .ar-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }

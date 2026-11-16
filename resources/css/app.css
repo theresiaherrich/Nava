@@ -4,7 +4,85 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+|--------------------------------------------------------------------------
+| Design token SIAKAD A2 (diambil dari docs/design)
+|--------------------------------------------------------------------------
+| Dipakai sebagai utility Tailwind, mis. bg-primary, text-ink, border-line,
+| bg-success-soft, rounded-card, shadow-card. CSS halaman memakai var(--color-*).
+*/
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, 'Segoe UI', sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Brand */
+    --color-primary: #0ea5e9;
+    --color-primary-strong: #0284c7;
+    --color-primary-soft: #e0f2fe;
+    --color-primary-faint: #f0f9ff;
+    --color-link: #0369a1;
+
+    /* Teks */
+    --color-ink: #0f172a;
+    --color-ink-2: #334155;
+    --color-muted: #64748b;
+    --color-subtle: #94a3b8;
+
+    /* Permukaan & garis */
+    --color-canvas: #f5f7fa;
+    --color-surface: #ffffff;
+    --color-surface-2: #f8fafc;
+    --color-line: #e2e8f0;
+    --color-line-soft: #eef2f6;
+
+    /* Status (teks / latar) */
+    --color-success: #15803d;
+    --color-success-strong: #16a34a;
+    --color-success-soft: #dcfce7;
+    --color-warning: #c2410c;
+    --color-warning-strong: #ea580c;
+    --color-warning-soft: #ffedd5;
+    --color-warning-faint: #fff7ed;
+    --color-danger: #dc2626;
+    --color-danger-soft: #fee2e2;
+    --color-info: #0369a1;
+    --color-info-soft: #e0f2fe;
+    --color-violet: #7c3aed;
+    --color-violet-strong: #6d28d9;
+    --color-violet-soft: #ede9fe;
+    --color-neutral: #475569;
+    --color-neutral-soft: #f1f5f9;
+
+    /* Kolom khusus tabel nilai */
+    --color-sas: #fef9e7;
+    --color-rapor: #eff6ff;
+
+    /* Toast */
+    --color-toast: #1f2a44;
+
+    /* Radius & bayangan */
+    --radius-card: 12px;
+    --radius-control: 8px;
+    --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04);
+    --shadow-pop: 0 12px 32px -8px rgb(15 23 42 / 0.18), 0 2px 6px rgb(15 23 42 / 0.06);
+}
+
+/*
+| Satu font untuk seluruh aplikasi. sidebar.css (komponen dikunci) masih menulis Poppins,
+| jadi ditimpa di sini dengan selektor yang lebih spesifik tanpa mengubah file sidebar.
+*/
+body .sb,
+body .sb button {
+    font-family: var(--font-sans);
+}
+
+@layer base {
+    [x-cloak] {
+        display: none !important;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
 }

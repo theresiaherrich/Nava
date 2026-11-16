@@ -1,49 +1,28 @@
+import { globSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import { bunny } from 'laravel-vite-plugin/fonts';
+import { fontsource } from 'laravel-vite-plugin/fonts';
 import tailwindcss from '@tailwindcss/vite';
+
+// Setiap file CSS/JS halaman di resources/{css,js} otomatis menjadi entry Vite,
+// jadi daftar input tidak bisa lagi menyebut file yang tidak ada (atau lupa didaftarkan).
+const input = [
+    ...globSync('resources/css/*.css'),
+    ...globSync('resources/js/*.js'),
+].map((file) => file.replaceAll('\\', '/')).sort();
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: [
-                'resources/css/app.css',
-                'resources/js/app.js',
-                'resources/css/sidebar.css',
-                'resources/css/rekap-nilai.css',
-                'resources/js/rekap-nilai.js',
-                'resources/css/verifikasi-nilai.css',
-                'resources/js/verifikasi-nilai.js',
-                'resources/css/rapor-saya.css',
-                'resources/js/rapor-saya.js',
-                'resources/css/nilai-per-mapel.css',
-                'resources/js/nilai-per-mapel.js',
-                'resources/css/riwayat-rapor.css',
-                'resources/js/riwayat-rapor.js',
-                'resources/css/beranda-akademik.css',
-                'resources/js/beranda-akademik.js',
-                'resources/css/dashboard-kurikulum.css',
-                'resources/js/dashboard-kurikulum.js',
-                'resources/css/dashboard-operator.css',
-                'resources/js/dashboard-operator.js',
-                'resources/css/akun-peran.css',
-                'resources/js/akun-peran.js',
-                'resources/css/data-siswa.css',
-                'resources/js/data-siswa.js',
-                'resources/css/data-guru.css',
-                'resources/js/data-guru.js',
-                'resources/css/data-kelas.css',
-                'resources/js/data-kelas.js',
-                'resources/css/relasi-orang-tua.css',
-                'resources/css/topbar.css',
-                'resources/js/topbar.js',
-                'resources/css/dashboard-kelas.css',
-                'resources/js/dashboard-kelas.js',
-            ],
+            input,
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
+                // Satu font untuk seluruh halaman, sesuai desain. Diambil dari paket npm
+                // @fontsource/plus-jakarta-sans (tanpa CDN).
+                fontsource('Plus Jakarta Sans', {
+                    weights: [400, 500, 600, 700, 800],
+                    // Tanpa paket opsional "fontaine"; fallback cukup dari daftar --font-sans.
+                    optimizedFallbacks: false,
                 }),
             ],
         }),

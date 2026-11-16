@@ -30,7 +30,7 @@
         box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
         display: flex;
         flex-direction: column;
-        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-family: var(--font-sans);
         font-size: 11px;
         line-height: 1.5;
         color: #111827;

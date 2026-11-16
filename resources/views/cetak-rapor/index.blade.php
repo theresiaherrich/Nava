@@ -3,7 +3,7 @@
 @section('title', 'Cetak & Ekspor Rapor')
 
 
- @vite(['resources/css/cetak-rapor.css', 'resources/js/cetak-rapor.js'])
+ @vite(['resources/css/cetak-rapor.css'])
 
 @section('content')
 @php

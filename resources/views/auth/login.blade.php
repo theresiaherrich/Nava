@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Login NAVA</title>
+    {{-- Halaman login akan dibangun ulang sesuai desain 1.01; sementara memakai font yang sama. --}}
+    @fonts
+    @vite(['resources/css/app.css'])
 </head>
-<body style="font-family:Arial;max-width:400px;margin:70px auto">
+<body class="font-sans" style="max-width:400px;margin:70px auto">
     <h1>Login SIAKAD NAVA</h1>
     
     <!-- Ganti login.process menjadi login.attempt -->

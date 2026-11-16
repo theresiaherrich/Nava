@@ -27,5 +27,20 @@ class Kelas extends Model
     public function waliKelas(): HasMany
     {
         return $this->hasMany(WaliKelas::class, 'id_kelas', 'id_kelas');
+    protected $fillable = ['semester_id', 'nama', 'tingkat', 'fase'];
+
+    protected function casts(): array
+    {
+        return ['tingkat' => 'integer'];
+    }
+
+    public function semester(): BelongsTo
+    {
+        return $this->belongsTo(Semester::class);
+    }
+
+    public function siswaKelas(): HasMany
+    {
+        return $this->hasMany(SiswaKelas::class);
     }
 }

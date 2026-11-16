@@ -19,6 +19,11 @@ class PeriodeNilai extends Model
     protected function casts(): array
     {
         return ['tanggal_mulai' => 'date', 'tanggal_selesai' => 'date'];
+    protected $fillable = ['semester_id', 'jenis', 'tingkat', 'tanggal_buka', 'tanggal_tutup', 'dikunci'];
+
+    protected function casts(): array
+    {
+        return ['tingkat' => 'integer', 'tanggal_buka' => 'datetime', 'tanggal_tutup' => 'datetime', 'dikunci' => 'boolean'];
     }
 
     public function semester(): BelongsTo
@@ -29,5 +34,11 @@ class PeriodeNilai extends Model
     public function paket(): HasMany
     {
         return $this->hasMany(PaketNilai::class, 'id_periode', 'id_periode');
+        return $this->belongsTo(Semester::class);
+    }
+
+    public function terbuka(): bool
+    {
+        return ! $this->dikunci && now()->between($this->tanggal_buka, $this->tanggal_tutup);
     }
 }

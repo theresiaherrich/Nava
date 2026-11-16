@@ -11,4 +11,10 @@ class Sekolah extends Model
     protected $primaryKey = 'id_sekolah';
 
     protected $fillable = ['nama', 'alamat', 'telepon', 'email', 'npsn'];
+    protected $fillable = ['npsn', 'nama', 'alamat', 'nama_kepala_sekolah'];
+
+    protected function casts(): array
+    {
+        return [];
+    }
 }

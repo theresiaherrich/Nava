@@ -23,6 +23,8 @@ class RoleSeeder extends Seeder
 
         foreach ($roles as $role) {
             Role::updateOrCreate(['kode' => $role['kode']], ['nama' => $role['nama']]);
+        foreach (['admin', 'kurikulum', 'guru', 'wali_kelas', 'siswa', 'wali_siswa', 'kepala_sekolah', 'kesiswaan'] as $name) {
+            Role::firstOrCreate(['name' => $name]);
         }
     }
 }

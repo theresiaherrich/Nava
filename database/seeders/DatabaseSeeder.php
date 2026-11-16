@@ -53,5 +53,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $user->roles()->syncWithoutDetaching([Role::where('kode', $kodeRole)->value('id_role')]);
+        $this->call([RoleSeeder::class, PredikatSeeder::class]);
     }
 }

@@ -35,5 +35,35 @@ class Rombel extends Model
     public function paket(): HasMany
     {
         return $this->hasMany(PaketNilai::class, 'id_rombel', 'id_rombel');
+    protected $fillable = ['semester_id', 'mapel_id', 'nama'];
+
+    public function semester(): BelongsTo
+    {
+        return $this->belongsTo(Semester::class);
+    }
+
+    public function mapel(): BelongsTo
+    {
+        return $this->belongsTo(Mapel::class);
+    }
+
+    public function gurus(): BelongsToMany
+    {
+        return $this->belongsToMany(Guru::class, 'guru_rombel', 'rombel_id', 'guru_id')->withTimestamps();
+    }
+
+    public function peserta(): HasMany
+    {
+        return $this->hasMany(SiswaRombel::class, 'rombel_id');
+    }
+
+    public function tp(): HasMany
+    {
+        return $this->hasMany(Tp::class, 'rombel_id')->orderBy('nomor_urut');
+    }
+
+    public function dapatDiampuOleh(?int $guruId): bool
+    {
+        return $guruId !== null && $this->gurus()->whereKey($guruId)->exists();
     }
 }

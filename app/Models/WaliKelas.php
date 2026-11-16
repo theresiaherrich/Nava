@@ -16,10 +16,16 @@ class WaliKelas extends Model
     public function kelas(): BelongsTo
     {
         return $this->belongsTo(Kelas::class, 'id_kelas', 'id_kelas');
+    protected $fillable = ['kelas_id', 'guru_id'];
+
+    public function kelas(): BelongsTo
+    {
+        return $this->belongsTo(Kelas::class);
     }
 
     public function guru(): BelongsTo
     {
         return $this->belongsTo(Guru::class, 'id_guru', 'id_guru');
+        return $this->belongsTo(Guru::class);
     }
 }

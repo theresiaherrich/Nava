@@ -20,6 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'username', 'password', 'nama', 'email', 'status_akun', 'must_change_password',
     ];
+    protected $fillable = ['name', 'username', 'email', 'password'];
 
     protected $hidden = ['password', 'remember_token'];
 
@@ -30,6 +31,27 @@ class User extends Authenticatable
             'must_change_password' => 'boolean',
             'last_login_at' => 'datetime',
         ];
+        return ['email_verified_at' => 'datetime', 'password' => 'hashed', 'is_active' => 'boolean'];
+    }
+
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'role_user')->withTimestamps();
+    }
+
+    public function hasAnyRole(array $roles): bool
+    {
+        return $this->roles()->whereIn('name', $roles)->exists();
+    }
+
+    public function siswa(): HasOne
+    {
+        return $this->hasOne(Siswa::class);
+    }
+
+    public function guru(): HasOne
+    {
+        return $this->hasOne(Guru::class);
     }
 
     public function roles(): BelongsToMany

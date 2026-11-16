@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Status: draf -> terkirim -> (revisi | disetujui) -> terkunci.
  * Nilai hanya boleh diubah saat status draf atau revisi (lihat isEditable).
  */
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class PaketNilai extends Model
 {
     protected $table = 'paket_nilai';
@@ -20,6 +22,7 @@ class PaketNilai extends Model
         'id_periode', 'id_kelas', 'id_rombel', 'status', 'dikirim_oleh', 'waktu_kirim',
         'dikunci_oleh', 'waktu_kunci', 'alasan_koreksi',
     ];
+    protected $fillable = ['rombel_id', 'periode_id', 'kelas_id', 'status', 'dikirim_oleh', 'waktu_kirim', 'dikunci_oleh', 'waktu_kunci'];
 
     protected function casts(): array
     {
@@ -44,5 +47,23 @@ class PaketNilai extends Model
     public function isEditable(): bool
     {
         return in_array($this->status, ['draf', 'revisi'], true);
+    public function rombel(): BelongsTo
+    {
+        return $this->belongsTo(Rombel::class, 'rombel_id');
+    }
+
+    public function periode(): BelongsTo
+    {
+        return $this->belongsTo(PeriodeNilai::class, 'periode_id');
+    }
+
+    public function kelas(): BelongsTo
+    {
+        return $this->belongsTo(Kelas::class, 'kelas_id');
+    }
+
+    public function verifikasi(): HasMany
+    {
+        return $this->hasMany(VerifikasiNilai::class, 'paket_id');
     }
 }

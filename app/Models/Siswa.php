@@ -30,5 +30,20 @@ class Siswa extends Model
     public function orangTua(): HasMany
     {
         return $this->hasMany(OrangTua::class, 'id_siswa', 'id_siswa');
+    protected $fillable = ['nis', 'nisn', 'nama', 'agama', 'aktif'];
+
+    protected function casts(): array
+    {
+        return ['aktif' => 'boolean'];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function kelas(): HasMany
+    {
+        return $this->hasMany(SiswaKelas::class);
     }
 }

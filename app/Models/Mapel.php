@@ -12,6 +12,7 @@ class Mapel extends Model
     protected $primaryKey = 'id_mapel';
 
     protected $fillable = ['kode', 'nama', 'kelompok', 'aktif'];
+    protected $fillable = ['kode', 'nama', 'aktif'];
 
     protected function casts(): array
     {

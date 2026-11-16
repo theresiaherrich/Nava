@@ -12,6 +12,7 @@ class LogAktivitas extends Model
     protected $fillable = [
         'id_user', 'aksi', 'nama_entitas', 'entitas_id', 'alasan', 'data_sebelum', 'data_sesudah',
     ];
+    protected $fillable = ['user_id', 'aksi', 'nama_entitas', 'entitas_id', 'alasan', 'data_sebelum', 'data_sesudah'];
 
     protected function casts(): array
     {

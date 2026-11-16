@@ -30,5 +30,15 @@ class Guru extends Model
     public function rombel(): BelongsToMany
     {
         return $this->belongsToMany(Rombel::class, 'guru_rombel', 'id_guru', 'id_rombel');
+    protected $fillable = ['nama', 'nip', 'status_kepegawaian', 'aktif'];
+
+    protected function casts(): array
+    {
+        return ['aktif' => 'boolean'];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

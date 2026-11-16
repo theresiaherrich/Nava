@@ -3,28 +3,25 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-/**
- * Primary key komposit (id_siswa, hubungan). Jangan memakai $model->save() untuk
- * mengubah baris; gunakan query builder yang memfilter kedua kolom (lihat SiswaController).
- */
 class OrangTua extends Model
 {
     protected $table = 'orang_tua';
 
-    protected $primaryKey = 'id_siswa';
+    protected $primaryKey = 'id_orang_tua';
 
-    public $incrementing = false;
+    protected $fillable = ['nama', 'jenis_kelamin', 'no_telepon', 'alamat'];
 
-    public $timestamps = false;
-
-    protected $fillable = [
-        'id_siswa', 'hubungan', 'id_user', 'alamat', 'no_telepon', 'jenis_kelamin',
-        'nama', 'status_verifikasi', 'diverifikasi_oleh', 'waktu_verifikasi',
-    ];
-
-    protected function casts(): array
+    public function user(): BelongsTo
     {
-        return ['waktu_verifikasi' => 'datetime'];
+        return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    public function anak(): BelongsToMany
+    {
+        return $this->belongsToMany(Siswa::class, 'orang_tua_siswa', 'id_orang_tua', 'id_siswa')
+            ->withPivot('hubungan')->withTimestamps();
     }
 }

@@ -3,57 +3,47 @@
 namespace App\Services;
 
 use App\Models\LogAktivitas;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use InvalidArgumentException;
 
 /**
- * Satu-satunya pintu penulisan log_aktivitas. Setiap aksi penting mencatat
- * pelaku, waktu (created_at), dan alasan.
+ * Satu-satunya pintu penulisan log_aktivitas: aktor, aksi, target, data lama/baru.
+ * Field sensitif selalu dibuang sebelum disimpan.
  */
 class AuditService
 {
-    private const WAJIB_ALASAN = ['buka_koreksi', 'nonaktifkan_akun'];
+    private const SENSITIF = ['password', 'password_confirmation', 'password_baru', 'password_lama', 'remember_token', 'token'];
+
+    private const WAJIB_ALASAN = ['buka_koreksi', 'cabut_rapor', 'minta_revisi'];
 
     public function catat(
         string $aksi,
         string $entitas,
-        int|string $entitasId,
-        ?string $alasan = null,
+        int|string|null $entitasId,
         ?array $sebelum = null,
         ?array $sesudah = null,
-        ?int $idUser = null,
+        ?string $alasan = null,
+        ?int $idAktor = null,
     ): LogAktivitas {
-        $pelaku = $idUser ?? Auth::id();
-
-        if (! $pelaku) {
-            throw new InvalidArgumentException('Audit membutuhkan pelaku.');
-        }
-
         if (in_array($aksi, self::WAJIB_ALASAN, true) && blank($alasan)) {
             throw new InvalidArgumentException("Aksi {$aksi} wajib menyertakan alasan.");
         }
 
         return LogAktivitas::create([
-            'id_user' => $pelaku,
+            'id_user' => $idAktor ?? Auth::id(),
             'aksi' => $aksi,
             'nama_entitas' => $entitas,
-            'entitas_id' => (int) $entitasId,
+            'entitas_id' => $entitasId === null ? null : (int) $entitasId,
             'alasan' => $alasan,
-            'data_sebelum' => $sebelum,
-            'data_sesudah' => $sesudah,
-use Illuminate\Support\Arr;
-
-class AuditService
-{
-    public static function record(string $action, string $table, ?int $id, ?array $before = null, ?array $after = null, ?string $reason = null, ?int $actorId = null): void
-    {
-        // Jangan pernah memasukkan request->all(): bisa berisi password/token.
-        $sensitive = ['password', 'password_confirmation', 'remember_token', 'token'];
-        LogAktivitas::create([
-            'user_id' => $actorId ?? auth()->id(), 'aksi' => $action, 'nama_entitas' => $table,
-            'entitas_id' => $id, 'alasan' => $reason,
-            'data_sebelum' => $before === null ? null : Arr::except($before, $sensitive),
-            'data_sesudah' => $after === null ? null : Arr::except($after, $sensitive),
+            'data_sebelum' => $sebelum === null ? null : $this->bersihkan($sebelum),
+            'data_sesudah' => $sesudah === null ? null : $this->bersihkan($sesudah),
+            'ip_address' => app()->runningInConsole() ? null : request()->ip(),
         ]);
+    }
+
+    private function bersihkan(array $data): array
+    {
+        return Arr::except($data, self::SENSITIF);
     }
 }

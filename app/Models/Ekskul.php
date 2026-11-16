@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ekskul extends Model
@@ -11,9 +12,17 @@ class Ekskul extends Model
 
     protected $primaryKey = 'id_ekskul';
 
-    public $timestamps = false;
+    protected $fillable = ['nama', 'id_pembina', 'aktif'];
 
-    protected $fillable = ['nama'];
+    protected function casts(): array
+    {
+        return ['aktif' => 'boolean'];
+    }
+
+    public function pembina(): BelongsTo
+    {
+        return $this->belongsTo(Guru::class, 'id_pembina', 'id_guru');
+    }
 
     public function peserta(): HasMany
     {

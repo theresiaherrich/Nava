@@ -7,22 +7,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory;
+
+    public const STATUS = ['belum_aktif', 'aktif', 'nonaktif'];
 
     protected $table = 'user';
 
     protected $primaryKey = 'id_user';
 
-    protected $fillable = [
-        'username', 'password', 'nama', 'email', 'status_akun', 'must_change_password',
-    ];
-    protected $fillable = ['name', 'username', 'email', 'password'];
+    protected $fillable = ['username', 'password', 'nama', 'email', 'status_akun', 'must_change_password'];
 
     protected $hidden = ['password', 'remember_token'];
+
+    /** Cache kode peran per instance agar middleware tidak query berulang. */
+    private ?array $kodeRolesCache = null;
 
     protected function casts(): array
     {
@@ -31,32 +32,11 @@ class User extends Authenticatable
             'must_change_password' => 'boolean',
             'last_login_at' => 'datetime',
         ];
-        return ['email_verified_at' => 'datetime', 'password' => 'hashed', 'is_active' => 'boolean'];
     }
 
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class, 'role_user')->withTimestamps();
-    }
-
-    public function hasAnyRole(array $roles): bool
-    {
-        return $this->roles()->whereIn('name', $roles)->exists();
-    }
-
-    public function siswa(): HasOne
-    {
-        return $this->hasOne(Siswa::class);
-    }
-
-    public function guru(): HasOne
-    {
-        return $this->hasOne(Guru::class);
-    }
-
-    public function roles(): BelongsToMany
-    {
-        return $this->belongsToMany(Role::class, 'role_user', 'id_user', 'id_role', 'id_user', 'id_role');
+        return $this->belongsToMany(Role::class, 'role_user', 'id_user', 'id_role')->withPivot('created_at');
     }
 
     public function siswa(): HasOne
@@ -69,20 +49,38 @@ class User extends Authenticatable
         return $this->hasOne(Guru::class, 'id_user', 'id_user');
     }
 
-    public function orangTua(): HasMany
+    public function orangTua(): HasOne
     {
-        return $this->hasMany(OrangTua::class, 'id_user', 'id_user');
+        return $this->hasOne(OrangTua::class, 'id_user', 'id_user');
     }
 
-    /** @return array<int, string> kode peran, mis. ['GURU', 'WALI_KELAS'] */
+    public function notifikasi(): HasMany
+    {
+        return $this->hasMany(Notifikasi::class, 'id_user', 'id_user');
+    }
+
+    /** @return list<string> mis. ['GURU', 'WALI_KELAS'], diurutkan sesuai config('siakad.roles'). */
     public function kodeRoles(): array
     {
-        return $this->roles()->pluck('kode')->all();
+        if ($this->kodeRolesCache === null) {
+            $kode = $this->roles()->pluck('kode')->all();
+            $urutan = array_keys(config('siakad.roles'));
+            usort($kode, fn ($a, $b) => array_search($a, $urutan, true) <=> array_search($b, $urutan, true));
+            $this->kodeRolesCache = $kode;
+        }
+
+        return $this->kodeRolesCache;
     }
 
-    public function hasRole(string $kode): bool
+    public function lupakanCacheRoles(): void
     {
-        return in_array($kode, $this->kodeRoles(), true);
+        $this->kodeRolesCache = null;
+        $this->unsetRelation('roles');
+    }
+
+    public function hasRole(string ...$kode): bool
+    {
+        return array_intersect($kode, $this->kodeRoles()) !== [];
     }
 
     public function isAktif(): bool

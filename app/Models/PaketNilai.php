@@ -4,29 +4,38 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-/**
- * Paket nilai = satu rombel + satu periode + satu kelas asal.
- * Status: draf -> terkirim -> (revisi | disetujui) -> terkunci.
- * Nilai hanya boleh diubah saat status draf atau revisi (lihat isEditable).
- */
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/** pengajuan_nilai (ERD): nilai satu rombel × periode × kelas asal. */
 class PaketNilai extends Model
 {
+    public const STATUS = ['draf', 'terkirim', 'perlu_revisi', 'disetujui', 'dikunci'];
+
+    /** Status yang masih boleh diubah guru. */
+    public const BISA_DIEDIT = ['draf', 'perlu_revisi'];
+
     protected $table = 'paket_nilai';
 
     protected $primaryKey = 'id_paket_nilai';
 
     protected $fillable = [
-        'id_periode', 'id_kelas', 'id_rombel', 'status', 'dikirim_oleh', 'waktu_kirim',
-        'dikunci_oleh', 'waktu_kunci', 'alasan_koreksi',
+        'id_rombel', 'id_periode', 'id_kelas', 'status', 'lengkap',
+        'dikirim_oleh', 'waktu_kirim', 'diverifikasi_oleh', 'waktu_verifikasi', 'dikunci_oleh', 'waktu_kunci',
     ];
-    protected $fillable = ['rombel_id', 'periode_id', 'kelas_id', 'status', 'dikirim_oleh', 'waktu_kirim', 'dikunci_oleh', 'waktu_kunci'];
 
     protected function casts(): array
     {
-        return ['waktu_kirim' => 'datetime', 'waktu_kunci' => 'datetime'];
+        return [
+            'lengkap' => 'boolean',
+            'waktu_kirim' => 'datetime',
+            'waktu_verifikasi' => 'datetime',
+            'waktu_kunci' => 'datetime',
+        ];
+    }
+
+    public function rombel(): BelongsTo
+    {
+        return $this->belongsTo(Rombel::class, 'id_rombel', 'id_rombel');
     }
 
     public function periode(): BelongsTo
@@ -39,31 +48,13 @@ class PaketNilai extends Model
         return $this->belongsTo(Kelas::class, 'id_kelas', 'id_kelas');
     }
 
-    public function rombel(): BelongsTo
+    public function riwayat(): HasMany
     {
-        return $this->belongsTo(Rombel::class, 'id_rombel', 'id_rombel');
+        return $this->hasMany(VerifikasiNilai::class, 'id_paket_nilai', 'id_paket_nilai')->orderBy('id_verifikasi_nilai');
     }
 
-    public function isEditable(): bool
+    public function bisaDiedit(): bool
     {
-        return in_array($this->status, ['draf', 'revisi'], true);
-    public function rombel(): BelongsTo
-    {
-        return $this->belongsTo(Rombel::class, 'rombel_id');
-    }
-
-    public function periode(): BelongsTo
-    {
-        return $this->belongsTo(PeriodeNilai::class, 'periode_id');
-    }
-
-    public function kelas(): BelongsTo
-    {
-        return $this->belongsTo(Kelas::class, 'kelas_id');
-    }
-
-    public function verifikasi(): HasMany
-    {
-        return $this->hasMany(VerifikasiNilai::class, 'paket_id');
+        return in_array($this->status, self::BISA_DIEDIT, true);
     }
 }

@@ -5,22 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/** Riwayat keputusan paket nilai (append-only). */
 class VerifikasiNilai extends Model
 {
-    // Hanya created_at; riwayat verifikasi tidak pernah diubah (append-only).
-    const UPDATED_AT = null;
+    public const UPDATED_AT = null;
 
     protected $table = 'verifikasi_nilai';
 
-    protected $fillable = ['paket_id', 'user_id', 'keputusan', 'catatan'];
+    protected $primaryKey = 'id_verifikasi_nilai';
 
-    public function paket(): BelongsTo
+    protected $fillable = ['id_paket_nilai', 'id_user', 'aksi', 'catatan'];
+
+    protected function casts(): array
     {
-        return $this->belongsTo(PaketNilai::class, 'paket_id');
+        return ['created_at' => 'datetime'];
     }
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
 }

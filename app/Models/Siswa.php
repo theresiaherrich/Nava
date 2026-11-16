@@ -4,22 +4,35 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Siswa extends Model
 {
+    public const STATUS = ['aktif', 'lulus', 'pindah', 'keluar'];
+
     protected $table = 'siswa';
 
     protected $primaryKey = 'id_siswa';
 
     protected $fillable = [
-        'id_user', 'nis', 'nisn', 'nama', 'agama', 'jenis_kelamin',
-        'tahun_masuk', 'urutan_masuk', 'alamat',
+        'nis', 'nisn', 'nama', 'jenis_kelamin', 'id_agama', 'tempat_lahir', 'tanggal_lahir',
+        'alamat', 'tahun_masuk', 'status',
     ];
+
+    protected function casts(): array
+    {
+        return ['tanggal_lahir' => 'date:Y-m-d'];
+    }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    public function agama(): BelongsTo
+    {
+        return $this->belongsTo(Agama::class, 'id_agama', 'id_agama');
     }
 
     public function riwayatKelas(): HasMany
@@ -27,23 +40,9 @@ class Siswa extends Model
         return $this->hasMany(RiwayatKelas::class, 'id_siswa', 'id_siswa');
     }
 
-    public function orangTua(): HasMany
+    public function orangTua(): BelongsToMany
     {
-        return $this->hasMany(OrangTua::class, 'id_siswa', 'id_siswa');
-    protected $fillable = ['nis', 'nisn', 'nama', 'agama', 'aktif'];
-
-    protected function casts(): array
-    {
-        return ['aktif' => 'boolean'];
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function kelas(): HasMany
-    {
-        return $this->hasMany(SiswaKelas::class);
+        return $this->belongsToMany(OrangTua::class, 'orang_tua_siswa', 'id_siswa', 'id_orang_tua')
+            ->withPivot('hubungan')->withTimestamps();
     }
 }

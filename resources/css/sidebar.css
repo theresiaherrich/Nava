@@ -50,8 +50,10 @@
     border-radius: var(--sb-radius);
 }
 .sb-brand:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.sb-brand__logo { width: 28px; height: auto; flex: none; display: block; }
-.sb-brand__name { font-size: 12px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+.sb-brand__logo { width: 32px; height: auto; flex: none; display: block; }
+.sb-brand__text { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.sb-brand__name { font-size: 17px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+.sb-brand__school { margin-top: 1px; font-size: 11px; font-weight: 400; opacity: .9; white-space: nowrap; }
 
 /* ---------- Area tengah ---------- */
 .sb-scroll {

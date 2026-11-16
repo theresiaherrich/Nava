@@ -81,8 +81,11 @@
 
 <aside class="sb" id="app-sidebar" aria-label="Navigasi utama">
     <a href="{{ url('/') }}" class="sb-brand">
-        <img class="sb-brand__logo" src="{{ asset('images/logo-siakad.png') }}" alt="Logo SIAKAD">
-        <span class="sb-brand__name">SIAKAD SMAN 1</span>
+        <img class="sb-brand__logo" src="{{ asset('images/logo-siakad.png') }}" alt="">
+        <span class="sb-brand__text">
+            <span class="sb-brand__name">SIAKAD</span>
+            <span class="sb-brand__school">SMA Negeri 1 Malang</span>
+        </span>
     </a>
 
     <div class="sb-scroll">

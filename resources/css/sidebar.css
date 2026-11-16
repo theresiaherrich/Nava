@@ -3,11 +3,13 @@
    Warna dan ukuran utama ada di variabel di bawah ini.
    ========================================================== */
 .sb {
-    --sb-bg-top: #12a8dc;
-    --sb-bg-bottom: #1b6fd0;
-    --sb-pink-1: #e8147e;
-    --sb-pink-2: #f0408f;
-    --sb-active-sub: rgba(255, 255, 255, .22);
+    /* Warna diambil dari desain (8.01 / 34 / 6.01 / 8.04): biru polos, tanpa gradasi. */
+    --sb-bg-top: #089bd5;
+    --sb-bg-bottom: #089bd5;
+    --sb-pink-1: #e92165;
+    --sb-pink-2: #f0689a;
+    --sb-active-sub: rgba(255, 255, 255, .29);
+    --sb-card: rgba(255, 255, 255, .16);
     --sb-text: #fff;
     --sb-text-soft: rgba(255, 255, 255, .72);
     --sb-line: rgba(255, 255, 255, .28);
@@ -157,10 +159,16 @@
 .sb-footer {
     flex: none;
     margin-top: 10px;
-    padding-top: 12px;
-    border-top: 1px solid var(--sb-line);
 }
-.sb-year { display: flex; align-items: center; gap: 8px; padding: 0 10px 8px; }
+.sb-year {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 9px 12px;
+    border-radius: var(--sb-radius);
+    background: var(--sb-card);
+}
 .sb-year__label { font-size: 8.5px; color: var(--sb-text-soft); }
 .sb-year__value { margin-top: 1px; font-size: 10px; font-weight: 600; white-space: nowrap; }
 .sb-footer form { margin: 0; }

@@ -293,3 +293,19 @@
     .dkl-stats { grid-template-columns: minmax(0, 1fr); }
     .dkl-date { width: 100%; }
 }
+
+/* ---------- Varian "rapor siap" (desain Wali 5.02) ---------- */
+.dkl-banner.is-success { background: var(--color-success-soft, #dcfce7); border-color: #86efac; }
+.dkl-banner.is-success .dkl-banner__icon { color: var(--color-success, #15803d); border-color: #86efac; }
+.dkl-banner.is-success .dkl-banner__title { color: var(--color-success, #15803d); }
+.dkl-banner__cta {
+    display: inline-flex; align-items: center; gap: 4px; flex: none;
+    background: var(--color-primary, #0ea5e9); color: #fff; font-size: 13px; font-weight: 600;
+    padding: 7px 12px; border-radius: 8px; text-decoration: none;
+}
+.dkl-banner__cta:hover { background: var(--color-primary-strong, #0284c7); }
+.dkl-badge.is-terkunci { background: #dcfce7; color: #15803d; }
+.dkl-rapor__icon.is-siap { background: var(--color-success-strong, #16a34a); color: #fff; border-color: transparent; }
+.dkl-btn--print.is-siap { background: var(--color-primary, #0ea5e9); color: #fff; text-decoration: none; }
+.dkl-btn--print.is-siap:hover { background: var(--color-primary-strong, #0284c7); }
+.dkl-done { display: flex; align-items: center; gap: 6px; color: var(--color-success, #15803d); font-size: 13px; font-weight: 600; }

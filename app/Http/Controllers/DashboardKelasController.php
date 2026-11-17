@@ -23,7 +23,11 @@ class DashboardKelasController extends Controller
         $tahunAjaran       = '2026/2027 · Ganjil';
         $daftarTahunAjaran = ['2026/2027 · Ganjil', '2025/2026 · Genap', '2025/2026 · Ganjil'];
 
-        $tanggalHariIni = now()->locale('id')->isoFormat('dddd, D MMMM YYYY');
+        // Tanggal dummy mengikuti desain (TODO backend: now()).
+        $tanggalHariIni = 'Senin, 12 Oktober 2026';
+
+        // Varian desain 5.02: ?state=rapor-siap (semua mapel dikunci Kurikulum).
+        $raporSiap = $request->query('state') === 'rapor-siap';
 
         // TODO (backend): ambil dari tabel notifikasi milik user
         $notifikasi = [
@@ -54,24 +58,30 @@ class DashboardKelasController extends Controller
             ['nama' => 'Bahasa Jepang',       'kelompok' => 'Bahasa Asing · Jepang 1', 'catatan' => 'hanya siswa X-B ditampilkan', 'guru' => 'Dewi Anggraini, S.Pd.', 'tp' => 6, 'sts' => 4, 'terisi' => 12, 'total' => 18, 'status' => 'sedang_diisi', 'diperbarui' => '11 Okt'],
         ];
 
+        if ($raporSiap) {
+            $mapel = array_map(fn ($m) => [
+                ...$m, 'status' => 'terkunci', 'terisi' => $m['total'],
+                'tp' => $m['tp'] ?: 4, 'sts' => $m['sts'] ?: 2,
+            ], $mapel);
+        }
+
         $hitung = fn (string $status) => count(array_filter($mapel, fn ($m) => $m['status'] === $status));
 
         $totalMapel     = count($mapel);
         $jumlahMenunggu = $hitung('menunggu');
-        $jumlahSetuju   = $hitung('disetujui');
+        $jumlahSetuju   = $hitung('disetujui') + $hitung('terkunci');
         $mapelDikirim   = $jumlahMenunggu + $jumlahSetuju;
 
         // TODO (backend): ambil dari tabel siswa rombel + catatan wali
         $siswa = ['total' => 32, 'laki' => 16, 'perempuan' => 16];
-        $catatanWaliTerisi = 26;
-        $ekskulTerisi      = 30;
+        $catatanWaliTerisi = $raporSiap ? 32 : 26;
+        $ekskulTerisi      = $raporSiap ? 32 : 30;
         $kehadiranTersedia = true;
 
         // TODO (backend): ambil dari tabel periode penilaian
-        $periode = [
-            'nama'  => 'Periode STS dibuka',
-            'tutup' => 'Jumat, 23 Oktober 2026',
-        ];
+        $periode = $raporSiap
+            ? ['nama' => "Nilai {$kelas} telah dikunci Kurikulum pada 26 Okt 2026", 'tutup' => null, 'terkunci' => true]
+            : ['nama' => 'Periode STS dibuka', 'tutup' => 'Jumat, 23 Oktober 2026'];
 
         $stats = [
             'siswa'          => $siswa,
@@ -82,7 +92,13 @@ class DashboardKelasController extends Controller
         ];
 
         // state: selesai | aktif | berjalan | menunggu
-        $langkah = [
+        $langkah = $raporSiap ? [
+            ['judul' => 'Nilai dikirim guru',      'keterangan' => "{$totalMapel}/{$totalMapel} mapel", 'state' => 'selesai'],
+            ['judul' => 'Diverifikasi wali kelas', 'keterangan' => "{$totalMapel} disetujui",          'state' => 'selesai'],
+            ['judul' => 'Pelengkap rapor',         'keterangan' => "32/{$siswa['total']} siswa",        'state' => 'selesai'],
+            ['judul' => 'Dikunci Kurikulum',       'keterangan' => '26 Okt 2026',                      'state' => 'selesai'],
+            ['judul' => 'Rapor siap dicetak',      'keterangan' => 'Siap dicetak',                     'state' => 'selesai'],
+        ] : [
             ['judul' => 'Nilai dikirim guru',      'keterangan' => "{$mapelDikirim}/{$totalMapel} mapel", 'state' => 'selesai'],
             ['judul' => 'Diverifikasi wali kelas', 'keterangan' => "{$jumlahSetuju} disetujui",           'state' => 'aktif'],
             ['judul' => 'Pelengkap rapor',         'keterangan' => "{$catatanWaliTerisi}/{$siswa['total']} siswa", 'state' => 'berjalan'],
@@ -136,7 +152,11 @@ class DashboardKelasController extends Controller
         ];
 
         // TODO (backend): true bila semua mapel disetujui & dikunci Kurikulum
-        $statusRapor = [
+        $statusRapor = $raporSiap ? [
+            'bisa_cetak' => true,
+            'judul'      => 'Rapor siap dicetak',
+            'keterangan' => 'Nilai dikunci Kurikulum pada 26 Okt 2026.',
+        ] : [
             'bisa_cetak' => false,
             'judul'      => 'Rapor belum dapat dicetak',
             'keterangan' => 'Menunggu seluruh mapel disetujui dan dikunci oleh Kurikulum.',

@@ -1,6 +1,8 @@
 @props([
-    'doc' => 'doc',   // ekspresi Alpine berisi dokumen rapor (bentuk App\Support\Dummy\Rapor::dokumen)
+    'doc' => 'doc',     // ekspresi Alpine berisi dokumen rapor (bentuk App\Support\Dummy\Rapor::dokumen)
+    'draf' => 'false',  // ekspresi Alpine: tampilkan watermark DRAFT (nilai belum dikunci)
 ])
+
 
 {{--
     Dokumen rapor (kertas A4, 540px) — Rapor STS 1 halaman, Rapor Semester 2 halaman.
@@ -8,7 +10,8 @@
 --}}
 <div {{ $attributes->class('flex flex-col items-center gap-5 text-ink') }} x-data="{ get d() { return {{ $doc }} } }">
     {{-- Halaman 1 --}}
-    <article class="relative flex min-h-[764px] w-[540px] flex-col bg-white px-9 pt-8 pb-6 text-[8px] leading-snug shadow-card" aria-label="Rapor halaman 1">
+    <article class="relative flex min-h-[764px] w-[540px] flex-col bg-white px-9 pt-8 pb-6 text-[8px] leading-snug shadow-card" aria-label="Rapor halaman 1" data-halaman="1">
+        @include('components.rapor._draf')
         @include('components.rapor._kop')
 
         <h3 class="mt-4 text-center text-[10px] font-bold uppercase" x-text="d.jenis === 'sts' ? 'Laporan Hasil Belajar — Sumatif Tengah Semester' : `Laporan Hasil Belajar — Semester ${d.semester}`"></h3>
@@ -89,7 +92,8 @@
 
     {{-- Halaman 2 (rapor semester) --}}
     <template x-if="d.jenis === 'semester'">
-        <article class="relative flex min-h-[764px] w-[540px] flex-col bg-white px-9 pt-8 pb-6 text-[8px] leading-snug shadow-card" aria-label="Rapor halaman 2">
+        <article class="relative flex min-h-[764px] w-[540px] flex-col bg-white px-9 pt-8 pb-6 text-[8px] leading-snug shadow-card" aria-label="Rapor halaman 2" data-halaman="2">
+            @include('components.rapor._draf')
             <template x-if="d.komponen.kokurikuler">
                 <section><h4 class="text-[8.5px] font-bold">A. Kokurikuler</h4><p class="mt-1 border border-ink px-2 py-1.5" x-text="d.kokurikuler"></p></section>
             </template>

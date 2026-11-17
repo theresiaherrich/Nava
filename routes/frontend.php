@@ -12,9 +12,7 @@
 */
 
 use App\Http\Controllers\AkunPeranController;
-use App\Http\Controllers\BelumTersediaController;
 use App\Http\Controllers\BerandaAkademikController;
-use App\Http\Controllers\CetakRaporController;
 use App\Http\Controllers\DashboardGuruController;
 use App\Http\Controllers\DashboardKelasController;
 use App\Http\Controllers\DashboardKurikulumController;
@@ -26,15 +24,13 @@ use App\Http\Controllers\Guru;
 use App\Http\Controllers\Kurikulum;
 use App\Http\Controllers\MapelController;
 use App\Http\Controllers\NilaiPerMapelController;
-use App\Http\Controllers\PelengkapRaporController;
 use App\Http\Controllers\PeriodePenguncianController;
 use App\Http\Controllers\RaporSayaController;
-use App\Http\Controllers\RekapNilaiController;
 use App\Http\Controllers\RelasiOrangTuaController;
 use App\Http\Controllers\RiwayatRaporController;
 use App\Http\Controllers\RombelController;
 use App\Http\Controllers\TahunAjaranController;
-use App\Http\Controllers\VerifikasiNilaiController;
+use App\Http\Controllers\Wali;
 use App\Http\Controllers\WaliKelasController;
 use App\Support\Navigation;
 use Illuminate\Support\Facades\Route;
@@ -89,31 +85,17 @@ Route::middleware($preview ? [] : ['auth', 'active'])->group(function () {
         Route::get('/tp', [Guru\TpController::class, 'index'])->name('tp.index');
         Route::get('/input-nilai', [Guru\InputNilaiController::class, 'index'])->name('input-nilai.index');
         Route::get('/rekap-nilai', [Guru\RekapNilaiController::class, 'index'])->name('guru.rekap-nilai.index');
-        Route::get('/rekap-nilai/ekspor', BelumTersediaController::class)->name('rekap-nilai.export');
-        Route::get('/rekap-nilai/{rombel}', BelumTersediaController::class)->name('rekap-nilai.show');
     });
 
     // Wali Kelas
     Route::prefix('wali-kelas')->group(function () {
         Route::get('/dashboard', [DashboardKelasController::class, 'index'])->name('dashboard-kelas.index');
 
-        Route::get('/verifikasi-nilai', [VerifikasiNilaiController::class, 'index'])->name('verifikasi-nilai.index');
-        Route::get('/verifikasi-nilai/{mapel}', [VerifikasiNilaiController::class, 'show'])->name('verifikasi-nilai.show');
-        Route::post('/verifikasi-nilai/{mapel}/revisi', [VerifikasiNilaiController::class, 'requestRevision'])->name('verifikasi-nilai.revisi');
-        Route::post('/verifikasi-nilai/{mapel}/setujui', [VerifikasiNilaiController::class, 'approve'])->name('verifikasi-nilai.setujui');
+        Route::get('/verifikasi-nilai', [Wali\VerifikasiNilaiController::class, 'index'])->name('verifikasi-nilai.index');
+        Route::get('/pelengkap-rapor', [Wali\PelengkapRaporController::class, 'index'])->name('pelengkap-rapor.index');
+        Route::get('/rekap-nilai', [Wali\RekapNilaiController::class, 'index'])->name('rekap-nilai.index');
 
-        Route::get('/pelengkap-rapor', [PelengkapRaporController::class, 'index'])->name('pelengkap-rapor.index');
-        Route::get('/pelengkap-rapor/pratinjau', BelumTersediaController::class)->name('pelengkap-rapor.pratinjau');
-        Route::post('/pelengkap-rapor', [PelengkapRaporController::class, 'simpan'])->name('pelengkap-rapor.simpan');
-        Route::post('/pelengkap-rapor/{siswa}/catatan', [PelengkapRaporController::class, 'simpanCatatan'])->name('pelengkap-rapor.catatan');
-
-        // TODO: varian wali kelas (desain 4.01–4.03) masih memakai view rekap guru.
-        Route::get('/rekap-nilai', [RekapNilaiController::class, 'index'])->name('rekap-nilai.index');
-
-        Route::get('/cetak-rapor', [CetakRaporController::class, 'index'])->name('cetak-rapor.index');
-        Route::post('/cetak-rapor/kelas', [CetakRaporController::class, 'unduhKelas'])->name('cetak-rapor.kelas');
-        Route::post('/cetak-rapor/siswa/{siswa}', [CetakRaporController::class, 'unduhSiswa'])->name('cetak-rapor.siswa');
-        Route::get('/cetak-rapor/riwayat/{riwayat}', [CetakRaporController::class, 'unduhUlang'])->name('cetak-rapor.ulang');
+        Route::get('/cetak-rapor', [Wali\CetakRaporController::class, 'index'])->name('cetak-rapor.index');
     });
 
     // Siswa

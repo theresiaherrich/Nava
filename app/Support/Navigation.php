@@ -185,6 +185,34 @@ class Navigation
             ],
             'kurikulum.cetak-rapor.index' => ['Dropdown pilih kelas' => ['pilih-kelas' => '1'], 'Kelas belum terkunci (draf)' => ['kelas' => 'X-A']],
             'terbitkan-rapor.index' => ['7.04 · Modal konfirmasi terbitkan' => ['modal' => 'terbitkan']],
+            // Wali Kelas
+            'dashboard-kelas.index' => ['5.02 · Rapor siap dicetak' => ['state' => 'rapor-siap']],
+            'verifikasi-nilai.index' => [
+                '2.01 · Kosong' => ['state' => 'kosong'],
+                '2.03 · Dropdown periode' => ['pilih-periode' => '1'],
+                '2.04 · Modal minta revisi' => ['modal' => 'revisi'],
+                '2.05 · Minta revisi (error)' => ['modal' => 'revisi-error'],
+                '2.06 · Modal setujui nilai' => ['modal' => 'setujui'],
+                '2.07 · Disetujui + riwayat' => ['paket' => 'p-4'],
+                '2.08 · Rombel campuran' => ['paket' => 'p-6'],
+                '2.09 · Terkunci' => ['state' => 'terkunci'],
+            ],
+            'pelengkap-rapor.index' => [
+                '3.02 · Data A1 belum ada' => ['state' => 'belum-a1'],
+                '3.03 · Terkunci' => ['state' => 'terkunci'],
+            ],
+            'rekap-nilai.index' => [
+                '4.02 · Kelengkapan per mapel' => ['tab' => 'mapel'],
+                '4.03 · Dropdown ekspor Excel' => ['ekspor' => '1'],
+                'Semua 16 mapel' => ['mapel' => 'semua'],
+            ],
+            'cetak-rapor.index' => [
+                '5.01 · Belum terkunci' => ['state' => 'belum-kunci'],
+                '5.04 · Cari siswa' => ['cari' => 'cit'],
+                '5.05 · Proses unduh satu kelas' => ['proses' => '1'],
+                '5.06 · Rapor semester 2 lembar' => ['jenis' => 'semester'],
+                '5.07 · Riwayat cetak' => ['tab' => 'riwayat'],
+            ],
         ];
     }
 

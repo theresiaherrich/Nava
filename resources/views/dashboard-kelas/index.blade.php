@@ -28,7 +28,9 @@
         'sedang_diisi' => 'Sedang diisi',
         'belum_tp'     => 'Belum ada TP',
         'dikembalikan' => 'Dikembalikan',
+        'terkunci'     => 'Terkunci',
     ];
+    $linkCetak = Route::has('cetak-rapor.index') ? route('cetak-rapor.index') : '#';
     $legenda = [
         'disetujui'    => 'Disetujui',
         'menunggu'     => 'Menunggu',
@@ -84,7 +86,16 @@
     </header>
 
     {{-- BANNER PERIODE --}}
-    @if ($periode)
+    @if ($periode && ! empty($periode['terkunci']))
+        <div class="dkl-banner is-success">
+            <span class="dkl-banner__icon">{!! $svg('lock') !!}</span>
+            <div class="dkl-banner__body">
+                <p class="dkl-banner__title">{{ $periode['nama'] }}</p>
+                <p class="dkl-banner__text">Rapor STS siap dicetak.</p>
+            </div>
+            <a href="{{ $linkCetak }}" class="dkl-banner__cta">Cetak rapor {!! $svg('arrow') !!}</a>
+        </div>
+    @elseif ($periode)
         <div class="dkl-banner">
             <span class="dkl-banner__icon">{!! $svg('calendar') !!}</span>
             <div class="dkl-banner__body">
@@ -269,7 +280,7 @@
                         @endif
                     </div>
                 @empty
-                    <p class="dkl-note">Semua beres. Tidak ada tindakan yang perlu dilakukan.</p>
+                    <p class="dkl-done">{!! $svg('check') !!} Semua tindakan selesai</p>
                 @endforelse
             </section>
 
@@ -313,16 +324,17 @@
             <section class="dkl-card">
                 <h2 class="dkl-panel-title">Status Rapor STS</h2>
                 <div class="dkl-rapor">
-                    <span class="dkl-rapor__icon">{!! $svg('lock') !!}</span>
+                    <span @class(['dkl-rapor__icon', 'is-siap' => $statusRapor['bisa_cetak']])>{!! $svg($statusRapor['bisa_cetak'] ? 'check' : 'lock') !!}</span>
                     <div>
-                        <p class="dkl-todo__title">{{ $statusRapor['judul'] }}</p>
+                        <p class="dkl-todo__title" @if ($statusRapor['bisa_cetak']) style="color: var(--color-success)" @endif>{{ $statusRapor['judul'] }}</p>
                         <p class="dkl-note">{{ $statusRapor['keterangan'] }}</p>
                     </div>
                 </div>
-                {{-- TODO (backend): arahkan ke route cetak rapor kelas bila bisa_cetak = true --}}
-                <button type="button" class="dkl-btn dkl-btn--print dkl-btn--block" @disabled(! $statusRapor['bisa_cetak'])>
-                    {!! $svg('printer') !!} Cetak rapor kelas
-                </button>
+                @if ($statusRapor['bisa_cetak'])
+                    <a href="{{ $linkCetak }}" class="dkl-btn dkl-btn--print dkl-btn--block is-siap">{!! $svg('printer') !!} Cetak rapor kelas</a>
+                @else
+                    <button type="button" class="dkl-btn dkl-btn--print dkl-btn--block" disabled>{!! $svg('printer') !!} Cetak rapor kelas</button>
+                @endif
             </section>
         </aside>
     </div>

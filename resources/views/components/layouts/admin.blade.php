@@ -10,7 +10,7 @@
 
     @vite(['resources/css/app.css', 'resources/css/bk/bk.css'])
 </head>
-<body class="bg-[#f8fafc] text-slate-800 antialiased font-sans">
+<body class="bg-[#f8fafc] text-slate-800 antialiased font-['Plus_Jakarta_Sans',sans-serif]">
     <div class="flex min-h-screen">
         <x-sidebar :context="$shell" />
 

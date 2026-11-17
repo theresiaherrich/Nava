@@ -1,9 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 /* Design tokens and components isolated to the A3 shell. */
 .a3-app {
  --a3-surface: #fff; --a3-canvas: #f4f8fd; --a3-ink: #0f1b33;
  --a3-muted: #6b7a90; --a3-border: #e3ebf5; --a3-primary: #0b6fa8;
  --a3-radius: 16px; --a3-shadow: 0 8px 28px rgba(15,60,120,.06);
- font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+ font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
  background: var(--a3-canvas); color: var(--a3-ink);
 }
 .a3-app * { box-sizing: border-box; }

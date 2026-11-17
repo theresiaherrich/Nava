@@ -1,5 +1,6 @@
 @import './sidebar.css';
-
+@import './topbar.css';
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 /* =========================================================
    BK - Modul RIASEC (SIAKAD SMAN 1 Malang)
    resources/css/bk/riasec.css
@@ -28,7 +29,7 @@
     min-height: 100vh;
     background: var(--pt-bg);
     color: var(--pt-text);
-    font-family: 'Plus Jakarta Sans', 'Poppins', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     font-size: 13px;
     line-height: 1.5;
 }

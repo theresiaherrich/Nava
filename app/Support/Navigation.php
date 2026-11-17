@@ -129,6 +129,13 @@ class Navigation
     public static function varianPreview(): array
     {
         return [
+            // Operator
+            'akun-peran.index' => ['2.03 · Modal tambah akun (username bentrok)' => ['modal' => 'akun']],
+            'data-siswa.index' => ['2.05 · Modal impor data siswa' => ['modal' => 'impor']],
+            'data-guru.index' => ['Modal impor data guru' => ['modal' => 'impor']],
+            'data-kelas.index' => ['2.08 · Modal pindahkan siswa' => ['modal' => 'pindah']],
+            'relasi-orang-tua.index' => ['2.10 · Modal hubungkan orang tua' => ['modal' => 'hubungkan']],
+            // Guru & Kurikulum
             'dashboard-guru.index' => ['05 · Kosong' => ['state' => 'kosong']],
             'tahun-ajaran.index' => ['4.02 · Modal aktifkan semester' => ['modal' => 'aktifkan']],
             'mapel.index' => ['4.04 · Modal tambah mapel' => ['modal' => 'mapel']],

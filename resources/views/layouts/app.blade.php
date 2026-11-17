@@ -55,6 +55,7 @@
         @endunless
         @yield('content')
         <x-ui.toast-stack />
+        <x-ui.confirm-dialog />
     </main>
 
 </body>

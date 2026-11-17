@@ -13,13 +13,14 @@ class WaliKelas
         return [
             'Dra. Endang Lestari', 'Hadi Santoso, S.Pd.', 'Nur Aini, S.Si.', 'Agus Prasetyo, S.Pd.', 'Ahmad Fauzi, S.Ag.',
             'Bambang Sutrisno, S.Pd.', 'Wahyu Setiawan, S.Pd.', 'Rina Marlina, S.Sos.', 'Dewi Kusuma, S.E.',
-            'Maria Hartati, S.Pd.', 'Fransiska Wulan, M.Pd.', 'Siti Rahmawati, S.Pd.', 'Andini Pertiwi, S.Pd.',
+            'Maria Hartati, S.Pd.', 'Fransiska Wulan, M.Pd.', 'Siti Rahmawati, S.Pd.', 'Andini Pratiwi, S.Pd.',
             'Rudi Hartono, M.Pd.', 'Dewi Anggraini, S.Pd.', 'Lin Mei, S.Pd.', 'Yohanes Setiawan, S.Th.',
-            'Sri Wahyuni, S.Pd.', 'Budi Santoso, S.Pd.', 'Teguh Prakoso, M.Pd.', 'Ratna Sari, S.Pd.',
+            'Sri Wahyuni, S.Pd.', 'Budi Santoso, S.Pd.', 'Teguh Prakoso, M.Pd.', 'Ratna Sari, M.Pd.',
             'Eko Purnomo, S.Kom.', 'Lilis Suryani, S.Pd.', 'Hendro Wibowo, S.Pd.', 'Puji Lestari, S.Pd.',
             'Anton Wijaya, S.Pd.', 'Nining Kurniasih, S.Pd.', 'Joko Widodo, S.Pd.', 'Indra Gunawan, S.Pd.',
             'Yuliana, S.Pd.', 'Galih Saputra, S.Pd.', 'Mega Puspita, S.Pd.', 'Rizal Fahmi, S.Pd.',
-            'Novi Andriani, S.Pd.', 'Kartika Dewi, S.Pd.',
+            'Novi Andriani, S.Pd.', 'Kartika Dewi, S.Pd.', 'Bayu Nugraha, S.Pd.', 'Yusuf Hidayat, S.Pd.',
+            'Lestari Wulandari, S.Pd.', 'Dedi Kurniawan, S.Pd.', 'Maria Ulfa, S.Pd.',
         ];
     }
 
@@ -47,10 +48,14 @@ class WaliKelas
             'XI-A' => 'Dra. Endang Lestari', 'XI-B' => 'Hadi Santoso, S.Pd.', 'XI-C' => 'Nur Aini, S.Si.',
             'XI-E' => 'Maria Hartati, S.Pd.', 'XI-F' => 'Ahmad Fauzi, S.Ag.', 'XI-G' => 'Fransiska Wulan, M.Pd.',
             'XI-H' => 'Wahyu Setiawan, S.Pd.', 'XI-I' => 'Rina Marlina, S.Sos.', 'XI-J' => 'Dewi Kusuma, S.E.',
-            'X-A' => 'Andini Pertiwi, S.Pd.', 'X-B' => 'Siti Rahmawati, S.Pd.',
+            // Kelas X sesuai desain Operator 2.07.
+            'X-A' => 'Andini Pratiwi, S.Pd.', 'X-B' => 'Siti Rahmawati, S.Pd.', 'X-C' => 'Bayu Nugraha, S.Pd.',
+            'X-D' => 'Ratna Sari, M.Pd.', 'X-E' => 'Yusuf Hidayat, S.Pd.', 'X-F' => 'Lestari Wulandari, S.Pd.',
+            'X-G' => 'Dedi Kurniawan, S.Pd.', 'X-H' => 'Maria Ulfa, S.Pd.', 'X-I' => 'Rizal Fahmi, S.Pd.',
+            'X-J' => 'Novi Andriani, S.Pd.',
         ];
 
-        // Kelas lain diisi guru yang belum menjadi wali.
+        // Kelas XII diisi guru yang belum menjadi wali.
         $sisa = array_values(array_diff($guru, $wali, ['Agus Prasetyo, S.Pd.', 'Bambang Sutrisno, S.Pd.']));
         $i = 0;
         foreach (['X', 'XII'] as $t) {

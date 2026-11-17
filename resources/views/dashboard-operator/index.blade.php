@@ -2,131 +2,114 @@
 
 @section('title', 'Dashboard Operator')
 
-@section('content')
-@vite(['resources/css/dashboard-operator.css', 'resources/js/dashboard-operator.js'])
-
 @php
-    $namaPengguna   = $namaPengguna   ?? 'Pengguna';
-    $sapaan         = $sapaan         ?? 'pagi';
-    $tanggalHariIni = $tanggalHariIni ?? '-';
-    $stats          = $stats          ?? [];
-    $ortu           = $ortu           ?? ['terhubung' => 0, 'total' => 0, 'belum' => 0];
-    $perlu          = collect($perlu ?? []);
-    $aktivitas      = collect($aktivitas ?? []);
+    use App\Support\Format;
 
-    $persenOrtu = ($ortu['total'] ?? 0) > 0 ? ($ortu['terhubung'] / $ortu['total']) * 100 : 0;
+    $s = $data['statistik'];
+    $persenOrtu = $s['siswa'] ? round($s['ortu_terhubung'] / $s['siswa'] * 100) : 0;
+    $tone = [
+        'success' => 'bg-success-soft text-success',
+        'info' => 'bg-info-soft text-info',
+        'warning' => 'bg-warning-soft text-warning-strong',
+        'danger' => 'bg-danger-soft text-danger',
+        'violet' => 'bg-violet-soft text-violet',
+        'neutral' => 'bg-neutral-soft text-neutral',
+    ];
+    $aksiCepat = [
+        ['upload', 'Impor siswa', 'Dari berkas Excel', route('data-siswa.index', ['modal' => 'impor'])],
+        ['upload', 'Impor guru', 'ASN & GTT', route('data-guru.index', ['modal' => 'impor'])],
+        ['plus', 'Tambah akun', 'Satu per satu', route('akun-peran.index', ['modal' => 'akun'])],
+        ['link', 'Hubungkan orang tua', 'Relasi orang tua–anak', route('relasi-orang-tua.index', ['modal' => 'hubungkan'])],
+    ];
 @endphp
 
-<div class="do-page">
+@section('content')
+<div class="px-7 pt-7 pb-10">
+    <x-ui.page-header :title="'Selamat pagi, '.$data['sapaan']" role="Operator"
+                      subtitle="Kelola data induk yang dipakai seluruh modul SIAKAD.">
+        <x-slot:actions><x-ui.today :tanggal="$data['hari_ini']" /></x-slot:actions>
+    </x-ui.page-header>
 
-    {{-- HEADER --}}
-    <header class="do-head">
-        <div>
-            <p class="do-eyebrow">SMA Negeri 1 Kota Malang · Operator</p>
-            <h1 class="do-title">Selamat {{ $sapaan }}, {{ $namaPengguna }}</h1>
-            <p class="do-subtitle">Kelola data induk yang dipakai seluruh modul SIAKAD.</p>
-        </div>
-        <div class="do-date">{{ $tanggalHariIni }}</div>
-    </header>
-
-    {{-- STATISTIK --}}
-    <div class="do-stats">
-        <div class="do-card">
-            <p class="do-label">Akun aktif</p>
-            <p class="do-value">{{ $stats['akun_aktif'] ?? 0 }}</p>
-            <p class="do-note">guru, siswa, orang tua, staf</p>
-        </div>
-
-        <div class="do-card">
-            <p class="do-label">Siswa</p>
-            <p class="do-value">{{ $stats['siswa'] ?? 0 }}</p>
-            <p class="do-note">{{ $stats['siswa_keterangan'] ?? '' }}</p>
-        </div>
-
-        <div class="do-card">
-            <p class="do-label">Guru</p>
-            <p class="do-value">{{ $stats['guru'] ?? 0 }}</p>
-            <p class="do-note">{{ $stats['guru_keterangan'] ?? '' }}</p>
-        </div>
-
-        <div class="do-card">
-            <p class="do-label">Orang tua terhubung</p>
-            <p class="do-value">{{ $ortu['terhubung'] ?? 0 }} <small>/ {{ $ortu['total'] ?? 0 }}</small></p>
-            <div class="do-bar"><div class="do-bar-fill" style="width: {{ $persenOrtu }}%"></div></div>
-            @if (($ortu['belum'] ?? 0) > 0)
-                <p class="do-note is-warn"><strong>{{ $ortu['belum'] }}</strong> belum terhubung</p>
-            @endif
-        </div>
-    </div>
-
-    <div class="do-grid">
-
-        {{-- KIRI --}}
-        <div class="do-left">
-
-            <section class="do-card">
-                <div class="do-panel-head">
-                    <h2 class="do-panel-title">Perlu ditindaklanjuti</h2>
-                    <span class="do-count">{{ $perlu->count() }}</span>
-                </div>
-
-                @forelse ($perlu as $item)
-                    <div class="do-todo">
-                        <span class="do-todo-icon tone-{{ $item['tone'] ?? 'blue' }}">●</span>
-                        <span class="do-todo-text">{{ $item['judul'] ?? '-' }}</span>
-                        <a href="{{ $item['url'] ?? '#' }}" class="do-link">{{ $item['aksi'] ?? 'Lihat' }} →</a>
-                    </div>
-                @empty
-                    <p class="do-empty">Tidak ada yang perlu ditindaklanjuti.</p>
-                @endforelse
-            </section>
-
-            <section class="do-card">
-                <h2 class="do-panel-title">Aksi cepat</h2>
-                <div class="do-quick">
-                    <a href="#" class="do-quick-item">
-                        <span class="do-quick-title">Impor siswa</span>
-                        <span class="do-quick-sub">Dari berkas Excel</span>
-                    </a>
-                    <a href="#" class="do-quick-item">
-                        <span class="do-quick-title">Impor guru</span>
-                        <span class="do-quick-sub">ASN & GTT</span>
-                    </a>
-                    <a href="#" class="do-quick-item">
-                        <span class="do-quick-title">Tambah akun</span>
-                        <span class="do-quick-sub">Satu per satu</span>
-                    </a>
-                    <a href="#" class="do-quick-item">
-                        <span class="do-quick-title">Hubungkan orang tua</span>
-                        <span class="do-quick-sub">Relasi orang tua–anak</span>
-                    </a>
-                </div>
-            </section>
-
-        </div>
-
-        {{-- KANAN --}}
-        <section class="do-card">
-            <div class="do-panel-head">
-                <h2 class="do-panel-title">Aktivitas terbaru</h2>
-                <a href="#" class="do-link">Lihat semua</a>
+    <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <x-ui.stat-card label="Akun aktif" :value="Format::angka($s['akun'])" hint="guru, siswa, orang tua, staf" />
+        <x-ui.stat-card label="Siswa" :value="Format::angka($s['siswa'])" :hint="$s['kelas'].' kelas · 2026/2027'" />
+        <x-ui.stat-card label="Guru" :value="$s['guru']" :hint="$s['asn'].' ASN · '.$s['gtt'].' GTT'" />
+        <x-ui.card class="px-5 py-5" :padding="false">
+            <p class="text-[13px] text-muted">Orang tua terhubung</p>
+            <p class="mt-1.5 flex items-baseline gap-1.5">
+                <span class="text-[30px] leading-none font-bold text-ink">{{ Format::angka($s['ortu_terhubung']) }}</span>
+                <span class="text-base font-semibold text-muted">/ {{ Format::angka($s['siswa']) }}</span>
+            </p>
+            <div class="mt-4 h-1 overflow-hidden rounded-full bg-line" role="progressbar" aria-valuenow="{{ $persenOrtu }}" aria-valuemin="0" aria-valuemax="100" aria-label="Orang tua terhubung">
+                <div class="h-full rounded-full bg-warning-strong" style="width: {{ $persenOrtu }}%"></div>
             </div>
-
-            @forelse ($aktivitas as $a)
-                <div class="do-activity">
-                    <span class="do-activity-icon tone-{{ $a['tone'] ?? 'gray' }}">•</span>
-                    <div class="do-activity-body">
-                        <p class="do-activity-title">{{ $a['judul'] ?? '-' }}</p>
-                        <p class="do-activity-detail">{{ $a['detail'] ?? '' }}</p>
-                    </div>
-                    <span class="do-activity-time">{{ $a['waktu'] ?? '' }}</span>
-                </div>
-            @empty
-                <p class="do-empty">Belum ada aktivitas.</p>
-            @endforelse
-        </section>
-
+            <p class="mt-2 text-xs text-muted"><strong class="font-bold text-warning">{{ $s['ortu_belum'] }} belum</strong> terhubung</p>
+        </x-ui.card>
     </div>
 
+    <div class="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_439px]">
+        <div class="flex flex-col gap-5">
+            <x-ui.card>
+                <h2 class="flex items-center gap-2 text-[15px] font-bold text-ink">
+                    Perlu ditindaklanjuti
+                    <span class="rounded-full bg-warning-soft px-2 text-xs font-bold text-warning">{{ count($data['tindak_lanjut']) }}</span>
+                </h2>
+                <ul class="mt-3 divide-y divide-line-soft">
+                    @foreach ($data['tindak_lanjut'] as $t)
+                        <li class="flex items-center gap-3 py-3">
+                            <span class="flex size-8 shrink-0 items-center justify-center rounded-control {{ $tone[$t['tone']] }}">
+                                <x-ui.icon :name="$t['ikon']" :size="15" />
+                            </span>
+                            <span class="flex-1 text-sm font-semibold text-ink">{{ $t['teks'] }}</span>
+                            <a href="{{ route(...$t['route']) }}" class="inline-flex items-center gap-1 text-[13px] font-semibold text-link hover:underline">
+                                {{ $t['aksi'] }} <x-ui.icon name="arrow-right" :size="13" />
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </x-ui.card>
+
+            <x-ui.card>
+                <h2 class="text-[15px] font-bold text-ink">Aksi cepat</h2>
+                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                    @foreach ($aksiCepat as [$ikon, $judul, $ket, $url])
+                        <a href="{{ $url }}" class="flex items-center gap-3 rounded-card border border-line px-4 py-3.5 transition-colors hover:border-primary/50 hover:bg-primary-faint">
+                            <span class="flex size-8 items-center justify-center rounded-control bg-primary-soft text-primary-strong">
+                                <x-ui.icon :name="$ikon" :size="15" />
+                            </span>
+                            <span>
+                                <span class="block text-sm font-bold text-ink">{{ $judul }}</span>
+                                <span class="block text-xs text-muted">{{ $ket }}</span>
+                            </span>
+                        </a>
+                    @endforeach
+                </div>
+            </x-ui.card>
+        </div>
+
+        <x-ui.card class="self-start">
+            <div class="flex items-center justify-between">
+                <h2 class="text-[15px] font-bold text-ink">Aktivitas terbaru</h2>
+                <a href="#" class="text-[13px] font-semibold text-link hover:underline"
+                   x-data x-on:click.prevent="$dispatch('toast', { message: 'Halaman log aktivitas belum tersedia di desain.', type: 'info' })">Lihat semua</a>
+            </div>
+            <ol class="relative mt-4 space-y-4 before:absolute before:top-2 before:bottom-2 before:left-[13px] before:w-px before:bg-line">
+                @foreach ($data['aktivitas'] as $a)
+                    <li class="relative flex gap-3">
+                        <span class="relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full ring-4 ring-surface {{ $tone[$a['tone']] }}">
+                            <x-ui.icon :name="$a['ikon']" :size="13" />
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-start justify-between gap-3">
+                                <p class="text-[13px] font-bold text-ink">{{ $a['judul'] }}</p>
+                                <p class="shrink-0 text-xs text-muted">{{ $a['waktu'] }}</p>
+                            </div>
+                            <p class="text-xs text-muted">{{ $a['ket'] }}</p>
+                        </div>
+                    </li>
+                @endforeach
+            </ol>
+        </x-ui.card>
+    </div>
 </div>
 @endsection

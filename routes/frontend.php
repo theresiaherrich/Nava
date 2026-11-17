@@ -56,27 +56,15 @@ Route::middleware($preview ? [] : ['auth', 'active'])->group(function () {
     // Operator
     Route::prefix('operator')->group(function () {
         Route::get('/dashboard', [DashboardOperatorController::class, 'index'])->name('dashboard-operator.index');
+        // Perubahan data (tambah/ubah/impor/pindah/hubungkan) berjalan di sisi klien dengan
+        // penanda "TODO API" sampai frontend disambungkan ke API backend.
         Route::get('/akun-peran', [AkunPeranController::class, 'index'])->name('akun-peran.index');
-
         Route::get('/data-siswa', [DataSiswaController::class, 'index'])->name('data-siswa.index');
         Route::get('/data-siswa/format', [DataSiswaController::class, 'format'])->name('data-siswa.format');
-        Route::post('/data-siswa/impor', [DataSiswaController::class, 'impor'])->name('data-siswa.impor');
-        Route::post('/data-siswa', [DataSiswaController::class, 'store'])->name('data-siswa.store');
-
         Route::get('/data-guru', [DataGuruController::class, 'index'])->name('data-guru.index');
         Route::get('/data-guru/format', [DataGuruController::class, 'format'])->name('data-guru.format');
-        Route::post('/data-guru/impor', [DataGuruController::class, 'impor'])->name('data-guru.impor');
-        Route::post('/data-guru', [DataGuruController::class, 'store'])->name('data-guru.store');
-
         Route::get('/data-kelas', [DataKelasController::class, 'index'])->name('data-kelas.index');
-        Route::post('/data-kelas', [DataKelasController::class, 'tambahKelas'])->name('data-kelas.kelas.store');
-        Route::post('/data-kelas/{kelas}/siswa', [DataKelasController::class, 'tambahSiswa'])->name('data-kelas.siswa.store');
-        Route::post('/data-kelas/pindah', [DataKelasController::class, 'pindah'])->name('data-kelas.pindah');
-
         Route::get('/relasi-orang-tua', [RelasiOrangTuaController::class, 'index'])->name('relasi-orang-tua.index');
-        Route::post('/relasi-orang-tua', [RelasiOrangTuaController::class, 'store'])->name('relasi-orang-tua.store');
-        Route::put('/relasi-orang-tua/{ortu}', [RelasiOrangTuaController::class, 'update'])->name('relasi-orang-tua.update');
-        Route::delete('/relasi-orang-tua/{ortu}', [RelasiOrangTuaController::class, 'destroy'])->name('relasi-orang-tua.destroy');
     });
 
     // Admin Kurikulum

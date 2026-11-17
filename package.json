@@ -4,7 +4,9 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "serve": "cd public && php -S 127.0.0.1:8100 ../scripts/dev-router.php",
+        "preview": "concurrently -n vite,php -c cyan,green \"vite\" \"npm:serve\""
     },
     "devDependencies": {
         "@alpinejs/focus": "3.17.5",

@@ -2,449 +2,156 @@
 
 @section('title', 'Relasi Orang Tua – Anak')
 
+@push('styles')
+    @vite(['resources/js/operator-relasi.js'])
+@endpush
+
+@php use App\Support\Format; @endphp
+
 @section('content')
-@vite(['resources/css/relasi-orang-tua.css'])
+<div class="px-7 pt-7 pb-10" x-data="relasiPage(JSON.parse(document.getElementById('data-relasi').textContent))">
+    <x-ui.json-data id="data-relasi" :data="[
+        'relasi' => $relasi->items(),
+        'akunOrtu' => $akunOrtu,
+        'calonAnak' => $calonAnak,
+        'bukaModal' => request('modal') === 'hubungkan',
+    ]" />
 
-@php
-    $rows           = collect($rows ?? []);
-    $page           = $page ?? 1;
-    $lastPage       = $lastPage ?? 1;
-    $totalFiltered  = $totalFiltered ?? 0;
-    $status         = $status ?? 'semua';
-    $hubungan       = $hubungan ?? 'semua';
-    $q              = $q ?? '';
-    $stats          = $stats ?? ['ortu_terhubung' => 0, 'belum_terhubung' => 0];
-    $opsiStatus     = $opsiStatus ?? [];
-    $opsiHubungan   = $opsiHubungan ?? [];
-    $akunOrtu       = collect($akunOrtu ?? []);
-    $siswaList      = collect($siswaList ?? []);
+    <x-ui.page-header title="Relasi Orang Tua – Anak" role="Operator"
+                      subtitle="Hubungkan akun orang tua dengan anaknya agar dapat melihat rapor yang sudah terbit.">
+        <x-slot:actions>
+            <x-ui.button icon="plus" size="lg" x-on:click="tambah()">Hubungkan</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    $labelHubungan  = ['ayah' => 'Ayah', 'ibu' => 'Ibu', 'wali' => 'Wali'];
-    $editId         = (string) old('_edit_id', '');
-    $aktifHubung    = old('_modal') === 'rot-hubung' && $errors->any();
-    $akunTerpilih   = (string) old('akun_ortu_id', '');
-    $akunNama       = $akunTerpilih !== '' ? ($akunOrtu->firstWhere('id', $akunTerpilih)['nama'] ?? '') : '';
-    $idTerpilih     = array_map('strval', (array) old('siswa_ids', []));
-@endphp
-
-<div class="ro-page">
-
-    {{-- HEADER --}}
-    <header class="ro-head">
-        <div>
-            <p class="ro-eyebrow">SMA Negeri 1 Kota Malang · Operator</p>
-            <h1 class="ro-title">Relasi Orang Tua – Anak</h1>
-            <p class="ro-subtitle">Hubungkan akun orang tua dengan anaknya agar dapat melihat rapor yang sudah terbit.</p>
-        </div>
-
-        <button type="button" class="ro-btn-primary" data-hubung-baru data-mk-open="rot-hubung">+ Hubungkan</button>
-    </header>
-
-    @if (session('status'))
-        <div class="mk-alert">{{ session('status') }}</div>
+    @if ($belumTerhubung)
+        <x-ui.alert tone="warning" :title="$belumTerhubung.' siswa belum memiliki akun orang tua terhubung.'">
+            Orang tua siswa tersebut belum dapat melihat rapor di portal (A4).
+            <x-slot:action>
+                <a href="{{ route('data-siswa.index', ['ortu' => 'belum']) }}" class="inline-flex items-center gap-1 text-[13px] font-semibold text-warning hover:underline">
+                    Lihat daftar <x-ui.icon name="arrow-right" :size="13" />
+                </a>
+            </x-slot:action>
+        </x-ui.alert>
     @endif
 
-    {{-- PERINGATAN SISWA BELUM TERHUBUNG --}}
-    <div class="ro-alert {{ $stats['belum_terhubung'] > 0 ? '' : 'is-ok' }}">
-        <span class="ro-alert-icon">{{ $stats['belum_terhubung'] > 0 ? '!' : '✓' }}</span>
-        <div class="ro-alert-body">
-            @if ($stats['belum_terhubung'] > 0)
-                <p class="ro-alert-title">{{ $stats['belum_terhubung'] }} siswa belum memiliki akun orang tua terhubung.</p>
-                <p class="ro-alert-text">Orang tua siswa tersebut belum dapat melihat rapor di portal (A4).</p>
-            @else
-                <p class="ro-alert-title">Semua siswa sudah memiliki akun orang tua terhubung.</p>
-            @endif
+    <x-ui.card class="mt-4 flex flex-wrap items-center gap-2.5 !py-3.5">
+        <x-ui.filter-link label="Status" param="status" :options="['' => 'Semua', 'terverifikasi' => 'Terverifikasi', 'menunggu' => 'Menunggu']" />
+        <x-ui.filter-link label="Hubungan" param="hubungan" :options="['' => 'Semua', 'Ayah' => 'Ayah', 'Ibu' => 'Ibu', 'Wali' => 'Wali']" />
+        <x-ui.search-form placeholder="Cari orang tua atau siswa…" class="ml-auto w-[260px]" />
+    </x-ui.card>
+
+    <x-ui.card :padding="false" class="mt-4 overflow-hidden">
+        <div class="px-5 pt-4 pb-3">
+            <h2 class="text-[15px] font-bold text-ink">Daftar Relasi</h2>
+            <p class="text-xs text-muted">{{ Format::angka($relasi->total()) }} orang tua terhubung</p>
         </div>
-        <button type="button" class="ro-link" data-hubung-baru data-mk-open="rot-hubung">Lihat daftar →</button>
-    </div>
-
-    {{-- FILTER --}}
-    <div class="ro-card ro-filter-card">
-        <form method="GET" action="{{ route('relasi-orang-tua.index') }}" class="ro-filter">
-            <x-dropdown name="status"   :value="$status"   :options="$opsiStatus"   autosubmit />
-            <x-dropdown name="hubungan" :value="$hubungan" :options="$opsiHubungan" autosubmit />
-
-            <div class="ro-search-wrap ro-search-main">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
-                </svg>
-                <input type="search" name="q" value="{{ $q }}" placeholder="Cari orang tua atau siswa..." class="ro-input" data-search>
-            </div>
-        </form>
-    </div>
-
-    {{-- TABEL --}}
-    <section class="ro-card ro-table-card">
-        <div class="ro-table-head">
-            <h2 class="ro-panel-title">Daftar Relasi</h2>
-            <p class="ro-note">{{ $stats['ortu_terhubung'] }} orang tua terhubung</p>
-        </div>
-
-        <div class="ro-table-wrap">
-            <table class="ro-table">
-                <thead>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[900px] text-left text-[13px]">
+                <thead class="bg-surface-2 text-xs font-semibold text-ink-2">
                     <tr>
-                        <th>Nama Orang Tua/Wali</th>
-                        <th>Username</th>
-                        <th>Hubungan</th>
-                        <th>Anak Terhubung</th>
-                        <th>Status</th>
-                        <th class="is-right">Aksi</th>
+                        <th class="px-5 py-3">Nama Orang Tua/Wali</th>
+                        <th class="px-3 py-3">Username</th>
+                        <th class="px-3 py-3">Hubungan</th>
+                        <th class="px-3 py-3">Anak Terhubung</th>
+                        <th class="px-3 py-3">Status</th>
+                        <th class="px-5 py-3 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @forelse ($rows as $r)
-                        @php
-                            $anakIds = collect($r['anak'] ?? [])->pluck('id')->map(fn ($v) => (string) $v)->values()->all();
-                        @endphp
+                <tbody class="divide-y divide-line-soft">
+                    <template x-for="r in relasi" :key="r.id_orang_tua">
                         <tr>
-                            <td class="ro-bold ro-nowrap">{{ $r['nama'] ?? '-' }}</td>
-                            <td class="ro-muted ro-nowrap">{{ $r['username'] ?? '-' }}</td>
-                            <td class="ro-nowrap">{{ $labelHubungan[$r['hubungan'] ?? ''] ?? '-' }}</td>
-                            <td>
-                                <div class="ro-chips">
-                                    @forelse ($r['anak'] ?? [] as $a)
-                                        <span class="ro-chip-anak">{{ $a['nama'] ?? '-' }} · {{ $a['kelas'] ?? '-' }}</span>
-                                    @empty
-                                        <span class="ro-muted">—</span>
-                                    @endforelse
+                            <td class="px-5 py-3 font-semibold text-ink" x-text="r.nama"></td>
+                            <td class="px-3 py-3 text-ink-2" x-text="r.username"></td>
+                            <td class="px-3 py-3 text-ink-2" x-text="r.hubungan"></td>
+                            <td class="px-3 py-3">
+                                <div class="flex flex-wrap gap-1.5">
+                                    <template x-for="a in r.anak" :key="a.nama">
+                                        <span class="rounded-full border border-line px-2 py-0.5 text-xs font-semibold text-ink" x-text="`${a.nama} · ${a.kelas}`"></span>
+                                    </template>
                                 </div>
                             </td>
-                            <td class="ro-nowrap">
-                                @if (($r['status'] ?? '') === 'terverifikasi')
-                                    <span class="ro-chip ok">Terverifikasi</span>
-                                @else
-                                    <span class="ro-chip warn">Menunggu</span>
-                                @endif
-                            </td>
-                            <td class="is-right ro-nowrap">
-                                <div class="ro-actions">
-                                    <button type="button" class="ro-icon-btn" aria-label="Ubah" title="Ubah"
-                                            data-edit data-mk-open="rot-hubung"
-                                            data-ortu-id="{{ $r['id'] }}"
-                                            data-nama="{{ $r['nama'] ?? '' }}"
-                                            data-hubungan="{{ $r['hubungan'] ?? 'ayah' }}"
-                                            data-anak="{{ json_encode($anakIds) }}">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
-                                    </button>
-
-                                    <form method="POST" action="{{ route('relasi-orang-tua.destroy', $r['id']) }}"
-                                          onsubmit="return confirm('Hapus semua relasi anak untuk {{ addslashes($r['nama'] ?? '') }}?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="ro-icon-btn is-danger" aria-label="Hapus" title="Hapus">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
-                                        </button>
-                                    </form>
+                            <td class="px-3 py-3"><span :class="$store.ref.badge(r.status === 'terverifikasi' ? 'success' : 'warning')" x-text="r.status === 'terverifikasi' ? 'Terverifikasi' : 'Menunggu'"></span></td>
+                            <td class="px-5 py-2.5">
+                                <div class="flex justify-end gap-1.5">
+                                    <x-ui.icon-button icon="pencil" label="Ubah relasi" x-on:click="ubah(r)" />
+                                    <x-ui.icon-button icon="trash" tone="danger" label="Putuskan relasi" x-on:click="hapus(r)" />
                                 </div>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="ro-empty">Belum ada relasi orang tua–anak.</td>
-                        </tr>
-                    @endforelse
+                    </template>
+                    <tr x-show="!relasi.length"><td colspan="6" class="px-5 py-10 text-center text-sm text-muted">Tidak ada relasi yang cocok dengan filter.</td></tr>
                 </tbody>
             </table>
         </div>
-
-        <div class="ro-foot">
-            <span class="ro-note">ⓘ Satu akun orang tua dapat terhubung ke lebih dari satu anak.</span>
-
-            <div class="ro-foot-right">
-                <span class="ro-note">{{ $rows->count() }} dari {{ $totalFiltered }} relasi</span>
-
-                @if ($lastPage > 1)
-                    <nav class="ro-pager">
-                        <a href="{{ $page > 1 ? request()->fullUrlWithQuery(['page' => $page - 1]) : '#' }}"
-                           class="ro-page-btn {{ $page <= 1 ? 'is-disabled' : '' }}">‹</a>
-                        @for ($i = 1; $i <= $lastPage; $i++)
-                            <a href="{{ request()->fullUrlWithQuery(['page' => $i]) }}"
-                               class="ro-page-btn {{ $i === $page ? 'is-active' : '' }}">{{ $i }}</a>
-                        @endfor
-                        <a href="{{ $page < $lastPage ? request()->fullUrlWithQuery(['page' => $page + 1]) : '#' }}"
-                           class="ro-page-btn {{ $page >= $lastPage ? 'is-disabled' : '' }}">›</a>
-                    </nav>
-                @endif
-            </div>
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft px-5 py-3">
+            <p class="flex items-center gap-1.5 text-xs text-muted"><x-ui.icon name="info" :size="13" />Satu akun orang tua dapat terhubung ke lebih dari satu anak.</p>
+            <x-ui.pager :paginator="$relasi" satuan="" />
         </div>
-    </section>
+    </x-ui.card>
 
-</div>
+    {{-- 2.10 Hubungkan orang tua ke siswa --}}
+    <x-ui.modal name="hubungkan" width="max-w-[560px]">
+        <h2 class="pr-10 text-lg font-bold text-ink" x-text="editId ? 'Ubah Relasi Orang Tua' : 'Hubungkan Orang Tua ke Siswa'"></h2>
 
-{{-- MODAL HUBUNGKAN / UBAH RELASI --}}
-<div id="rot-hubung" class="mk-overlay" @if ($aktifHubung) data-auto-open @endif>
-    <div class="mk-box ro-modal" role="dialog" aria-modal="true" aria-labelledby="rot-judul">
-        <div class="mk-head">
+        <form class="mt-4 space-y-4" x-on:submit.prevent="simpan()" novalidate>
             <div>
-                <h3 id="rot-judul" class="mk-title">{{ $editId !== '' ? 'Ubah Relasi Orang Tua' : 'Hubungkan Orang Tua ke Siswa' }}</h3>
-            </div>
-            <button type="button" class="mk-close" data-mk-close aria-label="Tutup">×</button>
-        </div>
-
-        <form method="POST"
-              action="{{ $editId !== '' ? route('relasi-orang-tua.update', $editId) : route('relasi-orang-tua.store') }}"
-              data-form-hubung
-              data-store-url="{{ route('relasi-orang-tua.store') }}"
-              data-update-url="{{ route('relasi-orang-tua.update', '__ID__') }}">
-            @csrf
-            <input type="hidden" name="_modal" value="rot-hubung">
-            <input type="hidden" name="_edit_id" value="{{ $editId }}" data-edit-id>
-            <input type="hidden" name="_method" value="PUT" data-method @disabled($editId === '')>
-
-            {{-- AKUN ORANG TUA --}}
-            <div class="mk-field">
-                <label>Akun orang tua <span class="ro-req">*</span></label>
-                <div class="ro-combo" data-combo>
-                    <input type="hidden" name="akun_ortu_id" value="{{ $akunTerpilih }}" data-combo-input>
-
-                    <button type="button" class="ro-combo-trigger {{ $errors->has('akun_ortu_id') ? 'is-error' : '' }}"
-                            data-combo-trigger @disabled($editId !== '')>
-                        <span class="ro-combo-text" data-combo-text>{{ $akunNama !== '' ? $akunNama : 'Pilih akun orang tua' }}</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="ro-chev"><path d="m6 9 6 6 6-6"/></svg>
+                <label for="hb-ortu" class="mb-1.5 block text-[13px] font-semibold text-ink">Akun orang tua<span class="text-danger"> *</span></label>
+                <div class="relative" x-on:click.outside="combo.buka = false" x-on:keydown.escape.stop="combo.buka = false">
+                    <button type="button" id="hb-ortu" x-on:click="!editId && (combo.buka = !combo.buka)" :aria-expanded="combo.buka" aria-haspopup="listbox"
+                            class="flex h-10 w-full items-center gap-2 rounded-control border bg-surface px-3 text-left text-sm"
+                            :class="error.ortu ? 'border-danger' : 'border-line'">
+                        <x-ui.icon name="search" :size="15" class="text-subtle" />
+                        <span class="flex-1 truncate" :class="form.ortu ? 'text-ink' : 'text-subtle'" x-text="form.ortu ? `${form.ortu.nama} · ${form.ortu.username}` : 'Cari akun orang tua…'"></span>
+                        <x-ui.icon name="chevron-down" :size="14" class="text-ink-2" />
                     </button>
-
-                    <div class="ro-combo-panel" data-combo-panel hidden>
-                        <div class="ro-search-wrap">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
-                            </svg>
-                            <input type="search" class="ro-input" placeholder="Cari nama atau username..." data-combo-search>
-                        </div>
-
-                        <div class="ro-combo-list">
-                            @foreach ($akunOrtu as $a)
-                                <button type="button" class="ro-combo-item {{ (string) $a['id'] === $akunTerpilih ? 'is-selected' : '' }}"
-                                        data-combo-item
-                                        data-value="{{ $a['id'] }}"
-                                        data-label="{{ $a['nama'] ?? '' }}"
-                                        data-text="{{ mb_strtolower(($a['nama'] ?? '') . ' ' . ($a['username'] ?? '')) }}">
-                                    <span>{{ $a['nama'] ?? '-' }}</span>
-                                    <span class="ro-muted">{{ $a['username'] ?? '' }}</span>
-                                </button>
-                            @endforeach
-
-                            <p class="ro-combo-empty" @if ($akunOrtu->isNotEmpty()) hidden @endif>Belum ada akun orang tua.</p>
-                            <p class="ro-combo-empty" data-combo-nomatch hidden>Tidak ada yang cocok.</p>
-                        </div>
+                    <div x-show="combo.buka" x-cloak class="absolute top-full left-0 z-20 mt-1 w-full rounded-control border border-line bg-surface p-2 shadow-pop">
+                        <x-ui.search-input placeholder="Ketik nama atau username…" x-model="combo.cari" x-init="$watch('combo.buka', (b) => b && $nextTick(() => $el.querySelector('input')?.focus()))" />
+                        <ul role="listbox" aria-label="Akun orang tua" class="mt-1 max-h-56 overflow-y-auto">
+                            <template x-for="a in ortuTersaring" :key="a.id">
+                                <li><button type="button" role="option" x-on:click="pilihOrtu(a)" class="flex w-full items-center justify-between rounded-control px-2 py-2 text-left text-[13px] hover:bg-primary-faint">
+                                    <span class="font-semibold text-ink" x-text="a.nama"></span><span class="text-xs text-muted" x-text="a.username"></span>
+                                </button></li>
+                            </template>
+                            <li x-show="!ortuTersaring.length" class="px-2 py-3 text-[13px] text-muted">Akun tidak ditemukan.</li>
+                        </ul>
                     </div>
                 </div>
-                @error('akun_ortu_id')
-                    <p class="mk-error">{{ $message }}</p>
-                @enderror
+                <p x-show="error.ortu" x-cloak class="mt-1.5 text-xs font-medium text-danger" role="alert" x-text="error.ortu"></p>
             </div>
 
-            {{-- PILIH ANAK --}}
-            <div class="mk-field">
-                <label>Pilih anak <span class="ro-req">*</span></label>
+            <fieldset>
+                <legend class="mb-1.5 text-[13px] font-semibold text-ink">Pilih anak<span class="text-danger"> *</span></legend>
+                <x-ui.search-input placeholder="Cari nama siswa atau NIS…" x-model="form.cariAnak" />
+                <ul class="mt-2 space-y-2">
+                    <template x-for="s in anakTampil" :key="s.nis">
+                        <li>
+                            <label class="flex cursor-pointer items-center gap-3 rounded-control border px-3 py-2.5"
+                                   :class="form.anak.includes(s.nis) ? 'border-primary/50 bg-primary-faint' : 'border-line hover:bg-surface-2'">
+                                <input type="checkbox" class="size-4 accent-primary" :checked="form.anak.includes(s.nis)" x-on:change="toggleAnak(s.nis)">
+                                <span>
+                                    <span class="block text-[13px] font-bold text-ink" x-text="`${s.nama} · ${s.kelas}`"></span>
+                                    <span class="block text-xs text-muted" x-text="`NIS ${s.nis}`"></span>
+                                </span>
+                            </label>
+                        </li>
+                    </template>
+                    <li x-show="!anakTampil.length" class="py-4 text-center text-[13px] text-muted">Siswa tidak ditemukan.</li>
+                </ul>
+                <p x-show="error.anak" x-cloak class="mt-1.5 text-xs font-medium text-danger" role="alert" x-text="error.anak"></p>
+            </fieldset>
 
-                <div class="ro-search-wrap ro-search-block">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
-                    </svg>
-                    <input type="search" class="ro-input" placeholder="Cari nama siswa atau NIS..." data-anak-search>
-                </div>
-
-                <div class="ro-anak-list">
-                    @forelse ($siswaList as $s)
-                        @php $checked = in_array((string) $s['id'], $idTerpilih, true); @endphp
-                        <label class="ro-anak-item {{ $checked ? 'is-selected' : '' }}"
-                               data-anak-item
-                               data-text="{{ mb_strtolower(($s['nama'] ?? '') . ' ' . ($s['nis'] ?? '')) }}">
-                            <input type="checkbox" name="siswa_ids[]" value="{{ $s['id'] }}" @checked($checked)>
-                            <span class="ro-anak-body">
-                                <span class="ro-anak-name">{{ $s['nama'] ?? '-' }}</span>
-                                <span class="ro-anak-nis">NIS {{ $s['nis'] ?? '-' }} · {{ $s['kelas'] ?? '-' }}</span>
-                            </span>
-                        </label>
-                    @empty
-                        <p class="ro-combo-empty">Belum ada data siswa.</p>
-                    @endforelse
-                    <p class="ro-combo-empty" data-anak-nomatch hidden>Tidak ada siswa yang cocok.</p>
-                </div>
-                @error('siswa_ids')
-                    <p class="mk-error">{{ $message }}</p>
-                @enderror
+            <div class="flex items-center justify-between">
+                <span class="text-[13px] font-semibold text-ink">Hubungan</span>
+                <x-ui.segmented :options="['Ayah' => 'Ayah', 'Ibu' => 'Ibu', 'Wali' => 'Wali']" model="form.hubungan" label="Hubungan" size="sm" />
             </div>
+            <p class="flex items-center gap-1.5 text-xs text-muted"><x-ui.icon name="info" :size="13" />Orang tua hanya dapat melihat rapor yang sudah diterbitkan.</p>
 
-            {{-- HUBUNGAN --}}
-            <div class="mk-field">
-                <span class="ro-label">Hubungan</span>
-                <div class="ro-seg">
-                    @foreach (['ayah' => 'Ayah', 'ibu' => 'Ibu', 'wali' => 'Wali'] as $val => $lbl)
-                        <label class="ro-seg-item">
-                            <input type="radio" name="hubungan" value="{{ $val }}" @checked(old('hubungan', 'ayah') === $val)>
-                            <span>{{ $lbl }}</span>
-                        </label>
-                    @endforeach
-                </div>
-                <p class="ro-note">ⓘ Orang tua hanya dapat melihat rapor yang sudah diterbitkan.</p>
-                @error('hubungan')
-                    <p class="mk-error">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div class="mk-foot">
-                <button type="button" class="mk-btn" data-mk-close>Batal</button>
-                <button type="submit" class="mk-btn-primary">{{ $editId !== '' ? 'Simpan Perubahan' : 'Hubungkan' }}</button>
+            <div class="flex justify-end gap-2.5 border-t border-line-soft pt-4">
+                <x-ui.button variant="secondary" size="lg" x-on:click="$dispatch('close-modal', 'hubungkan')">Batal</x-ui.button>
+                <x-ui.button type="submit" size="lg" icon="link">Hubungkan</x-ui.button>
             </div>
         </form>
-    </div>
+    </x-ui.modal>
 </div>
-
-@include('components.modal-kit')
-
-<script>
-(function () {
-    var filterCari = document.querySelector('.ro-filter [data-search]');
-    if (filterCari) {
-        filterCari.addEventListener('search', function () { filterCari.form.submit(); });
-    }
-
-    var form  = document.querySelector('[data-form-hubung]');
-    var modal = document.getElementById('rot-hubung');
-    if (!form || !modal) return;
-
-    var judul      = document.getElementById('rot-judul');
-    var metodeEl   = form.querySelector('[data-method]');
-    var editEl     = form.querySelector('[data-edit-id]');
-    var submitBtn  = form.querySelector('button[type="submit"].mk-btn-primary');
-    var combo      = modal.querySelector('[data-combo]');
-    var comboIn    = combo.querySelector('[data-combo-input]');
-    var comboTxt   = combo.querySelector('[data-combo-text]');
-    var comboTrig  = combo.querySelector('[data-combo-trigger]');
-    var comboPanel = combo.querySelector('[data-combo-panel]');
-    var comboCari  = combo.querySelector('[data-combo-search]');
-    var comboItems = combo.querySelectorAll('[data-combo-item]');
-    var comboNo    = combo.querySelector('[data-combo-nomatch]');
-    var anakCari   = modal.querySelector('[data-anak-search]');
-    var anakItems  = modal.querySelectorAll('[data-anak-item]');
-    var anakNo     = modal.querySelector('[data-anak-nomatch]');
-    var storeUrl   = form.dataset.storeUrl;
-    var updateUrl  = form.dataset.updateUrl;
-
-    function cocokkan(input, items, noEl) {
-        var q = input ? input.value.trim().toLowerCase() : '';
-        var n = 0;
-        items.forEach(function (it) {
-            var ok = it.dataset.text.indexOf(q) !== -1;
-            it.hidden = !ok;
-            if (ok) n++;
-        });
-        if (noEl) noEl.hidden = n > 0 || items.length === 0;
-    }
-
-    function tutupCombo() { comboPanel.hidden = true; }
-
-    comboTrig.addEventListener('click', function () {
-        var buka = comboPanel.hidden;
-        comboPanel.hidden = !buka;
-        if (buka) {
-            comboCari.value = '';
-            cocokkan(comboCari, comboItems, comboNo);
-            comboCari.focus();
-        }
-    });
-
-    comboCari.addEventListener('input', function () { cocokkan(comboCari, comboItems, comboNo); });
-
-    comboItems.forEach(function (it) {
-        it.addEventListener('click', function () {
-            comboIn.value = it.dataset.value;
-            comboTxt.textContent = it.dataset.label;
-            comboItems.forEach(function (x) { x.classList.toggle('is-selected', x === it); });
-            tutupCombo();
-        });
-    });
-
-    document.addEventListener('click', function (e) {
-        if (!combo.contains(e.target)) tutupCombo();
-    });
-
-    if (anakCari) {
-        anakCari.addEventListener('input', function () { cocokkan(anakCari, anakItems, anakNo); });
-    }
-
-    anakItems.forEach(function (lbl) {
-        var cb = lbl.querySelector('input[type="checkbox"]');
-        cb.addEventListener('change', function () { lbl.classList.toggle('is-selected', cb.checked); });
-    });
-
-    // Enter di kolom cari tidak boleh mengirim form
-    [comboCari, anakCari].forEach(function (el) {
-        if (!el) return;
-        el.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') e.preventDefault();
-        });
-    });
-
-    function setAkun(id, nama) {
-        comboIn.value = id;
-        comboTxt.textContent = nama || 'Pilih akun orang tua';
-        comboItems.forEach(function (x) {
-            x.classList.toggle('is-selected', x.dataset.value === String(id));
-        });
-    }
-
-    function setAnak(ids) {
-        anakItems.forEach(function (lbl) {
-            var cb = lbl.querySelector('input[type="checkbox"]');
-            cb.checked = ids.indexOf(cb.value) !== -1;
-            lbl.classList.toggle('is-selected', cb.checked);
-        });
-    }
-
-    function setHubungan(v) {
-        var r = form.querySelector('input[name="hubungan"][value="' + v + '"]');
-        if (r) r.checked = true;
-    }
-
-    function bersihkanCari() {
-        if (anakCari) {
-            anakCari.value = '';
-            cocokkan(anakCari, anakItems, anakNo);
-        }
-        comboCari.value = '';
-        cocokkan(comboCari, comboItems, comboNo);
-        tutupCombo();
-    }
-
-    // Mode tambah
-    document.querySelectorAll('[data-hubung-baru]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            judul.textContent = 'Hubungkan Orang Tua ke Siswa';
-            form.action = storeUrl;
-            metodeEl.disabled = true;
-            editEl.value = '';
-            submitBtn.textContent = 'Hubungkan';
-            comboTrig.disabled = false;
-            setAkun('', '');
-            setAnak([]);
-            setHubungan('ayah');
-            bersihkanCari();
-        });
-    });
-
-    // Mode ubah
-    document.querySelectorAll('[data-edit]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var d = btn.dataset;
-            var anak = [];
-            try { anak = JSON.parse(d.anak || '[]'); } catch (err) { anak = []; }
-
-            judul.textContent = 'Ubah Relasi Orang Tua';
-            form.action = updateUrl.replace('__ID__', encodeURIComponent(d.ortuId));
-            metodeEl.disabled = false;
-            metodeEl.value = 'PUT';
-            editEl.value = d.ortuId;
-            submitBtn.textContent = 'Simpan Perubahan';
-            comboTrig.disabled = true;
-            setAkun(d.ortuId, d.nama);
-            setAnak(anak.map(String));
-            setHubungan(d.hubungan || 'ayah');
-            bersihkanCari();
-        });
-    });
-})();
-</script>
 @endsection

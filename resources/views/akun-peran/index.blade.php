@@ -2,255 +2,147 @@
 
 @section('title', 'Kelola Akun & Peran')
 
-@section('content')
-@vite(['resources/css/akun-peran.css', 'resources/js/akun-peran.js'])
+@push('styles')
+    @vite(['resources/js/operator-akun.js'])
+@endpush
 
 @php
-    $stats     = $stats     ?? [];
-    $akun      = collect($akun ?? []);
-    $peranMap  = $peranMap  ?? [];
-    $peranOpsi = $peranOpsi ?? [];
-    $peran     = $peran     ?? 'semua';
-    $status    = $status    ?? 'semua';
-    $q         = $q         ?? '';
-    $page      = $page      ?? 1;
-    $lastPage  = $lastPage  ?? 1;
-    $totalAkun = $totalAkun ?? 0;
-
-    $persenOrtu = ($stats['akun_ortu'] ?? 0) > 0
-        ? ($stats['ortu_terhubung'] / $stats['akun_ortu']) * 100
-        : 0;
+    use App\Support\Format;
+    $s = $statistik;
 @endphp
 
-<div class="ak-page">
+@section('content')
+<div class="px-7 pt-7 pb-10" x-data="akunPage(JSON.parse(document.getElementById('data-akun').textContent))">
+    <x-ui.json-data id="data-akun" :data="['akun' => $akun->items(), 'username' => $username, 'bukaModal' => request('modal') === 'akun']" />
 
-    {{-- HEADER --}}
-    <header class="ak-head">
-        <div>
-            <p class="ak-eyebrow">SMA Negeri 1 Kota Malang · Operator</p>
-            <h1 class="ak-title">Kelola Akun & Peran</h1>
-            <p class="ak-subtitle">Atur akun pengguna dan peran yang dimiliki.</p>
-        </div>
-        <button type="button" class="ak-btn-primary" data-buka-modal>+ Tambah Akun</button>
-    </header>
+    <x-ui.page-header title="Kelola Akun & Peran" role="Operator" subtitle="Atur akun pengguna dan peran yang dimiliki.">
+        <x-slot:actions>
+            <x-ui.button icon="plus" size="lg" x-on:click="tambah()">Tambah Akun</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    {{-- STATISTIK --}}
-    <div class="ak-stats">
-        <div class="ak-card">
-            <p class="ak-label">Total akun</p>
-            <p class="ak-value">{{ $stats['total'] ?? 0 }}</p>
-            <p class="ak-note">{{ $stats['total_aktif'] ?? 0 }} aktif · {{ $stats['total_nonaktif'] ?? 0 }} nonaktif</p>
-        </div>
-
-        <div class="ak-card">
-            <p class="ak-label">Akun guru</p>
-            <p class="ak-value">{{ $stats['akun_guru'] ?? 0 }}</p>
-            <p class="ak-note {{ ($stats['guru_belum_akun'] ?? 0) > 0 ? 'is-warn' : '' }}">
-                {{ $stats['guru_belum_akun'] ?? 0 }} guru belum punya akun
-            </p>
-        </div>
-
-        <div class="ak-card">
-            <p class="ak-label">Akun orang tua</p>
-            <p class="ak-value">{{ $stats['akun_ortu'] ?? 0 }}</p>
-            <div class="ak-bar"><div class="ak-bar-fill" style="width: {{ $persenOrtu }}%"></div></div>
-            <p class="ak-note">terhubung ke {{ $stats['ortu_terhubung'] ?? 0 }} siswa</p>
-        </div>
+    <div class="grid gap-4 md:grid-cols-3">
+        <x-ui.stat-card label="Total akun" :value="Format::angka($s['total'])" :hint="Format::angka($s['aktif']).' aktif · '.$s['nonaktif'].' nonaktif'" />
+        <x-ui.stat-card label="Akun guru" :value="$s['guru']" :hint="$s['guru_tanpa_akun'].' guru belum punya akun'" />
+        <x-ui.stat-card label="Akun orang tua" :value="Format::angka($s['ortu'])" :hint="'terhubung ke '.Format::angka($s['ortu']).' siswa'" />
     </div>
 
-    {{-- DAFTAR AKUN --}}
-    <section class="ak-card ak-table-card">
-        <div class="ak-table-head">
+    <x-ui.card :padding="false" class="mt-5 overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-3">
             <div>
-                <h2 class="ak-panel-title">Daftar Akun</h2>
-                <p class="ak-note">{{ $totalAkun }} akun</p>
+                <h2 class="text-[15px] font-bold text-ink">Daftar Akun</h2>
+                <p class="text-xs text-muted">{{ Format::angka($akun->total()) }} akun</p>
             </div>
-
-            <form method="GET" action="{{ route('akun-peran.index') }}" class="ak-filter" data-filter-form>
-                <select name="peran" class="ak-select" data-auto-submit>
-                    <option value="semua" @selected($peran === 'semua')>Peran: Semua</option>
-                    @foreach ($peranMap as $kode => $info)
-                        <option value="{{ $kode }}" @selected($peran === $kode)>Peran: {{ $info['label'] }}</option>
-                    @endforeach
-                </select>
-
-                <select name="status" class="ak-select" data-auto-submit>
-                    <option value="semua" @selected($status === 'semua')>Status: Semua</option>
-                    <option value="aktif" @selected($status === 'aktif')>Status: Aktif</option>
-                    <option value="nonaktif" @selected($status === 'nonaktif')>Status: Nonaktif</option>
-                </select>
-
-                <div class="ak-search-wrap">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
-                    </svg>
-                    <input type="search" name="q" value="{{ $q }}" placeholder="Cari nama atau username..." class="ak-search" data-search>
-                </div>
-            </form>
+            <div class="flex flex-wrap items-center gap-2.5">
+                <x-ui.filter-link label="Peran" param="peran" :options="['' => 'Semua'] + array_combine($peran, $peran)" />
+                <x-ui.filter-link label="Status" param="status" :options="['' => 'Semua', 'aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']" />
+                <x-ui.search-form placeholder="Cari nama atau username…" class="w-[220px]" />
+            </div>
         </div>
-
-        <div class="ak-table-wrap">
-            <table class="ak-table">
-                <thead>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[900px] text-left text-[13px]">
+                <thead class="bg-surface-2 text-xs font-semibold text-ink-2">
                     <tr>
-                        <th class="is-center">No</th>
-                        <th>Nama</th>
-                        <th>Username</th>
-                        <th>Peran</th>
-                        <th>Status</th>
-                        <th>Terakhir login</th>
-                        <th class="is-right">Aksi</th>
+                        <th class="w-[56px] px-5 py-3">No</th>
+                        <th class="px-3 py-3">Nama</th>
+                        <th class="px-3 py-3">Username</th>
+                        <th class="px-3 py-3">Peran</th>
+                        <th class="px-3 py-3">Status</th>
+                        <th class="px-3 py-3">Terakhir login</th>
+                        <th class="px-5 py-3 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @forelse ($akun as $i => $a)
+                <tbody class="divide-y divide-line-soft">
+                    <template x-for="(a, i) in akun" :key="a.id_user">
                         <tr>
-                            <td class="is-center ak-muted">{{ ($page - 1) * 10 + $i + 1 }}</td>
-                            <td class="ak-bold">{{ $a['nama'] ?? '-' }}</td>
-                            <td class="ak-muted">{{ $a['username'] ?? '-' }}</td>
-                            <td>
-                                <div class="ak-roles">
-                                    @foreach ($a['peran'] ?? [] as $kode)
-                                        @php $info = $peranMap[$kode] ?? null; @endphp
-                                        @if ($info)
-                                            <span class="ak-role tone-{{ $info['tone'] }}">{{ $info['label'] }}</span>
-                                        @endif
-                                    @endforeach
+                            <td class="px-5 py-3 text-ink-2" x-text="{{ max(0, $akun->firstItem() - 1) }} + i + 1"></td>
+                            <td class="px-3 py-3 font-semibold text-ink" x-text="a.nama"></td>
+                            <td class="px-3 py-3 text-ink-2" x-text="a.username"></td>
+                            <td class="px-3 py-3">
+                                <div class="flex flex-wrap gap-1.5">
+                                    <template x-for="p in a.peran" :key="p"><span :class="$store.ref.peranBadge(p)" x-text="p"></span></template>
                                 </div>
                             </td>
-                            <td>
-                                @if (($a['status'] ?? 'nonaktif') === 'aktif')
-                                    <span class="ak-chip ok">Aktif</span>
-                                @else
-                                    <span class="ak-chip">Nonaktif</span>
-                                @endif
+                            <td class="px-3 py-3">
+                                <span :class="$store.ref.badge(a.status === 'aktif' ? 'success' : 'neutral')" x-text="a.status === 'aktif' ? 'Aktif' : 'Nonaktif'"></span>
                             </td>
-                            <td class="ak-muted">{{ $a['terakhir_login'] ?? '—' }}</td>
-                            <td class="is-right">
-                                <div class="ak-actions">
-                                    <button type="button" class="ak-icon-btn" title="Ubah" aria-label="Ubah">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 3a2.8 2.8 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
-                                    </button>
-                                    <button type="button" class="ak-icon-btn" title="Reset password" aria-label="Reset password">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 8.7-8.7M16 7l3 3"/></svg>
-                                    </button>
-                                    <button type="button" class="ak-icon-btn" title="Aktif / nonaktif" aria-label="Aktif atau nonaktif">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="5"/><circle cx="16" cy="12" r="3"/></svg>
-                                    </button>
+                            <td class="px-3 py-3 text-muted" x-text="a.login"></td>
+                            <td class="px-5 py-2.5">
+                                <div class="flex justify-end gap-1.5">
+                                    <x-ui.icon-button icon="pencil" label="Ubah akun" x-on:click="ubah(a)" />
+                                    <x-ui.icon-button icon="key" label="Reset kata sandi" x-on:click="resetSandi(a)" />
+                                    <x-ui.icon-button icon="toggle" label="Aktifkan atau nonaktifkan akun" x-on:click="ubahStatus(a)" />
                                 </div>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="ak-empty">Belum ada akun.</td>
-                        </tr>
-                    @endforelse
+                    </template>
+                    <tr x-show="!akun.length"><td colspan="7" class="px-5 py-10 text-center text-sm text-muted">Tidak ada akun yang cocok dengan filter.</td></tr>
                 </tbody>
             </table>
         </div>
-
-        <div class="ak-foot">
-            <span class="ak-note">ⓘ Satu akun dapat memiliki lebih dari satu peran.</span>
-
-            <div class="ak-foot-right">
-                <span class="ak-note">{{ $akun->count() }} dari {{ $totalAkun }} akun</span>
-
-                @if ($lastPage > 1)
-                    <nav class="ak-pager">
-                        <a href="{{ $page > 1 ? request()->fullUrlWithQuery(['page' => $page - 1]) : '#' }}"
-                           class="ak-page-btn {{ $page <= 1 ? 'is-disabled' : '' }}">‹</a>
-                        @for ($i = 1; $i <= $lastPage; $i++)
-                            <a href="{{ request()->fullUrlWithQuery(['page' => $i]) }}"
-                               class="ak-page-btn {{ $i === $page ? 'is-active' : '' }}">{{ $i }}</a>
-                        @endfor
-                        <a href="{{ $page < $lastPage ? request()->fullUrlWithQuery(['page' => $page + 1]) : '#' }}"
-                           class="ak-page-btn {{ $page >= $lastPage ? 'is-disabled' : '' }}">›</a>
-                    </nav>
-                @endif
-            </div>
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft px-5 py-3">
+            <p class="flex items-center gap-1.5 text-xs text-muted"><x-ui.icon name="info" :size="13" />Satu akun dapat memiliki lebih dari satu peran.</p>
+            <x-ui.pager :paginator="$akun" satuan="akun" />
         </div>
-    </section>
+    </x-ui.card>
 
-</div>
+    {{-- 2.03 Tambah / Ubah Akun --}}
+    <x-ui.modal name="akun" width="max-w-[520px]">
+        <h2 class="pr-10 text-lg font-bold text-ink" x-text="editId ? 'Ubah Akun' : 'Tambah Akun'"></h2>
+        <p class="mt-1 text-[13px] text-muted">Akun dipakai untuk masuk ke seluruh modul SIAKAD.</p>
 
-{{-- MODAL TAMBAH AKUN --}}
-<div data-modal class="ak-modal" aria-hidden="true">
-    <div class="ak-modal-box" role="dialog" aria-modal="true" aria-labelledby="ak-modal-title">
-        <div class="ak-modal-head">
-            <div>
-                <h3 id="ak-modal-title" class="ak-modal-title">Tambah Akun</h3>
-                <p class="ak-note">Akun dipakai untuk masuk ke seluruh modul SIAKAD.</p>
-            </div>
-            <button type="button" class="ak-close" data-tutup-modal aria-label="Tutup">×</button>
-        </div>
-
-        <form method="POST" action="#" data-form-akun novalidate>
-            @csrf
-
-            <div class="ak-form-grid">
-                <div class="ak-field">
-                    <label for="ak-nama">Nama lengkap <span class="ak-req">*</span></label>
-                    <input id="ak-nama" type="text" name="nama" value="{{ old('nama') }}" placeholder="Nama lengkap">
-                </div>
-
-                <div class="ak-field">
-                    <label for="ak-username">Username <span class="ak-req">*</span></label>
-                    <input id="ak-username" type="text" name="username" value="{{ old('username') }}"
-                           class="{{ $errors->has('username') ? 'is-error' : '' }}">
-                    @error('username')
-                        <p class="ak-error">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="ak-field">
-                    <label for="ak-email">Email (opsional)</label>
-                    <input id="ak-email" type="email" name="email" value="{{ old('email') }}" placeholder="nama@sman1malang.sch.id">
-                </div>
-
-                <div class="ak-field">
-                    <label for="ak-password">Password awal <span class="ak-req">*</span></label>
-                    <div class="ak-password">
-                        <input id="ak-password" type="password" name="password" value="">
-                        <button type="button" class="ak-link-btn" data-buat-password>Buat otomatis</button>
+        <form class="mt-4 space-y-4" x-on:submit.prevent="simpan()" novalidate>
+            <div class="grid gap-3.5 sm:grid-cols-2">
+                <x-ui.field label="Nama lengkap" for="ak-nama" required error="error.nama">
+                    <x-ui.input id="ak-nama" x-model="form.nama" error="error.nama" autocomplete="off" />
+                </x-ui.field>
+                <x-ui.field label="Username" for="ak-username" required error="error.username">
+                    <x-ui.input id="ak-username" x-model="form.username" error="error.username" autocomplete="off" x-on:input="delete error.username" />
+                </x-ui.field>
+                <x-ui.field label="Email (opsional)" for="ak-email" error="error.email">
+                    <x-ui.input id="ak-email" type="email" x-model="form.email" error="error.email" placeholder="nama@sman1malang.sch.id" />
+                </x-ui.field>
+                <x-ui.field label="Password awal" for="ak-sandi" :required="true" error="error.sandi">
+                    <div class="flex items-center gap-2">
+                        <x-ui.input id="ak-sandi" x-bind:type="lihatSandi ? 'text' : 'password'" x-model="form.sandi" error="error.sandi"
+                                    x-bind:placeholder="editId ? 'Kosongkan bila tidak diubah' : ''" autocomplete="new-password" />
+                        <button type="button" x-on:click="buatSandi()" class="shrink-0 text-[13px] font-semibold text-link hover:underline">Buat otomatis</button>
                     </div>
-                </div>
+                </x-ui.field>
             </div>
 
-            <div class="ak-field ak-field-full">
-                <span class="ak-label-strong">Peran <span class="ak-req">*</span></span>
-                <div class="ak-check-grid">
-                    @foreach ($peranMap as $kode => $info)
-                        <label class="ak-check">
-                            <input type="checkbox" name="peran[]" value="{{ $kode }}"
-                                   data-peran-check="{{ $kode }}"
-                                   @checked(in_array($kode, old('peran', []), true))>
-                            <span>{{ $info['label'] }}</span>
+            <fieldset>
+                <legend class="mb-1.5 text-[13px] font-semibold text-ink">Peran<span class="text-danger"> *</span></legend>
+                <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                    <template x-for="p in peranForm" :key="p">
+                        <label class="flex min-h-12 cursor-pointer items-center gap-2.5 rounded-control border px-3 py-2"
+                               :class="form.peran.includes(p) ? 'border-primary/40 bg-primary-faint' : 'border-line hover:bg-surface-2'">
+                            <input type="checkbox" class="size-4 accent-primary" :checked="form.peran.includes(p)" x-on:change="togglePeran(p)">
+                            <span class="text-[13px] font-semibold text-ink" x-text="p"></span>
                         </label>
-                    @endforeach
+                    </template>
                 </div>
-            </div>
+                <p x-show="error.peran" x-cloak class="mt-1.5 text-xs font-medium text-danger" role="alert" x-text="error.peran"></p>
+            </fieldset>
 
-            <div class="ak-guru-box" data-guru-box hidden>
-                <div class="ak-field">
-                    <label for="ak-nip">NIP (opsional)</label>
-                    <input id="ak-nip" type="text" name="nip" value="{{ old('nip') }}" placeholder="18 digit NIP">
-                    <p class="ak-note">Muncul karena peran Guru dipilih.</p>
-                </div>
-
-                <div class="ak-field">
-                    <span class="ak-label-strong">Status</span>
-                    <div class="ak-segment">
-                        <label><input type="radio" name="status_guru" value="asn" @checked(old('status_guru', 'asn') === 'asn')><span>ASN</span></label>
-                        <label><input type="radio" name="status_guru" value="gtt" @checked(old('status_guru') === 'gtt')><span>GTT</span></label>
+            <div x-show="pilihGuru" x-cloak class="rounded-card border border-line bg-surface-2 p-3.5">
+                <div class="flex flex-wrap items-end gap-3">
+                    <x-ui.field label="NIP (opsional)" for="ak-nip" error="error.nip" class="min-w-0 flex-1">
+                        <x-ui.input id="ak-nip" x-model="form.nip" error="error.nip" inputmode="numeric" x-bind:disabled="form.status === 'GTT'" />
+                    </x-ui.field>
+                    <div>
+                        <p class="mb-1.5 text-[13px] font-semibold text-ink">Status</p>
+                        <x-ui.segmented :options="['ASN' => 'ASN', 'GTT' => 'GTT']" model="form.status" label="Status kepegawaian" size="sm" class="bg-surface ring-1 ring-line" />
                     </div>
                 </div>
+                <p class="mt-2 text-xs text-muted">Muncul karena peran Guru dipilih</p>
             </div>
 
-            <div class="ak-modal-foot">
-                <button type="button" class="ak-btn" data-tutup-modal>Batal</button>
-                <button type="submit" class="ak-btn-primary">Simpan Akun</button>
+            <div class="flex justify-end gap-2.5 border-t border-line-soft pt-4">
+                <x-ui.button variant="secondary" size="lg" x-on:click="$dispatch('close-modal', 'akun')">Batal</x-ui.button>
+                <x-ui.button type="submit" size="lg">Simpan Akun</x-ui.button>
             </div>
         </form>
-    </div>
+    </x-ui.modal>
 </div>
 @endsection

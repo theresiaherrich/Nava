@@ -11,6 +11,7 @@
         'info' => 'bg-info-soft text-info',
         'violet' => 'bg-violet-soft text-violet',
         'neutral' => 'bg-neutral-soft text-neutral',
+        'yellow' => 'bg-amber-100 text-amber-700',
         'outline' => 'bg-surface text-ink-2 ring-1 ring-inset ring-line',
     ][$tone] ?? 'bg-neutral-soft text-neutral';
 @endphp

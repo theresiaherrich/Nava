@@ -2,299 +2,181 @@
 
 @section('title', 'Data Kelas & Anggota Kelas')
 
+@push('styles')
+    @vite(['resources/js/operator-kelas.js'])
+@endpush
+
 @section('content')
-@vite(['resources/css/data-kelas.css'])
+<div class="px-7 pt-7 pb-10" x-data="kelasPage(JSON.parse(document.getElementById('data-kelas').textContent))">
+    <x-ui.json-data id="data-kelas" :data="[
+        'tingkat' => $tingkat,
+        'kelas' => $kelas,
+        'tanpaKelas' => $tanpaKelas,
+        'bukaPindah' => request('modal') === 'pindah',
+    ]" />
 
-@php
-    $semester          = $semester          ?? 'ganjil';
-    $tingkat           = $tingkat           ?? 'X';
-    $kelasAktif        = $kelasAktif        ?? '';
-    $infoKelas         = $infoKelas         ?? null;
-    $kelasTingkat      = collect($kelasTingkat ?? []);
-    $anggota           = collect($anggota   ?? []);
-    $jumlahAktif       = $jumlahAktif       ?? 0;
-    $totalAnggota      = $totalAnggota      ?? 0;
-    $totalKelasTingkat = $totalKelasTingkat ?? 0;
-    $totalSiswaTingkat = $totalSiswaTingkat ?? 0;
-    $q                 = $q                 ?? '';
-    $page              = $page              ?? 1;
-    $lastPage          = $lastPage          ?? 1;
-    $opsiSemester      = $opsiSemester      ?? [];
-    $opsiTingkat       = $opsiTingkat       ?? [];
-    $opsiPindah        = $opsiPindah        ?? [];
+    <x-ui.page-header title="Data Kelas & Anggota Kelas" role="Operator" subtitle="Kelas asal siswa per semester.">
+        <x-slot:actions>
+            <x-ui.button icon="plus" size="lg" x-on:click="bukaKelasBaru()">Tambah Kelas</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    $adaKelas     = $kelasAktif !== '';
-    $aksiTambah   = $adaKelas ? route('data-kelas.siswa.store', $kelasAktif) : '#';
-    $aktifPindah  = old('_modal') === 'dk-pindah' && $errors->any();
-@endphp
+    <x-ui.card class="flex flex-wrap items-center gap-2.5 !py-3.5">
+        <x-ui.filter-select label="Semester" model="semester" :options="['Ganjil 2026/2027', 'Genap 2025/2026']" />
+        <x-ui.filter-link label="Tingkat" param="tingkat" :options="['X' => 'Kelas X', 'XI' => 'Kelas XI', 'XII' => 'Kelas XII']" />
+        <span class="ml-1 text-[13px] text-muted" x-text="`${kelas.length} kelas · ${totalSiswa} siswa`"></span>
+    </x-ui.card>
 
-<div class="dk-page">
-
-    {{-- HEADER --}}
-    <header class="dk-head">
-        <div>
-            <p class="dk-eyebrow">SMA Negeri 1 Kota Malang · Operator</p>
-            <h1 class="dk-title">Data Kelas & Anggota Kelas</h1>
-            <p class="dk-subtitle">Kelas asal siswa per semester.</p>
-        </div>
-    </header>
-
-    @if (session('status'))
-        <div class="mk-alert">{{ session('status') }}</div>
-    @endif
-
-    {{-- FILTER --}}
-    <div class="dk-card dk-filter-card">
-        <form method="GET" action="{{ route('data-kelas.index') }}" class="dk-filter" data-filter-form>
-            <input type="hidden" name="kelas" value="{{ $kelasAktif }}">
-            <x-dropdown name="semester" :value="$semester" :options="$opsiSemester" autosubmit />
-            <x-dropdown name="tingkat"  :value="$tingkat"  :options="$opsiTingkat"  autosubmit />
-            <span class="dk-summary">{{ $totalKelasTingkat }} kelas · {{ $totalSiswaTingkat }} siswa</span>
-        </form>
-    </div>
-
-    <div class="dk-grid">
-
-        {{-- DAFTAR KELAS --}}
-        <aside class="dk-card dk-kelas-panel">
-            <div class="dk-panel-head">
-                <div class="dk-panel-head-left">
-                    <h2 class="dk-panel-title">Kelas {{ $tingkat }}</h2>
-                    <span class="dk-count">{{ $totalKelasTingkat }} kelas</span>
-                </div>
-                <button type="button" class="dk-btn-sm dk-btn-add" data-mk-open="dk-tambah-kelas">+ Kelas</button>
+    <div class="mt-4 grid gap-4 lg:grid-cols-[331px_minmax(0,1fr)]">
+        {{-- Daftar kelas --}}
+        <x-ui.card :padding="false" class="self-start overflow-hidden py-2">
+            <div class="flex items-center justify-between px-4 pt-2 pb-2">
+                <h2 class="text-[15px] font-bold text-ink">Kelas {{ $tingkat }}</h2>
+                <x-ui.badge tone="info"><span x-text="`${kelas.length} kelas`"></span></x-ui.badge>
             </div>
+            <ul role="listbox" aria-label="Pilih kelas" class="px-2 pb-1">
+                <template x-for="(k, i) in kelas" :key="k.id_kelas">
+                    <li>
+                        <button type="button" role="option" :aria-selected="aktif === i" x-on:click="aktif = i"
+                                class="relative flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-left"
+                                :class="aktif === i ? 'bg-primary-faint before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[3px] before:rounded-l-control before:bg-primary' : 'hover:bg-surface-2'">
+                            <span class="flex size-9 shrink-0 items-center justify-center rounded-control text-[13px] font-bold"
+                                  :class="aktif === i ? 'bg-primary-soft text-link' : 'bg-neutral-soft text-ink-2'" x-text="k.kelas"></span>
+                            <span class="min-w-0 flex-1">
+                                <span class="block text-[13px] font-bold" :class="aktif === i ? 'text-link' : 'text-ink'" x-text="`Kelas ${k.kelas}`"></span>
+                                <span class="block truncate text-xs text-muted" x-text="`Wali: ${k.wali ?? 'belum ditetapkan'}`"></span>
+                            </span>
+                            <span class="shrink-0 text-xs text-muted" x-text="`${k.anggota.length} siswa`"></span>
+                        </button>
+                    </li>
+                </template>
+            </ul>
+        </x-ui.card>
 
-            @forelse ($kelasTingkat as $k)
-                <a href="{{ route('data-kelas.index', ['semester' => $semester, 'tingkat' => $tingkat, 'kelas' => $k['kode']]) }}"
-                   class="dk-kelas-item {{ $k['kode'] === $kelasAktif ? 'is-active' : '' }}">
-                    <span class="dk-kelas-badge">{{ $k['kode'] }}</span>
-                    <span class="dk-kelas-body">
-                        <span class="dk-kelas-name">Kelas {{ $k['kode'] }}</span>
-                        <span class="dk-kelas-wali">Wali: {{ $k['wali_kelas'] ?? '-' }}</span>
-                    </span>
-                    <span class="dk-kelas-jml">{{ $k['jumlah'] ?? 0 }} siswa</span>
-                </a>
-            @empty
-                <p class="dk-empty-text">Belum ada kelas pada tingkat ini.</p>
-            @endforelse
-        </aside>
-
-        {{-- ANGGOTA KELAS --}}
-        <section class="dk-card dk-table-card">
-            <div class="dk-table-head">
+        {{-- Anggota kelas --}}
+        <x-ui.card :padding="false" class="self-start overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-3">
                 <div>
-                    <h2 class="dk-panel-title">Anggota Kelas {{ $kelasAktif !== '' ? $kelasAktif : '-' }}</h2>
-                    <p class="dk-note">{{ $jumlahAktif }} siswa · Wali kelas: {{ $infoKelas['wali_kelas'] ?? '-' }}</p>
+                    <h2 class="text-[15px] font-bold text-ink" x-text="`Anggota Kelas ${kelasAktif.kelas}`"></h2>
+                    <p class="text-xs text-muted" x-text="`${kelasAktif.anggota.length} siswa · Wali kelas: ${kelasAktif.wali ?? 'belum ditetapkan'}`"></p>
                 </div>
-
-                <div class="dk-head-right">
-                    <form method="GET" action="{{ route('data-kelas.index') }}" class="dk-search-form" data-filter-form>
-                        <input type="hidden" name="semester" value="{{ $semester }}">
-                        <input type="hidden" name="tingkat" value="{{ $tingkat }}">
-                        <input type="hidden" name="kelas" value="{{ $kelasAktif }}">
-                        <div class="dk-search-wrap">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
-                            </svg>
-                            <input type="search" name="q" value="{{ $q }}" placeholder="Cari siswa..." class="dk-search" data-search>
-                        </div>
-                    </form>
-
-                    <button type="button" class="dk-btn-primary" data-mk-open="dk-tambah" @disabled(! $adaKelas)>+ Tambah Siswa</button>
+                <div class="flex items-center gap-2.5">
+                    <x-ui.search-input placeholder="Cari siswa…" x-model="cari" class="w-[180px]" />
+                    <x-ui.button icon="plus" x-on:click="bukaTambah()">Tambah Siswa</x-ui.button>
                 </div>
             </div>
-
-            <div class="dk-table-wrap">
-                <table class="dk-table">
-                    <thead>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[600px] text-left text-[13px]">
+                    <thead class="bg-surface-2 text-xs font-semibold text-ink-2">
                         <tr>
-                            <th class="is-center">No</th>
-                            <th>NIS</th>
-                            <th>Nama</th>
-                            <th>L/P</th>
-                            <th>Agama</th>
-                            <th class="is-right">Aksi</th>
+                            <th class="w-[56px] px-5 py-3">No</th>
+                            <th class="px-3 py-3">NIS</th>
+                            <th class="px-3 py-3">Nama</th>
+                            <th class="px-3 py-3">L/P</th>
+                            <th class="px-3 py-3">Agama</th>
+                            <th class="px-5 py-3 text-right">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @forelse ($anggota as $i => $s)
+                    <tbody class="divide-y divide-line-soft">
+                        <template x-for="(s, i) in barisHalaman" :key="s.nis">
                             <tr>
-                                <td class="is-center dk-muted">{{ ($page - 1) * 10 + $i + 1 }}</td>
-                                <td class="dk-muted">{{ $s['nis'] ?? '-' }}</td>
-                                <td class="dk-bold">{{ $s['nama'] ?? '-' }}</td>
-                                <td>{{ $s['lp'] ?? '-' }}</td>
-                                <td>{{ $s['agama'] ?? '-' }}</td>
-                                <td class="is-right">
-                                    <button type="button" class="dk-btn-sm"
-                                            data-pindah
-                                            data-id="{{ $s['id'] ?? '' }}"
-                                            data-nama="{{ $s['nama'] ?? '' }}"
-                                            data-nis="{{ $s['nis'] ?? '' }}"
-                                            data-kelas="{{ $kelasAktif }}">Pindahkan</button>
-                                </td>
+                                <td class="px-5 py-2.5 text-ink-2" x-text="(page - 1) * perPage + i + 1"></td>
+                                <td class="px-3 py-2.5 text-ink-2" x-text="s.nis"></td>
+                                <td class="px-3 py-2.5 font-semibold text-ink" x-text="s.nama"></td>
+                                <td class="px-3 py-2.5 text-ink-2" x-text="s.jenis_kelamin"></td>
+                                <td class="px-3 py-2.5 text-ink-2" x-text="s.agama"></td>
+                                <td class="px-5 py-2 text-right"><x-ui.button variant="secondary" size="sm" x-on:click="bukaPindahkan(s)">Pindahkan</x-ui.button></td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="dk-empty">Belum ada anggota kelas.</td>
-                            </tr>
-                        @endforelse
+                        </template>
+                        <tr x-show="!barisHalaman.length"><td colspan="6" class="px-5 py-10 text-center text-sm text-muted">Belum ada siswa di kelas ini.</td></tr>
                     </tbody>
                 </table>
             </div>
-
-            <div class="dk-foot">
-                <span class="dk-note">ⓘ Satu siswa hanya memiliki satu kelas asal per semester.</span>
-
-                <div class="dk-foot-right">
-                    <span class="dk-note">{{ $anggota->count() }} dari {{ $totalAnggota }} siswa</span>
-
-                    @if ($lastPage > 1)
-                        <nav class="dk-pager">
-                            <a href="{{ $page > 1 ? request()->fullUrlWithQuery(['page' => $page - 1]) : '#' }}"
-                               class="dk-page-btn {{ $page <= 1 ? 'is-disabled' : '' }}">‹</a>
-                            @for ($i = 1; $i <= $lastPage; $i++)
-                                <a href="{{ request()->fullUrlWithQuery(['page' => $i]) }}"
-                                   class="dk-page-btn {{ $i === $page ? 'is-active' : '' }}">{{ $i }}</a>
-                            @endfor
-                            <a href="{{ $page < $lastPage ? request()->fullUrlWithQuery(['page' => $page + 1]) : '#' }}"
-                               class="dk-page-btn {{ $page >= $lastPage ? 'is-disabled' : '' }}">›</a>
-                        </nav>
-                    @endif
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft px-5 py-3">
+                <p class="flex items-center gap-1.5 text-xs text-muted"><x-ui.icon name="info" :size="13" />Satu siswa hanya memiliki satu kelas asal per semester.</p>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-muted" x-text="rentang"></span>
+                    <x-ui.pagination page="page" pages="halaman" />
                 </div>
             </div>
-        </section>
+        </x-ui.card>
     </div>
 
-</div>
+    {{-- 2.08 Pindahkan siswa --}}
+    <x-ui.modal name="pindah" title="Pindahkan Siswa" subtitle="Kelas asal baru berlaku untuk semester Ganjil 2026/2027." width="max-w-[480px]">
+        <template x-if="pindah.siswa">
+            <form class="space-y-4" x-on:submit.prevent="simpanPindah()" novalidate>
+                <div class="flex items-center gap-3 rounded-card border border-line bg-surface-2 px-4 py-3">
+                    <span class="flex size-9 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white" x-text="inisial(pindah.siswa.nama)"></span>
+                    <div>
+                        <p class="text-sm font-bold text-ink" x-text="pindah.siswa.nama"></p>
+                        <p class="text-xs text-muted">NIS <span x-text="pindah.siswa.nis"></span> · saat ini di <strong class="text-ink" x-text="kelasAktif.kelas"></strong></p>
+                    </div>
+                </div>
+                <x-ui.field label="Pindahkan ke kelas" for="pd-kelas" required error="pindah.error">
+                    <x-ui.select id="pd-kelas" x-model="pindah.ke" placeholder="Pilih kelas tujuan" x-on:change="pindah.error = ''">
+                        <template x-for="k in tujuanPindah" :key="k.kelas">
+                            <option :value="k.kelas" :selected="pindah.ke === k.kelas" x-text="`${k.kelas} · Wali: ${k.wali ?? '—'} · ${k.anggota.length} siswa`"></option>
+                        </template>
+                    </x-ui.select>
+                </x-ui.field>
+                <x-ui.field label="Alasan (opsional)" for="pd-alasan">
+                    <textarea id="pd-alasan" x-model="pindah.alasan" rows="3" placeholder="Contoh: penyesuaian jumlah siswa per kelas"
+                              class="w-full rounded-control border border-line px-3 py-2.5 text-sm text-ink placeholder:text-subtle focus:border-primary focus:ring-2 focus:ring-primary-soft focus:outline-none"></textarea>
+                </x-ui.field>
+                <p class="flex items-center gap-2 rounded-control border border-primary-soft bg-primary-faint px-3 py-2.5 text-[13px] text-info">
+                    <x-ui.icon name="info" :size="14" /> Nilai yang sudah dikunci tetap tersimpan di rapor kelas lama.
+                </p>
+                <div class="flex justify-end gap-2.5 border-t border-line-soft pt-4">
+                    <x-ui.button variant="secondary" size="lg" x-on:click="$dispatch('close-modal', 'pindah')">Batal</x-ui.button>
+                    <x-ui.button type="submit" size="lg">Pindahkan</x-ui.button>
+                </div>
+            </form>
+        </template>
+    </x-ui.modal>
 
-{{-- MODAL TAMBAH KELAS --}}
-@include('components.modal-tambah', [
-    'id'     => 'dk-tambah-kelas',
-    'judul'  => 'Tambah Kelas',
-    'aksi'   => route('data-kelas.kelas.store'),
-    'fields' => [
-        ['name' => 'kode',       'label' => 'Kode kelas',      'required' => true, 'full' => true, 'placeholder' => 'contoh: X-K'],
-        ['name' => 'tingkat',    'label' => 'Tingkat', 'type' => 'select', 'required' => true,
-         'options' => ['X' => 'Kelas X', 'XI' => 'Kelas XI', 'XII' => 'Kelas XII']],
-        ['name' => 'wali_kelas', 'label' => 'Wali kelas (opsional)', 'placeholder' => 'Nama wali kelas'],
-    ],
-])
-
-{{-- MODAL TAMBAH SISWA KE KELAS --}}
-@include('components.modal-tambah', [
-    'id'     => 'dk-tambah',
-    'judul'  => 'Tambah Siswa ke Kelas ' . $kelasAktif,
-    'aksi'   => $aksiTambah,
-    'fields' => [
-        ['name' => 'nis', 'label' => 'NIS siswa', 'required' => true, 'full' => true, 'placeholder' => 'contoh: 2526001'],
-    ],
-])
-
-{{-- MODAL PINDAHKAN SISWA --}}
-<div id="dk-pindah" class="mk-overlay" @if ($aktifPindah) data-auto-open @endif>
-    <div class="mk-box" role="dialog" aria-modal="true" aria-labelledby="dk-pindah-judul">
-        <div class="mk-head">
-            <div>
-                <h3 id="dk-pindah-judul" class="mk-title">Pindahkan Siswa</h3>
-                <p class="mk-desc">Kelas asal baru berlaku untuk semester Ganjil 2026/2027.</p>
+    {{-- Tambah siswa ke kelas --}}
+    <x-ui.modal name="tambah-anggota" width="max-w-[520px]">
+        <h2 class="pr-10 text-lg font-bold text-ink" x-text="`Tambah Siswa ke ${kelasAktif.kelas}`"></h2>
+        <p class="mt-1 text-[13px] text-muted">Siswa yang belum memiliki kelas asal pada semester ini.</p>
+        <ul class="mt-4 space-y-2">
+            <template x-for="s in tanpaKelas" :key="s.nis">
+                <li>
+                    <label class="flex cursor-pointer items-center gap-3 rounded-control border px-3 py-2.5"
+                           :class="tambah.dipilih.includes(s.nis) ? 'border-primary/50 bg-primary-faint' : 'border-line hover:bg-surface-2'">
+                        <input type="checkbox" class="size-4 accent-primary" :checked="tambah.dipilih.includes(s.nis)" x-on:change="toggleTambah(s.nis)">
+                        <span>
+                            <span class="block text-[13px] font-semibold text-ink" x-text="s.nama"></span>
+                            <span class="block text-xs text-muted" x-text="`NIS ${s.nis} · ${s.jenis_kelamin} · ${s.agama}`"></span>
+                        </span>
+                    </label>
+                </li>
+            </template>
+            <li x-show="!tanpaKelas.length" class="py-6 text-center text-sm text-muted">Semua siswa sudah memiliki kelas asal.</li>
+        </ul>
+        <div class="mt-5 flex items-center justify-between gap-3 border-t border-line-soft pt-4">
+            <span class="text-[13px] font-semibold text-link" x-text="`${tambah.dipilih.length} siswa dipilih`"></span>
+            <div class="flex gap-2.5">
+                <x-ui.button variant="secondary" size="lg" x-on:click="$dispatch('close-modal', 'tambah-anggota')">Batal</x-ui.button>
+                <x-ui.button size="lg" x-bind:disabled="!tambah.dipilih.length" x-on:click="simpanTambah()">Tambahkan</x-ui.button>
             </div>
-            <button type="button" class="mk-close" data-mk-close aria-label="Tutup">×</button>
         </div>
+    </x-ui.modal>
 
-        <form method="POST" action="{{ route('data-kelas.pindah') }}">
-            @csrf
-            <input type="hidden" name="_modal" value="dk-pindah">
-            <input type="hidden" name="siswa_id" value="{{ old('siswa_id') }}" data-f-id>
-            <input type="hidden" name="kelas_asal" value="{{ old('kelas_asal', $kelasAktif) }}" data-f-kelas>
-            <input type="hidden" name="siswa_nama" value="{{ old('siswa_nama') }}" data-f-nama>
-            <input type="hidden" name="siswa_nis" value="{{ old('siswa_nis') }}" data-f-nis>
-
-            <div class="dk-siswa-chip">
-                <span class="dk-avatar" data-t-inisial>{{ mb_strtoupper(mb_substr(old('siswa_nama', '-'), 0, 2)) }}</span>
-                <div>
-                    <p class="dk-siswa-name" data-t-nama>{{ old('siswa_nama', '-') }}</p>
-                    <p class="dk-note">NIS <span data-t-nis>{{ old('siswa_nis', '-') }}</span> · saat ini di <b data-t-kelas>{{ old('kelas_asal', $kelasAktif ?: '-') }}</b></p>
-                </div>
-            </div>
-
-            <div class="mk-field">
-                <label>Pindahkan ke kelas <span style="color:#dc2626">*</span></label>
-                <div class="dk-full">
-                    <x-dropdown name="kelas_tujuan" :value="old('kelas_tujuan', '')" :options="$opsiPindah" />
-                </div>
-                @error('kelas_tujuan')
-                    <p class="mk-error">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div class="mk-field">
-                <label for="dk-alasan">Alasan (opsional)</label>
-                <textarea id="dk-alasan" name="alasan" class="dk-textarea" placeholder="Contoh: penyesuaian jumlah siswa per kelas">{{ old('alasan') }}</textarea>
-            </div>
-
-            <div class="dk-info">
-                <span>ⓘ</span>
-                <span>Nilai yang sudah dikunci tetap tersimpan di rapor kelas lama.</span>
-            </div>
-
-            <div class="mk-foot">
-                <button type="button" class="mk-btn" data-mk-close>Batal</button>
-                <button type="submit" class="mk-btn-primary">Pindahkan</button>
+    {{-- Tambah kelas --}}
+    <x-ui.modal name="kelas-baru" title="Tambah Kelas" subtitle="Kelas baru berlaku untuk semester Ganjil 2026/2027." width="max-w-[420px]">
+        <form class="space-y-4" x-on:submit.prevent="simpanKelasBaru()" novalidate>
+            <x-ui.field label="Nama kelas" for="kb-nama" required error="kelasBaru.error">
+                <x-ui.input id="kb-nama" x-model="kelasBaru.nama" error="kelasBaru.error" x-on:input="kelasBaru.error = ''" />
+            </x-ui.field>
+            <x-ui.field label="Wali kelas (opsional)" for="kb-wali" hint="Wali kelas dapat ditetapkan Kurikulum di menu Penetapan Wali Kelas.">
+                <x-ui.input id="kb-wali" x-model="kelasBaru.wali" />
+            </x-ui.field>
+            <div class="flex justify-end gap-2.5 border-t border-line-soft pt-4">
+                <x-ui.button variant="secondary" size="lg" x-on:click="$dispatch('close-modal', 'kelas-baru')">Batal</x-ui.button>
+                <x-ui.button type="submit" size="lg">Simpan Kelas</x-ui.button>
             </div>
         </form>
-    </div>
+    </x-ui.modal>
 </div>
-
-@include('components.modal-kit')
-
-<script>
-(function () {
-    var modal = document.getElementById('dk-pindah');
-
-    function inisial(nama) {
-        return nama.split(' ').filter(Boolean).slice(0, 2).map(function (p) {
-            return p.charAt(0).toUpperCase();
-        }).join('');
-    }
-
-    // Tombol Pindahkan di tabel
-    document.addEventListener('click', function (e) {
-        var btn = e.target.closest('[data-pindah]');
-        if (!btn || !modal) return;
-
-        var d = btn.dataset;
-        modal.querySelector('[data-f-id]').value = d.id;
-        modal.querySelector('[data-f-kelas]').value = d.kelas;
-        modal.querySelector('[data-f-nama]').value = d.nama;
-        modal.querySelector('[data-f-nis]').value = d.nis;
-
-        modal.querySelector('[data-t-inisial]').textContent = inisial(d.nama);
-        modal.querySelector('[data-t-nama]').textContent = d.nama;
-        modal.querySelector('[data-t-nis]').textContent = d.nis;
-        modal.querySelector('[data-t-kelas]').textContent = d.kelas;
-
-        // Reset dropdown dan alasan
-        modal.querySelector('[data-dd-input]').value = '';
-        modal.querySelector('.dd-text').textContent = 'Pilih kelas tujuan';
-        modal.querySelectorAll('.dd-item').forEach(function (it) {
-            var on = it.dataset.value === '';
-            it.classList.toggle('is-selected', on);
-            it.setAttribute('aria-selected', on ? 'true' : 'false');
-        });
-        modal.querySelector('#dk-alasan').value = '';
-
-        modal.classList.add('is-open');
-        document.body.style.overflow = 'hidden';
-    });
-
-    // Pencarian dikirim saat Enter atau tombol hapus (×)
-    var cari = document.querySelector('[data-search]');
-    if (cari) {
-        cari.addEventListener('search', function () {
-            cari.form.submit();
-        });
-    }
-})();
-</script>
 @endsection

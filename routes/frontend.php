@@ -12,7 +12,6 @@
 */
 
 use App\Http\Controllers\AkunPeranController;
-use App\Http\Controllers\BerandaAkademikController;
 use App\Http\Controllers\DashboardGuruController;
 use App\Http\Controllers\DashboardKelasController;
 use App\Http\Controllers\DashboardKurikulumController;
@@ -23,12 +22,10 @@ use App\Http\Controllers\DataSiswaController;
 use App\Http\Controllers\Guru;
 use App\Http\Controllers\Kurikulum;
 use App\Http\Controllers\MapelController;
-use App\Http\Controllers\NilaiPerMapelController;
 use App\Http\Controllers\PeriodePenguncianController;
-use App\Http\Controllers\RaporSayaController;
 use App\Http\Controllers\RelasiOrangTuaController;
-use App\Http\Controllers\RiwayatRaporController;
 use App\Http\Controllers\RombelController;
+use App\Http\Controllers\Siswa\PortalController as SiswaPortal;
 use App\Http\Controllers\TahunAjaranController;
 use App\Http\Controllers\Wali;
 use App\Http\Controllers\WaliKelasController;
@@ -100,10 +97,11 @@ Route::middleware($preview ? [] : ['auth', 'active'])->group(function () {
 
     // Siswa
     Route::prefix('siswa')->group(function () {
-        Route::get('/beranda', [BerandaAkademikController::class, 'index'])->name('beranda-akademik.index');
-        Route::get('/rapor', [RaporSayaController::class, 'index'])->name('rapor-saya.index');
-        Route::get('/nilai', [NilaiPerMapelController::class, 'index'])->name('nilai-per-mapel.index');
-        Route::get('/nilai/{id}', [NilaiPerMapelController::class, 'show'])->name('nilai-per-mapel.show');
-        Route::get('/riwayat-rapor', [RiwayatRaporController::class, 'index'])->name('riwayat-rapor.index');
+        Route::get('/beranda', [SiswaPortal::class, 'beranda'])->name('beranda-akademik.index');
+        Route::get('/rapor', [SiswaPortal::class, 'rapor'])->name('rapor-saya.index');
+        Route::get('/nilai', [SiswaPortal::class, 'nilai'])->name('nilai-per-mapel.index');
+        Route::get('/nilai/{mapel}', [SiswaPortal::class, 'nilaiDetail'])->name('nilai-per-mapel.show');
+        Route::get('/riwayat-rapor', [SiswaPortal::class, 'riwayat'])->name('riwayat-rapor.index');
+        Route::get('/akses-ditolak', [SiswaPortal::class, 'aksesDitolak'])->name('siswa.akses-ditolak');
     });
 });

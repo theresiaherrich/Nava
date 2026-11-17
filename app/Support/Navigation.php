@@ -213,6 +213,20 @@ class Navigation
                 '5.06 · Rapor semester 2 lembar' => ['jenis' => 'semester'],
                 '5.07 · Riwayat cetak' => ['tab' => 'riwayat'],
             ],
+            // Siswa
+            'beranda-akademik.index' => [
+                '2.05 · Belum ada rapor terbit' => ['state' => 'belum-terbit'],
+                '6.01 · Akses ditolak' => ['_route' => 'siswa.akses-ditolak'],
+            ],
+            'rapor-saya.index' => [
+                '3.04 · Rapor Semester belum terbit' => ['jenis' => 'semester'],
+                '3.05 · Rapor Semester terbit' => ['jenis' => 'semester', 'state' => 'semester-terbit'],
+            ],
+            'nilai-per-mapel.index' => [
+                '4.02 · Detail mapel (Matematika)' => ['_route' => 'nilai-per-mapel.show', 'mapel' => 'matematika'],
+                '4.03 · Detail mapel perlu penguatan (Fisika)' => ['_route' => 'nilai-per-mapel.show', 'mapel' => 'fisika'],
+            ],
+            'riwayat-rapor.index' => ['5.02 · Versi diperbarui' => ['state' => 'versi-baru']],
         ];
     }
 

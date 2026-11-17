@@ -45,7 +45,7 @@
                     <tr>
                         <td class="border border-ink px-1 py-1 text-center" x-text="i + 1"></td>
                         <td class="border border-ink px-1.5 py-1" x-text="m.nama"></td>
-                        <template x-for="(n, j) in m.tp" :key="j"><td class="border border-ink px-1 py-1 text-center" x-text="n"></td></template>
+                        <template x-for="(n, j) in m.tp" :key="j"><td class="border border-ink px-1 py-1 text-center" x-text="n ?? '—'"></td></template>
                         <td class="border border-ink px-1 py-1 text-center font-bold" x-text="m.akhir"></td>
                     </tr>
                 </template>

@@ -222,6 +222,25 @@ Untuk build aset produksi:
 npm run build
 ```
 
+### Melihat frontend tanpa login (mode preview, A2)
+
+Semua halaman Akademik (A2) memakai data dummy di `app/Support/Dummy/*` (bentuk menyerupai respons API, ditandai `// TODO API: ...`) sehingga dapat dicek tanpa basis data.
+
+1. Pastikan `.env` berisi `APP_ENV=local` dan `FRONTEND_PREVIEW=true`.
+2. Instal dependensi: `composer install` lalu `npm install`.
+3. Jalankan Vite dan server PHP sekaligus:
+
+   ```bash
+   npm run preview
+   ```
+
+   Perintah ini sama dengan `npm run dev` + `npm run serve` (server `php -S 127.0.0.1:8100` dengan router `scripts/dev-router.php`, yang memakai gzip agar respons besar tidak terpotong di Windows). Boleh juga dijalankan terpisah di dua terminal.
+4. Buka [http://127.0.0.1:8100/preview](http://127.0.0.1:8100/preview). Halaman ini berisi daftar semua halaman per peran (Operator, Kurikulum, Guru, Wali Kelas, Siswa) beserta varian state/modal sesuai nomor desain di `docs/design/`, plus halaman login.
+
+Varian layar dibuka lewat query string, mis. `?modal=revisi`, `?state=terkunci`, `?tab=riwayat`. Di luar mode preview, semua halaman berada di balik middleware `auth` dan `active`.
+
+Sebelum commit, pastikan `php artisan view:cache` dan `npm run build` lolos tanpa peringatan.
+
 ---
 
 ## Akun dan Peran

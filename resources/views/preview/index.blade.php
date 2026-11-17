@@ -14,7 +14,12 @@
     <p class="mt-2 text-sm text-muted">
         Halaman memakai data dummy dan dapat dibuka tanpa login selama <code>APP_ENV=local</code> dan <code>FRONTEND_PREVIEW=true</code>.
         Baris ↳ membuka variasi state atau modal sesuai nomor desain.
-        <a class="font-semibold text-link hover:underline" href="{{ route('login') }}">Halaman login</a>
+    </p>
+    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        <span class="font-semibold">Login:</span>
+        <a class="font-medium text-link hover:underline" href="{{ route('login') }}">1.01 · Login (mode demo)</a>
+        <a class="font-medium text-link hover:underline" href="{{ route('login', ['peran' => 'siswa']) }}">Siswa 1.01 · Login siswa</a>
+        <a class="font-medium text-link hover:underline" href="{{ route('login', ['peran' => 'siswa', 'state' => 'belum-aktif']) }}">Siswa 1.02 · Akun belum aktif</a>
     </p>
 
     <div class="mt-8 grid gap-4 sm:grid-cols-2">

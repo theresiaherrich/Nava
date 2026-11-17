@@ -1,1 +1,0 @@
-@include('dashboard.layout', ['judul'=>'Siswa'])

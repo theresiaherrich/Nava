@@ -12,7 +12,6 @@
 */
 
 use App\Http\Controllers\Academic\TpController;
-use App\Http\Controllers\Admin\KurikulumController;
 use App\Http\Controllers\AkunPeranController;
 use App\Http\Controllers\BelumTersediaController;
 use App\Http\Controllers\BerandaAkademikController;
@@ -25,6 +24,7 @@ use App\Http\Controllers\DataGuruController;
 use App\Http\Controllers\DataKelasController;
 use App\Http\Controllers\DataSiswaController;
 use App\Http\Controllers\InputNilaiController;
+use App\Http\Controllers\Kurikulum;
 use App\Http\Controllers\MapelController;
 use App\Http\Controllers\NilaiPerMapelController;
 use App\Http\Controllers\PelengkapRaporController;
@@ -76,12 +76,12 @@ Route::middleware($preview ? [] : ['auth', 'active'])->group(function () {
         Route::get('/rombel/{rombel}', [RombelController::class, 'show'])->name('rombel.show');
         Route::get('/wali-kelas', [WaliKelasController::class, 'index'])->name('wali-kelas.index');
         Route::get('/periode-penguncian', [PeriodePenguncianController::class, 'index'])->name('periode-penguncian.index');
-        Route::get('/kktp', [KurikulumController::class, 'kktp'])->name('kktp.index');
-        Route::get('/rekap-nilai', [KurikulumController::class, 'rekapNilai'])->name('kurikulum.rekap-nilai.index');
-        Route::get('/format-rapor', [KurikulumController::class, 'formatRapor'])->name('format-rapor.index');
-        Route::get('/cetak-rapor', [KurikulumController::class, 'cetakRapor'])->name('kurikulum.cetak-rapor.index');
-        Route::get('/terbitkan-rapor', [KurikulumController::class, 'terbitkanRapor'])->name('terbitkan-rapor.index');
-        Route::get('/arsip-rapor', [KurikulumController::class, 'arsipRapor'])->name('arsip-rapor.index');
+        Route::get('/kktp', [Kurikulum\KktpController::class, 'index'])->name('kktp.index');
+        Route::get('/rekap-nilai', [Kurikulum\RekapNilaiController::class, 'index'])->name('kurikulum.rekap-nilai.index');
+        Route::get('/format-rapor', [Kurikulum\RaporController::class, 'format'])->name('format-rapor.index');
+        Route::get('/cetak-rapor', [Kurikulum\RaporController::class, 'cetak'])->name('kurikulum.cetak-rapor.index');
+        Route::get('/terbitkan-rapor', [Kurikulum\RaporController::class, 'terbitkan'])->name('terbitkan-rapor.index');
+        Route::get('/arsip-rapor', [Kurikulum\RaporController::class, 'arsip'])->name('arsip-rapor.index');
     });
 
     // Guru Mapel

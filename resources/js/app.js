@@ -77,6 +77,13 @@ Alpine.store('ref', {
 /** $angka(2010) → "2.010" */
 Alpine.magic('angka', () => (n) => Number(n ?? 0).toLocaleString('id-ID'));
 
+/** $tanggal('2026-10-30') → "30 Oktober 2026"; $tanggal(iso, true) → "30 Okt 2026" */
+Alpine.magic('tanggal', () => (iso, pendek = false) => {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('id-ID', { day: 'numeric', month: pendek ? 'short' : 'long', year: 'numeric' }).replace('.', '');
+});
+
 window.Alpine = Alpine;
 Alpine.plugin(focus);
 

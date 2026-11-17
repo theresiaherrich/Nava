@@ -2,541 +2,233 @@
 
 @section('title', 'Periode & Penguncian')
 
+@push('styles')
+    @vite(['resources/js/kurikulum-periode.js'])
+@endpush
+
 @section('content')
-@vite(['resources/css/periode-penguncian.css', 'resources/js/periode-penguncian.js'])
+<div class="px-7 pt-7 pb-10"
+     x-data="periodePage(JSON.parse(document.getElementById('data-periode').textContent))">
+    <x-ui.json-data id="data-periode" :data="['periode' => $periode, 'kelas' => $kelas, 'mapelKelas' => $mapelKelas, 'modal' => request('modal')]" />
 
-@php
-    $namaSekolah   = 'SMA Negeri 1 Kota Malang';
-    $semesterTabs  = $semesterTabs  ?? [];
-    $semesterAktif = $semesterAktif ?? 0;
-    $tingkatData   = $tingkatData   ?? [];
-    $tingkatAktif  = $tingkatAktif  ?? array_key_first($tingkatData);
-    $mapelList     = $mapelList     ?? [];
-    $periodeList   = $periodeList   ?? [];
-    $hariIni       = $hariIni       ?? now()->toDateString();
+    <x-ui.page-header title="Periode & Penguncian" role="Kurikulum" subtitle="Atur jadwal pengisian dan kunci nilai sebelum rapor diterbitkan." class="mb-3">
+        <x-slot:actions>
+            <x-ui.button variant="secondary" icon="plus" size="lg" x-on:click="tambahPeriode()">Tambah periode</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    $sts = $sts ?? ['judul' => '-', 'tanggal' => '-', 'statusLabel' => '-'];
-    $sas = $sas ?? [
-        'judul'            => '-',
-        'tanggal'          => '-',
-        'statusLabel'      => '-',
-        'tanggalBuka'      => '-',
-        'bulanBuka'        => '',
-        'hariSampaiDibuka' => 0,
-    ];
-
-    // Kalau controller belum mengirim data per semester, pakai key lama untuk semester aktif
-    $semesterData = $semesterData ?? [
-        $semesterAktif => [
-            'tingkatData'  => $tingkatData,
-            'tingkatAktif' => $tingkatAktif,
-            'adaPeriode'   => true,
-            'sts'          => $sts,
-            'sas'          => $sas,
-        ],
-    ];
-
-    // Semua tingkat yang ada (untuk pilihan di modal Tambah periode)
-    $daftarTingkat = collect($semesterData)->flatMap(fn ($s) => array_keys($s['tingkatData'] ?? []))->unique()->values();
-    if ($daftarTingkat->isEmpty()) {
-        $daftarTingkat = collect(['X', 'XI', 'XII']);
-    }
-
-    // Data untuk periode-penguncian.js
-    $dataJs = [
-        'semesterTabs' => array_values($semesterTabs),
-        'periode'      => $periodeList,
-        'hariIni'      => $hariIni,
-    ];
-
-    // Status per kelas (harus sama dengan STATUS di periode-penguncian.js)
-    $statusMap = [
-        'siap'     => ['label' => 'Siap dikunci',         'class' => 'pk-status-siap'],
-        'terkunci' => ['label' => 'Terkunci',             'class' => 'pk-status-kunci'],
-        'menunggu' => ['label' => 'Belum lengkap',        'class' => 'pk-status-menunggu'],
-        'koreksi'  => ['label' => 'Dibuka untuk koreksi', 'class' => 'pk-status-koreksi'],
-        'belum'    => ['label' => 'Belum dibuka',         'class' => 'pk-status-belum'],
-    ];
-
-    // Badge status periode (harus sama dengan STATUS_PERIODE di periode-penguncian.js)
-    $badgePeriode = [
-        'terjadwal' => 'pk-badge-muted',
-        'dibuka'    => 'pk-badge-open',
-        'ditutup'   => 'pk-badge-closed',
-    ];
-
-    $iconLock     = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
-    $iconUnlock   = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>';
-    $iconCalendar = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>';
-    $iconCalSm    = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>';
-    $iconError    = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>';
-@endphp
-
-<div class="pk-page" data-pk-page>
-
-    {{-- Data untuk JS. TODO (backend): nanti bisa diganti fetch ke API --}}
-    <script type="application/json" id="pk-data">@json($dataJs)</script>
-
-    <header class="pk-header">
-        <div>
-            <p class="pk-eyebrow">{{ $namaSekolah }}</p>
-            <h1 class="pk-title">Periode &amp; Penguncian</h1>
-            <p class="pk-desc">Atur jadwal pengisian dan kunci nilai sebelum rapor diterbitkan.</p>
-        </div>
-        <button type="button" class="pk-btn-outline pk-btn-icon" id="pk-btn-tambah" data-action="tambah">
-            <span aria-hidden="true">+</span> Tambah periode
-        </button>
-    </header>
-
-    {{-- Tab semester --}}
-    <div class="pk-semester-tabs" role="tablist" aria-label="Pilih semester">
-        @forelse ($semesterTabs as $i => $semester)
-            <button type="button"
-                    role="tab"
-                    id="pk-semester-tab-{{ $i }}"
-                    aria-controls="pk-semester-{{ $i }}"
-                    class="pk-semester-tab{{ $i === $semesterAktif ? ' is-active' : '' }}"
-                    aria-selected="{{ $i === $semesterAktif ? 'true' : 'false' }}"
-                    tabindex="{{ $i === $semesterAktif ? '0' : '-1' }}"
-                    data-semester="{{ $i }}">{{ $semester }}</button>
-        @empty
-            <span class="pk-desc">Belum ada semester.</span>
-        @endforelse
+    <div role="tablist" aria-label="Semester" class="mb-5 flex gap-6 border-b border-line">
+        @foreach (['ganjil' => 'Semester Ganjil 2026/2027', 'genap' => 'Semester Genap 2026/2027'] as $kode => $teks)
+            <button type="button" role="tab" :aria-selected="semester === '{{ $kode }}'" x-on:click="semester = '{{ $kode }}'"
+                    class="-mb-px border-b-2 px-0.5 pt-1 pb-2.5 text-sm"
+                    :class="semester === '{{ $kode }}' ? 'border-primary font-semibold text-link' : 'border-transparent text-muted hover:text-ink'">{{ $teks }}</button>
+        @endforeach
     </div>
 
-    @foreach ($semesterData as $si => $sem)
-        @php
-            $semTingkatData  = $sem['tingkatData'] ?? [];
-            $semTingkatAktif = $sem['tingkatAktif'] ?? array_key_first($semTingkatData);
-            if (! array_key_exists($semTingkatAktif, $semTingkatData)) {
-                $semTingkatAktif = array_key_first($semTingkatData);
-            }
-            $semSts   = $sem['sts'] ?? $sts;
-            $semSas   = $sem['sas'] ?? $sas;
-            $semLabel = $semesterTabs[$si] ?? '';
-            $prefix   = 'pk-s' . $si;
-        @endphp
+    <div x-show="semester === 'genap'" x-cloak>
+        <x-ui.card :padding="false">
+            <x-ui.empty-state icon="calendar" title="Periode semester Genap belum dibuat"
+                              description="Periode STS dan SAS dibuat otomatis saat semester Genap diaktifkan di menu Tahun Ajaran." />
+        </x-ui.card>
+    </div>
 
-        <section class="pk-semester-panel"
-                 id="pk-semester-{{ $si }}"
-                 role="tabpanel"
-                 aria-labelledby="pk-semester-tab-{{ $si }}"
-                 data-semester-panel="{{ $si }}"
-                 @if ($si !== $semesterAktif) hidden @endif>
-
-            {{-- Empty state: semester belum punya periode --}}
-            <div class="pk-empty" data-semester-empty @if ($sem['adaPeriode'] ?? true) hidden @endif>
-                <span class="pk-empty-icon" aria-hidden="true">{!! $iconCalendar !!}</span>
-                <h2 class="pk-empty-title">Belum ada periode di {{ $semLabel }}</h2>
-                <p class="pk-empty-text">
-                    Tambahkan periode STS atau SAS agar guru bisa mulai mengisi nilai sesuai jadwal.
-                </p>
-                <button type="button" class="pk-btn-primary" data-action="tambah" data-semester="{{ $si }}">
-                    <span aria-hidden="true">+</span> Tambah periode
-                </button>
-            </div>
-
-            <div class="pk-grid" data-semester-grid @unless ($sem['adaPeriode'] ?? true) hidden @endunless>
-
-                {{-- Card STS --}}
-                <section class="pk-card" data-periode-card="STS" aria-labelledby="{{ $prefix }}-sts-title">
-                    <div class="pk-card-head">
-                        <span class="pk-icon-box" aria-hidden="true">{!! $iconCalendar !!}</span>
-                        <div class="pk-card-head-text">
-                            <h2 class="pk-card-title" id="{{ $prefix }}-sts-title">{{ $semSts['judul'] }}</h2>
-                            <p class="pk-card-sub" data-periode-tanggal>{{ $semSts['tanggal'] }}</p>
-                        </div>
-                        <div class="pk-card-head-actions">
-                            <span class="pk-badge {{ $badgePeriode[$semSts['status'] ?? ''] ?? 'pk-badge-open' }}"
-                                  data-periode-badge
-                                  @if (($semSts['ada'] ?? true) === false) hidden @endif>{{ $semSts['statusLabel'] }}</span>
-                            <button type="button"
-                                    class="pk-btn-outline pk-btn-sm"
-                                    data-action="jadwal"
-                                    data-jenis="STS"
-                                    aria-label="Ubah jadwal STS Kelas {{ $semTingkatAktif }}">
-                                {!! $iconCalSm !!} <span data-jadwal-text>Ubah jadwal</span>
-                            </button>
-                        </div>
+    <div x-show="semester === 'ganjil'" class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_401px]">
+        {{-- STS --}}
+        <x-ui.card :padding="false" class="self-start overflow-hidden">
+            <div class="px-5 pt-5">
+                <div class="flex flex-wrap items-start gap-3">
+                    <span class="flex size-9 items-center justify-center rounded-control border border-success-soft bg-success-soft/50 text-success"><x-ui.icon name="calendar" :size="17" /></span>
+                    <div class="min-w-0 flex-1">
+                        <h2 class="text-base font-bold text-ink" x-text="periode.sts.judul"></h2>
+                        <p class="text-xs text-muted" x-text="`${periode.sts.rentang} · ditutup dalam ${periode.sts.sisa_hari} hari`"></p>
                     </div>
-
-                    {{-- Pilihan tingkat kelas --}}
-                    <div class="pk-tingkat-tabs" role="tablist" aria-label="Pilih tingkat kelas">
-                        @foreach ($semTingkatData as $tingkat => $data)
-                            <button type="button"
-                                    role="tab"
-                                    id="{{ $prefix }}-tab-{{ $tingkat }}"
-                                    aria-controls="{{ $prefix }}-panel-{{ $tingkat }}"
-                                    class="pk-tingkat-tab{{ $tingkat === $semTingkatAktif ? ' is-active' : '' }}"
-                                    aria-selected="{{ $tingkat === $semTingkatAktif ? 'true' : 'false' }}"
-                                    tabindex="{{ $tingkat === $semTingkatAktif ? '0' : '-1' }}"
-                                    data-tingkat="{{ $tingkat }}">Kelas {{ $tingkat }}</button>
-                        @endforeach
-                    </div>
-
-                    {{-- Panel per tingkat. Hanya satu yang tampil. --}}
-                    @forelse ($semTingkatData as $tingkat => $data)
-                        <div class="pk-panel"
-                             id="{{ $prefix }}-panel-{{ $tingkat }}"
-                             role="tabpanel"
-                             aria-labelledby="{{ $prefix }}-tab-{{ $tingkat }}"
-                             data-tingkat-panel="{{ $tingkat }}"
-                             @if ($tingkat !== $semTingkatAktif) hidden @endif>
-                            <div class="pk-panel-head">
-                                <span>Status per kelas</span>
-                                <strong>{{ $data['keseluruhan'] }}% keseluruhan</strong>
-                            </div>
-
-                            <div class="pk-table-wrap">
-                                <table class="pk-table">
-                                    <caption class="pk-sr-only">Status nilai per kelas, Kelas {{ $tingkat }}, {{ $semLabel }}</caption>
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">Kelas</th>
-                                            <th scope="col">Wali Kelas</th>
-                                            <th scope="col">Kelengkapan</th>
-                                            <th scope="col">Status</th>
-                                            <th scope="col" class="pk-th-aksi">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($data['kelas'] as $k)
-                                            @php
-                                                $statusKey = $k['status'] ?? ($k['persen'] === 100 ? 'siap' : 'menunggu');
-                                                $st        = $statusMap[$statusKey] ?? $statusMap['menunggu'];
-                                                $progress  = isset($k['terisi'], $k['total'])
-                                                    ? $k['terisi'] . '/' . $k['total']
-                                                    : $k['persen'] . '%';
-                                            @endphp
-                                            <tr data-kelas-row
-                                                data-kelas="{{ $k['kode'] }}"
-                                                data-status="{{ $statusKey }}"
-                                                data-dikunci="{{ $k['dikunci'] ?? '' }}">
-                                                <td class="pk-kelas-kode">{{ $k['kode'] }}</td>
-                                                <td class="pk-td-wali">{{ $k['wali'] ?? '-' }}</td>
-                                                <td class="pk-td-progress">
-                                                    <div class="pk-progress">
-                                                        <span class="pk-track"
-                                                              role="progressbar"
-                                                              aria-label="Kelengkapan nilai {{ $k['kode'] }}"
-                                                              aria-valuemin="0"
-                                                              aria-valuemax="100"
-                                                              aria-valuenow="{{ $k['persen'] }}">
-                                                            <span class="pk-fill" data-percent="{{ $k['persen'] }}"></span>
-                                                        </span>
-                                                        <span class="pk-progress-text">{{ $progress }}</span>
-                                                    </div>
-                                                </td>
-                                                <td class="pk-td-status">
-                                                    <span class="pk-status {{ $st['class'] }}" data-status-badge>{{ $st['label'] }}</span>
-                                                    @if (! empty($k['catatan']))
-                                                        <span class="pk-status-note" data-status-note>{{ $k['catatan'] }}</span>
-                                                    @endif
-                                                </td>
-                                                <td class="pk-td-aksi" data-aksi>
-                                                    @if ($statusKey === 'siap')
-                                                        <button type="button" class="pk-btn-primary pk-btn-sm" data-action="kunci"
-                                                                aria-label="Kunci nilai kelas {{ $k['kode'] }}">
-                                                            {!! $iconLock !!} Kunci
-                                                        </button>
-                                                    @elseif ($statusKey === 'terkunci')
-                                                        <button type="button" class="pk-btn-outline pk-btn-sm" data-action="koreksi"
-                                                                aria-label="Buka koreksi nilai kelas {{ $k['kode'] }}">
-                                                            {!! $iconUnlock !!} Buka koreksi
-                                                        </button>
-                                                    @elseif ($statusKey === 'belum')
-                                                        <span class="pk-aksi-text">periode belum dibuka</span>
-                                                    @else
-                                                        <span class="pk-aksi-text">menunggu guru</span>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="pk-panel">
-                            <p class="pk-desc">Belum ada data kelas.</p>
-                        </div>
-                    @endforelse
-
-                    <footer class="pk-card-foot">
-                        <p class="pk-foot-note">
-                            {!! $iconLock !!}
-                            Penguncian tidak otomatis menerbitkan rapor.
-                        </p>
-                        <button type="button" class="pk-btn-primary" data-action="kunci-semua" disabled>
-                            {!! $iconLock !!}
-                            <span data-kunci-label>Kunci semua yang siap</span>
-                        </button>
-                    </footer>
-                </section>
-
-                {{-- Card SAS --}}
-                <section class="pk-card" data-periode-card="SAS" aria-labelledby="{{ $prefix }}-sas-title">
-                    <div class="pk-card-head">
-                        <span class="pk-icon-box pk-icon-sas" aria-hidden="true">{!! $iconCalendar !!}</span>
-                        <div class="pk-card-head-text">
-                            <h2 class="pk-card-title" id="{{ $prefix }}-sas-title">{{ $semSas['judul'] }}</h2>
-                            <p class="pk-card-sub" data-periode-tanggal>{{ $semSas['tanggal'] }}</p>
-                        </div>
-                        <span class="pk-badge {{ $badgePeriode[$semSas['status'] ?? ''] ?? 'pk-badge-muted' }}"
-                              data-periode-badge
-                              @if (($semSas['ada'] ?? true) === false) hidden @endif>{{ $semSas['statusLabel'] }}</span>
-                    </div>
-
-                    <div class="pk-sas-body">
-                        <div class="pk-date-box" data-date-box aria-hidden="true">
-                            <span class="pk-date-day" data-date-day>{{ $semSas['tanggalBuka'] }}</span>
-                            <span class="pk-date-month" data-date-month>{{ $semSas['bulanBuka'] }}</span>
-                        </div>
-                        <div>
-                            <p class="pk-sas-title" data-sas-title>Dibuka dalam {{ $semSas['hariSampaiDibuka'] }} hari</p>
-                            <p class="pk-sas-desc" data-sas-desc>Guru dapat mulai mengisi nilai SAS mulai tanggal ini.</p>
-                        </div>
-                    </div>
-
-                    <div class="pk-sas-foot">
-                        <button type="button"
-                                class="pk-btn-outline pk-btn-block pk-btn-icon"
-                                data-action="jadwal"
-                                data-jenis="SAS"
-                                aria-label="Ubah jadwal SAS Kelas {{ $semTingkatAktif }}">
-                            {!! $iconCalSm !!} <span data-jadwal-text>Ubah jadwal</span>
-                        </button>
-                    </div>
-                </section>
-            </div>
-        </section>
-    @endforeach
-
-    {{-- Notifikasi (toast) --}}
-    <div class="pk-toasts" id="pk-toasts" role="status" aria-live="polite"></div>
-
-    {{-- ============ MODAL: KONFIRMASI KUNCI NILAI ============ --}}
-    <dialog class="pk-modal" id="pk-modal-kunci" aria-labelledby="pk-modal-kunci-title" aria-describedby="pk-modal-kunci-desc">
-        <form method="dialog" class="pk-modal-box">
-            <button type="button" data-close class="pk-modal-close" aria-label="Tutup">&times;</button>
-
-            <span class="pk-modal-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-            </span>
-
-            <h2 class="pk-modal-title" id="pk-modal-kunci-title">
-                Kunci nilai <span data-kunci-jumlah>0</span> kelas?
-            </h2>
-            <p class="pk-modal-text" id="pk-modal-kunci-desc">
-                Pastikan seluruh nilai telah diverifikasi. Setelah dikunci, perubahan hanya dapat
-                dilakukan oleh Admin Kurikulum melalui koreksi beralasan.
-            </p>
-
-            <dl class="pk-modal-info">
-                <div>
-                    <dt>Kelas</dt>
-                    <dd data-kunci-kelas>-</dd>
+                    <x-ui.badge tone="success">Dibuka</x-ui.badge>
+                    <button type="button" x-on:click="ubahJadwal('sts')" class="text-[13px] font-semibold text-link hover:underline">Ubah jadwal</button>
                 </div>
-                <div>
-                    <dt>Kelengkapan</dt>
-                    <dd class="pk-text-ok">100% nilai disetujui</dd>
+                <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-line" role="progressbar" :aria-valuenow="periode.sts.progres" aria-valuemin="0" aria-valuemax="100" aria-label="Waktu periode STS berjalan">
+                    <div class="h-full rounded-full bg-success-strong" :style="`width: ${periode.sts.progres}%`"></div>
                 </div>
-            </dl>
 
-            <div class="pk-modal-actions">
-                <button type="button" data-close class="pk-btn-outline">Batal</button>
-                <button type="submit" value="kunci" class="pk-btn-primary" data-autofocus>
-                    {!! $iconLock !!} Ya, kunci nilai
-                </button>
-            </div>
-        </form>
-    </dialog>
-
-    {{-- ============ MODAL: BUKA KOREKSI NILAI ============ --}}
-    <dialog class="pk-modal pk-modal-lg" id="pk-modal-koreksi" aria-labelledby="pk-modal-koreksi-title">
-        <form method="dialog" class="pk-modal-box" novalidate>
-            <button type="button" data-close class="pk-modal-close" aria-label="Tutup">&times;</button>
-
-            <span class="pk-modal-icon pk-modal-icon-koreksi" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>
-            </span>
-
-            <h2 class="pk-modal-title" id="pk-modal-koreksi-title">Buka koreksi nilai</h2>
-            <p class="pk-modal-pill" data-koreksi-info>-</p>
-
-            <div class="pk-field">
-                <label class="pk-label" for="pk-mapel-select">
-                    Mata pelajaran yang dikoreksi <span class="pk-req" aria-hidden="true">*</span>
-                </label>
-                <div class="pk-chips" data-mapel-chips>
-                    <select id="pk-mapel-select" class="pk-chip-select" data-autofocus>
-                        <option value="">Tambah mapel…</option>
-                        @foreach ($mapelList as $mapel)
-                            <option value="{{ $mapel }}">{{ $mapel }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-
-            <div class="pk-field">
-                <label class="pk-label" for="pk-alasan">
-                    Alasan koreksi <span class="pk-req" aria-hidden="true">*</span>
-                </label>
-                <textarea id="pk-alasan"
-                          class="pk-input"
-                          rows="3"
-                          placeholder="Jelaskan kesalahan yang dikoreksi…"
-                          aria-describedby="pk-alasan-error"
-                          required></textarea>
-                <p class="pk-error" id="pk-alasan-error" hidden>
-                    {!! $iconError !!}
-                    Alasan koreksi wajib diisi.
-                </p>
-            </div>
-
-            <div class="pk-field">
-                <label class="pk-label" for="pk-batas">Batas waktu koreksi</label>
-                <input type="date" id="pk-batas" class="pk-input">
-            </div>
-
-            <div class="pk-alert">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>
-                <span>Koreksi akan membuat versi rapor baru. Rapor versi lama tetap tersimpan di arsip.</span>
-            </div>
-
-            <div class="pk-modal-actions">
-                <button type="button" data-close class="pk-btn-outline">Batal</button>
-                <button type="submit" value="buka" class="pk-btn-primary" id="pk-btn-buka-koreksi" disabled>
-                    {!! $iconUnlock !!} Buka Koreksi
-                </button>
-            </div>
-        </form>
-    </dialog>
-
-    {{-- ============ MODAL: TAMBAH PERIODE ============ --}}
-    <dialog class="pk-modal pk-modal-lg" id="pk-modal-tambah" aria-labelledby="pk-modal-tambah-title" aria-describedby="pk-modal-tambah-desc">
-        <form method="dialog" class="pk-modal-box" novalidate>
-            <button type="button" data-close class="pk-modal-close" aria-label="Tutup">&times;</button>
-
-            <span class="pk-modal-icon" aria-hidden="true">{!! $iconCalendar !!}</span>
-
-            <h2 class="pk-modal-title" id="pk-modal-tambah-title">Tambah periode</h2>
-            <p class="pk-modal-text" id="pk-modal-tambah-desc">
-                Atur jadwal pengisian nilai untuk satu atau beberapa tingkat sekaligus.
-            </p>
-
-            <div class="pk-field">
-                <label class="pk-label" for="pk-tambah-semester">
-                    Semester <span class="pk-req" aria-hidden="true">*</span>
-                </label>
-                <select id="pk-tambah-semester" name="semester" class="pk-input"
-                        aria-describedby="pk-tambah-semester-error" required data-autofocus>
-                    <option value="">Pilih semester…</option>
-                    @foreach ($semesterTabs as $i => $semester)
-                        <option value="{{ $i }}">{{ $semester }}</option>
-                    @endforeach
-                </select>
-                <p class="pk-error" id="pk-tambah-semester-error" hidden>{!! $iconError !!} <span data-error-text></span></p>
-            </div>
-
-            <fieldset class="pk-field pk-fieldset" aria-describedby="pk-tambah-jenis-error">
-                <legend class="pk-label">Jenis periode <span class="pk-req" aria-hidden="true">*</span></legend>
-                <div class="pk-options">
-                    <label class="pk-option">
-                        <input type="radio" name="jenis" value="STS" required>
-                        <span><strong>STS</strong> Sumatif Tengah Semester</span>
-                    </label>
-                    <label class="pk-option">
-                        <input type="radio" name="jenis" value="SAS" required>
-                        <span><strong>SAS</strong> Sumatif Akhir Semester</span>
-                    </label>
-                </div>
-                <p class="pk-error" id="pk-tambah-jenis-error" hidden>{!! $iconError !!} <span data-error-text></span></p>
-            </fieldset>
-
-            <fieldset class="pk-field pk-fieldset" aria-describedby="pk-tambah-tingkat-hint pk-tambah-tingkat-error">
-                <legend class="pk-label">Tingkat <span class="pk-req" aria-hidden="true">*</span></legend>
-                <p class="pk-hint" id="pk-tambah-tingkat-hint">Boleh pilih lebih dari satu.</p>
-                <div class="pk-options pk-options-tingkat">
-                    @foreach ($daftarTingkat as $tingkat)
-                        <label class="pk-option pk-option-sm">
-                            <input type="checkbox" name="tingkat" value="{{ $tingkat }}">
-                            <span>Kelas {{ $tingkat }}</span>
-                        </label>
+                <div role="tablist" aria-label="Tingkat" class="mt-4 flex gap-6 border-b border-line">
+                    @foreach (['X', 'XI', 'XII'] as $t)
+                        <button type="button" role="tab" :aria-selected="tingkat === '{{ $t }}'" x-on:click="tingkat = '{{ $t }}'"
+                                class="-mb-px border-b-2 px-0.5 pb-2.5 text-sm"
+                                :class="tingkat === '{{ $t }}' ? 'border-primary font-semibold text-link' : 'border-transparent text-muted hover:text-ink'">Kelas {{ $t }}</button>
                     @endforeach
                 </div>
-                <p class="pk-error" id="pk-tambah-tingkat-error" hidden>{!! $iconError !!} <span data-error-text></span></p>
-            </fieldset>
-
-            <div class="pk-field-row">
-                <div class="pk-field">
-                    <label class="pk-label" for="pk-tambah-buka">
-                        Tanggal buka <span class="pk-req" aria-hidden="true">*</span>
-                    </label>
-                    <input type="date" id="pk-tambah-buka" name="buka" class="pk-input"
-                           aria-describedby="pk-tambah-buka-error" required>
-                    <p class="pk-error" id="pk-tambah-buka-error" hidden>{!! $iconError !!} <span data-error-text></span></p>
-                </div>
-                <div class="pk-field">
-                    <label class="pk-label" for="pk-tambah-tutup">
-                        Tanggal tutup <span class="pk-req" aria-hidden="true">*</span>
-                    </label>
-                    <input type="date" id="pk-tambah-tutup" name="tutup" class="pk-input"
-                           aria-describedby="pk-tambah-tutup-error" required>
-                    <p class="pk-error" id="pk-tambah-tutup-error" hidden>{!! $iconError !!} <span data-error-text></span></p>
+                <div class="flex items-center justify-between pt-4 pb-3">
+                    <h3 class="text-sm font-bold text-ink">Status per Kelas</h3>
+                    <p class="text-xs text-muted">
+                        <span x-text="`Menampilkan ${kelasTampil.length} dari ${kelasTingkat.length} kelas`"></span>
+                        <button type="button" x-show="kelasTingkat.length > 6" x-on:click="semua = !semua" class="ml-1 font-semibold text-link hover:underline" x-text="semua ? 'Ringkas' : 'Tampilkan semua'"></button>
+                    </p>
                 </div>
             </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[640px] text-left text-[13px]">
+                    <thead class="bg-surface-2 text-xs font-semibold text-ink-2">
+                        <tr><th class="px-5 py-2.5">Kelas</th><th class="px-3 py-2.5">Wali Kelas</th><th class="px-3 py-2.5">Mapel disetujui</th><th class="px-3 py-2.5">Status</th><th class="px-5 py-2.5 text-right">Aksi</th></tr>
+                    </thead>
+                    <tbody class="divide-y divide-line-soft">
+                        <template x-for="k in kelasTampil" :key="k.kelas">
+                            <tr>
+                                <td class="px-5 py-3 font-bold text-ink" x-text="k.kelas"></td>
+                                <td class="px-3 py-3 text-ink-2" x-text="k.wali ?? '—'"></td>
+                                <td class="px-3 py-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="h-1 w-14 overflow-hidden rounded-full bg-line"><div class="h-full rounded-full" :class="k.disetujui === 16 ? 'bg-success-strong' : (k.disetujui >= 12 ? 'bg-primary' : 'bg-warning-strong')" :style="`width: ${k.disetujui / 16 * 100}%`"></div></div>
+                                        <span class="text-xs text-ink-2" x-text="`${k.disetujui}/16`"></span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3">
+                                    <span x-show="k.status === 'siap'" :class="$store.ref.badge('success')">Siap dikunci</span>
+                                    <span x-show="k.status === 'terkunci'" class="inline-flex items-center gap-1 rounded-md bg-success-soft px-2 py-0.5 text-xs font-semibold text-success"><x-ui.icon name="lock" :size="12" :stroke="2.2" />Terkunci</span>
+                                    <span x-show="k.status === 'menunggu'" :class="$store.ref.badge('info')">Menunggu verifikasi</span>
+                                    <span x-show="k.status === 'terbuka'" :class="$store.ref.badge('neutral')">Terbuka</span>
+                                    <span x-show="k.status === 'koreksi'">
+                                        <span class="inline-flex items-center gap-1 rounded-md bg-violet-soft px-2 py-0.5 text-xs font-semibold text-violet"><x-ui.icon name="unlock" :size="12" :stroke="2.2" />Dibuka untuk koreksi</span>
+                                        <span class="mt-0.5 block text-xs text-muted" x-text="k.koreksi"></span>
+                                    </span>
+                                </td>
+                                <td class="px-5 py-2.5 text-right">
+                                    <x-ui.button size="sm" icon="lock" x-show="k.status === 'siap'" x-on:click="mintaKunci([k.kelas])">Kunci</x-ui.button>
+                                    <x-ui.button variant="secondary" size="sm" icon="unlock" x-show="k.status === 'terkunci'" x-on:click="bukaKoreksi(k)">Buka Koreksi</x-ui.button>
+                                    <span x-show="k.status === 'menunggu' || k.status === 'terbuka'" class="group relative inline-block">
+                                        <x-ui.button variant="soft" size="sm" icon="lock" disabled aria-describedby="tip-kunci">Kunci</x-ui.button>
+                                        <span role="tooltip" class="pointer-events-none absolute right-0 bottom-full z-10 mb-1.5 hidden rounded-md bg-toast px-2.5 py-1.5 text-xs whitespace-nowrap text-white group-hover:block">Masih ada mapel belum disetujui</span>
+                                    </span>
+                                    <span x-show="k.status === 'koreksi'" class="text-xs text-muted">menunggu guru</span>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft px-5 py-3.5">
+                <p class="flex items-center gap-1.5 text-xs text-muted"><x-ui.icon name="lock" :size="13" />Penguncian tidak otomatis menerbitkan rapor.</p>
+                <x-ui.button icon="lock" x-bind:disabled="!siap.length" x-on:click="mintaKunci(siap.map((k) => k.kelas))">
+                    <span x-text="`Kunci semua yang siap (${siap.length} kelas)`"></span>
+                </x-ui.button>
+            </div>
+        </x-ui.card>
 
-            <div class="pk-modal-actions">
-                <button type="button" data-close class="pk-btn-outline">Batal</button>
-                <button type="submit" value="simpan" class="pk-btn-primary">
-                    <span aria-hidden="true">+</span> Simpan periode
+        {{-- SAS --}}
+        <x-ui.card class="self-start">
+            <div class="flex items-start gap-3">
+                <span class="flex size-9 items-center justify-center rounded-control border border-line bg-surface-2 text-ink-2"><x-ui.icon name="calendar" :size="17" /></span>
+                <div class="min-w-0 flex-1">
+                    <h2 class="text-[15px] font-bold text-ink" x-text="periode.sas.judul"></h2>
+                    <p class="text-xs text-muted" x-text="periode.sas.rentang"></p>
+                </div>
+                <x-ui.badge>Terjadwal</x-ui.badge>
+            </div>
+            <div class="mt-4 flex items-center gap-4 rounded-card border border-line bg-surface-2 p-4">
+                <span class="flex size-14 flex-col items-center justify-center rounded-control border border-line bg-surface">
+                    <span class="text-[10px] font-bold text-danger" x-text="periode.sas.bulan"></span>
+                    <span class="text-xl leading-none font-bold text-ink" x-text="periode.sas.tanggal"></span>
+                </span>
+                <div>
+                    <p class="text-sm font-bold text-ink" x-text="`Dibuka dalam ${periode.sas.dibuka_dalam} hari`"></p>
+                    <p class="text-xs text-muted">Guru dapat mengisi nilai SAS mulai tanggal ini</p>
+                </div>
+            </div>
+            <x-ui.button variant="secondary" icon="calendar" size="lg" class="mt-4" x-on:click="ubahJadwal('sas')">Ubah jadwal</x-ui.button>
+        </x-ui.card>
+    </div>
+
+    {{-- 5.02 Ubah jadwal --}}
+    <x-ui.modal name="jadwal" width="max-w-[480px]">
+        <h2 class="pr-10 text-lg font-bold text-ink" x-text="`Ubah jadwal ${periode[jadwal.jenis].singkat}`"></h2>
+        <p class="mt-1 text-[13px] text-muted">Perubahan jadwal langsung berlaku untuk seluruh guru.</p>
+        <form class="mt-4 space-y-4" x-on:submit.prevent="simpanJadwal()" novalidate>
+            <div class="grid grid-cols-2 gap-3.5">
+                <x-ui.field label="Tanggal buka" for="jd-buka" required error="jadwal.error.buka"><x-ui.input id="jd-buka" type="date" x-model="jadwal.buka" error="jadwal.error.buka" /></x-ui.field>
+                <x-ui.field label="Tanggal tutup" for="jd-tutup" required error="jadwal.error.tutup"><x-ui.input id="jd-tutup" type="date" x-model="jadwal.tutup" error="jadwal.error.tutup" /></x-ui.field>
+            </div>
+            <label class="flex cursor-pointer items-center gap-3 rounded-control border border-line px-3 py-2.5">
+                <button type="button" role="switch" :aria-checked="jadwal.perpanjangan" x-on:click="jadwal.perpanjangan = !jadwal.perpanjangan"
+                        class="relative h-5 w-9 shrink-0 rounded-full transition-colors" :class="jadwal.perpanjangan ? 'bg-primary' : 'bg-line'">
+                    <span class="absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow transition-transform" :class="jadwal.perpanjangan && 'translate-x-4'"></span>
+                    <span class="sr-only">Izinkan pengisian setelah tutup</span>
                 </button>
+                <span>
+                    <span class="block text-[13px] font-semibold text-ink">Izinkan pengisian setelah tutup (perpanjangan)</span>
+                    <span class="block text-xs text-muted">Hanya untuk guru yang belum mengirim nilai</span>
+                </span>
+            </label>
+            <x-ui.field label="Alasan perubahan" for="jd-alasan" required error="jadwal.error.alasan">
+                <textarea id="jd-alasan" x-model="jadwal.alasan" rows="3" class="w-full rounded-control border px-3 py-2.5 text-sm text-ink focus:ring-2 focus:outline-none"
+                          :class="jadwal.error.alasan ? 'border-danger focus:ring-danger-soft' : 'border-line focus:border-primary focus:ring-primary-soft'"></textarea>
+            </x-ui.field>
+            <div class="flex justify-end gap-2.5 border-t border-line-soft pt-4">
+                <x-ui.button variant="secondary" size="lg" x-on:click="$dispatch('close-modal', 'jadwal')">Batal</x-ui.button>
+                <x-ui.button type="submit" size="lg">Simpan Jadwal</x-ui.button>
             </div>
         </form>
-    </dialog>
+    </x-ui.modal>
 
-    {{-- ============ MODAL: UBAH JADWAL ============ --}}
-    <dialog class="pk-modal" id="pk-modal-jadwal" aria-labelledby="pk-modal-jadwal-title">
-        <form method="dialog" class="pk-modal-box" novalidate>
-            <button type="button" data-close class="pk-modal-close" aria-label="Tutup">&times;</button>
+    {{-- 6.03 Konfirmasi kunci nilai --}}
+    <x-ui.modal name="kunci" width="max-w-[460px]">
+        <x-slot:icon><span class="flex size-11 items-center justify-center rounded-full bg-primary-soft text-primary-strong"><x-ui.icon name="lock" :size="19" /></span></x-slot:icon>
+        <h2 class="text-lg font-bold text-ink" x-text="`Kunci nilai ${kunci.daftar.length} kelas?`"></h2>
+        <p class="mt-3 text-sm text-ink-2">Pastikan seluruh nilai telah diverifikasi. Setelah dikunci, perubahan hanya dapat dilakukan oleh Admin Kurikulum melalui koreksi beralasan.</p>
+        <div class="mt-4 grid grid-cols-2 divide-x divide-line overflow-hidden rounded-control border border-line bg-surface-2 text-[13px]">
+            <div class="px-3.5 py-2.5"><p class="text-xs text-muted">Kelas</p><p class="font-bold text-ink" x-text="`${kunci.daftar.join(', ')} · ${periode.sts.singkat}`"></p></div>
+            <div class="px-3.5 py-2.5"><p class="text-xs text-muted">Kelengkapan</p><p class="font-bold text-success">100% nilai disetujui</p></div>
+        </div>
+        <x-slot:footer>
+            <x-ui.button variant="secondary" size="lg" x-on:click="$dispatch('close-modal', 'kunci')">Batal</x-ui.button>
+            <x-ui.button size="lg" icon="lock" x-on:click="kunciNilai()">Ya, kunci nilai</x-ui.button>
+        </x-slot:footer>
+    </x-ui.modal>
 
-            <span class="pk-modal-icon" aria-hidden="true">{!! $iconCalendar !!}</span>
-
-            <h2 class="pk-modal-title" id="pk-modal-jadwal-title">
-                Ubah jadwal <span data-jadwal-jenis>STS</span>
-            </h2>
-            <p class="pk-modal-pill" data-jadwal-info>-</p>
-
-            <div class="pk-field-row">
-                <div class="pk-field">
-                    <label class="pk-label" for="pk-jadwal-buka">
-                        Tanggal buka <span class="pk-req" aria-hidden="true">*</span>
-                    </label>
-                    <input type="date" id="pk-jadwal-buka" name="buka" class="pk-input"
-                           aria-describedby="pk-jadwal-buka-error" required data-autofocus>
-                    <p class="pk-error" id="pk-jadwal-buka-error" hidden>{!! $iconError !!} <span data-error-text></span></p>
+    {{-- 6.04 Buka koreksi nilai --}}
+    <x-ui.modal name="koreksi" width="max-w-[520px]">
+        <x-slot:icon><span class="flex size-11 items-center justify-center rounded-full bg-violet-soft text-violet"><x-ui.icon name="unlock" :size="19" /></span></x-slot:icon>
+        <h2 class="text-lg font-bold text-ink">Buka koreksi nilai</h2>
+        <template x-if="koreksi.kelas">
+            <form class="mt-4 space-y-4" x-on:submit.prevent="simpanKoreksi()" novalidate>
+                <p class="flex items-center gap-2 rounded-control border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-ink-2">
+                    <x-ui.icon name="lock" :size="13" />
+                    <span><strong class="text-ink" x-text="`Kelas ${koreksi.kelas.kelas}`"></strong> · <span x-text="`${periode.sts.singkat} 2026/2027 · Terkunci sejak ${koreksi.kelas.terkunci_sejak ?? '—'}`"></span></span>
+                </p>
+                <div>
+                    <label for="kr-mapel" class="mb-1.5 block text-[13px] font-semibold text-ink">Mata pelajaran yang dikoreksi<span class="text-danger"> *</span></label>
+                    <div class="relative" x-data="{ fokus: false }" x-on:click.outside="fokus = false">
+                        <div class="flex min-h-10 flex-wrap items-center gap-1.5 rounded-control border border-line px-2 py-1.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary-soft">
+                            <template x-for="m in koreksi.mapel" :key="m">
+                                <span class="inline-flex items-center gap-1 rounded-md bg-violet-soft px-2 py-0.5 text-xs font-semibold text-violet">
+                                    <span x-text="`${m} — ${guruMapel(m)}`"></span>
+                                    <button type="button" x-on:click="koreksi.mapel = koreksi.mapel.filter((x) => x !== m)" :aria-label="`Hapus ${m}`"><x-ui.icon name="x" :size="12" :stroke="2.4" /></button>
+                                </span>
+                            </template>
+                            <input id="kr-mapel" x-model="koreksi.cari" x-on:focus="fokus = true" placeholder="Tambah mapel…" autocomplete="off"
+                                   x-on:keydown.enter.prevent="tambahMapel(saranMapel[0])" class="min-w-24 flex-1 border-0 bg-transparent px-1 text-sm focus:outline-none">
+                        </div>
+                        <ul x-show="fokus && saranMapel.length" x-cloak class="absolute top-full left-0 z-10 mt-1 w-full rounded-control border border-line bg-surface py-1 shadow-pop">
+                            <template x-for="m in saranMapel" :key="m.mapel">
+                                <li><button type="button" x-on:click="tambahMapel(m)" class="flex w-full justify-between px-3 py-2 text-left text-[13px] hover:bg-surface-2"><span class="font-semibold text-ink" x-text="m.mapel"></span><span class="text-xs text-muted" x-text="m.guru"></span></button></li>
+                            </template>
+                        </ul>
+                    </div>
                 </div>
-                <div class="pk-field">
-                    <label class="pk-label" for="pk-jadwal-tutup">
-                        Tanggal tutup <span class="pk-req" aria-hidden="true">*</span>
-                    </label>
-                    <input type="date" id="pk-jadwal-tutup" name="tutup" class="pk-input"
-                           aria-describedby="pk-jadwal-tutup-error" required>
-                    <p class="pk-error" id="pk-jadwal-tutup-error" hidden>{!! $iconError !!} <span data-error-text></span></p>
+                <x-ui.field label="Alasan koreksi" for="kr-alasan" required>
+                    <textarea id="kr-alasan" x-model="koreksi.alasan" rows="3" placeholder="Jelaskan kesalahan yang dikoreksi…" x-on:input="koreksi.error = ''"
+                              x-on:blur="!koreksi.alasan.trim() && (koreksi.error = 'Alasan koreksi wajib diisi.')"
+                              class="w-full rounded-control border px-3 py-2.5 text-sm text-ink placeholder:text-subtle focus:ring-2 focus:outline-none"
+                              :class="koreksi.error ? 'border-danger focus:ring-danger-soft' : 'border-line focus:border-primary focus:ring-primary-soft'"></textarea>
+                    <p x-show="koreksi.error" x-cloak class="mt-1.5 flex items-center gap-1 text-xs font-medium text-danger" role="alert"><x-ui.icon name="alert-circle" :size="13" /><span x-text="koreksi.error"></span></p>
+                </x-ui.field>
+                <x-ui.field label="Batas waktu koreksi" for="kr-batas"><x-ui.input id="kr-batas" type="date" x-model="koreksi.batas" /></x-ui.field>
+                <p class="flex items-start gap-2 rounded-control border border-orange-200 bg-warning-faint px-3 py-2.5 text-[13px] text-warning">
+                    <x-ui.icon name="alert" :size="14" class="mt-0.5" /> Koreksi akan membuat versi rapor baru. Rapor versi lama tetap tersimpan di arsip.
+                </p>
+                <div class="flex justify-end gap-2.5 border-t border-line-soft pt-4">
+                    <x-ui.button variant="secondary" size="lg" x-on:click="$dispatch('close-modal', 'koreksi')">Batal</x-ui.button>
+                    <x-ui.button type="submit" size="lg" icon="unlock" x-bind:disabled="!koreksi.alasan.trim()">Buka Koreksi</x-ui.button>
                 </div>
-            </div>
-
-            <div class="pk-alert" data-jadwal-warning hidden>
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>
-                <span>Periode ini sedang dibuka. Perubahan jadwal langsung berlaku untuk semua guru di tingkat ini.</span>
-            </div>
-
-            <div class="pk-modal-actions">
-                <button type="button" data-close class="pk-btn-outline">Batal</button>
-                <button type="submit" value="simpan" class="pk-btn-primary">Simpan jadwal</button>
-            </div>
-        </form>
-    </dialog>
+            </form>
+        </template>
+    </x-ui.modal>
 </div>
 @endsection

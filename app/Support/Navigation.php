@@ -146,6 +146,17 @@ class Navigation
                 '4.09 · Modal tambah peserta' => ['_route' => 'rombel.show', 'rombel' => 'mandarin-1', 'modal' => 'tambah-peserta'],
             ],
             'wali-kelas.index' => ['4.10 · 2 perubahan belum disimpan' => ['state' => 'diubah']],
+            'periode-penguncian.index' => [
+                '5.02 · Modal ubah jadwal' => ['modal' => 'jadwal'],
+                '6.03 · Modal kunci nilai' => ['modal' => 'kunci'],
+                '6.04 · Modal buka koreksi' => ['modal' => 'koreksi'],
+            ],
+            'kurikulum.rekap-nilai.index' => [
+                '6.02 · Dropdown ekspor DKN' => ['ekspor' => '1'],
+                'Tab per siswa (X-B)' => ['kelas' => 'X-B'],
+            ],
+            'kurikulum.cetak-rapor.index' => ['Dropdown pilih kelas' => ['pilih-kelas' => '1'], 'Kelas belum terkunci (draf)' => ['kelas' => 'X-A']],
+            'terbitkan-rapor.index' => ['7.04 · Modal konfirmasi terbitkan' => ['modal' => 'terbitkan']],
         ];
     }
 

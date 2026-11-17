@@ -11,7 +11,6 @@
 |
 */
 
-use App\Http\Controllers\Academic\TpController;
 use App\Http\Controllers\AkunPeranController;
 use App\Http\Controllers\BelumTersediaController;
 use App\Http\Controllers\BerandaAkademikController;
@@ -23,7 +22,7 @@ use App\Http\Controllers\DashboardOperatorController;
 use App\Http\Controllers\DataGuruController;
 use App\Http\Controllers\DataKelasController;
 use App\Http\Controllers\DataSiswaController;
-use App\Http\Controllers\InputNilaiController;
+use App\Http\Controllers\Guru;
 use App\Http\Controllers\Kurikulum;
 use App\Http\Controllers\MapelController;
 use App\Http\Controllers\NilaiPerMapelController;
@@ -87,9 +86,9 @@ Route::middleware($preview ? [] : ['auth', 'active'])->group(function () {
     // Guru Mapel
     Route::prefix('guru')->group(function () {
         Route::get('/dashboard', [DashboardGuruController::class, 'index'])->name('dashboard-guru.index');
-        Route::get('/tp', [TpController::class, 'index'])->name('tp.index');
-        Route::get('/input-nilai', [InputNilaiController::class, 'index'])->name('input-nilai.index');
-        Route::get('/rekap-nilai', [RekapNilaiController::class, 'index'])->name('guru.rekap-nilai.index');
+        Route::get('/tp', [Guru\TpController::class, 'index'])->name('tp.index');
+        Route::get('/input-nilai', [Guru\InputNilaiController::class, 'index'])->name('input-nilai.index');
+        Route::get('/rekap-nilai', [Guru\RekapNilaiController::class, 'index'])->name('guru.rekap-nilai.index');
         Route::get('/rekap-nilai/ekspor', BelumTersediaController::class)->name('rekap-nilai.export');
         Route::get('/rekap-nilai/{rombel}', BelumTersediaController::class)->name('rekap-nilai.show');
     });

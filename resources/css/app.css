@@ -67,20 +67,6 @@
     --shadow-pop: 0 12px 32px -8px rgb(15 23 42 / 0.18), 0 2px 6px rgb(15 23 42 / 0.06);
 }
 
-/*
-| Satu font untuk seluruh aplikasi. sidebar.css (komponen dikunci) masih menulis Poppins,
-| jadi ditimpa di sini dengan selektor yang lebih spesifik tanpa mengubah file sidebar.
-*/
-body .sb,
-body .sb button {
-    font-family: var(--font-sans);
-}
-
-/* Kode modul (A1, A2, A3) tidak ditampilkan di sidebar — cukup nama modulnya. */
-body .sb .sb-item__code {
-    display: none;
-}
-
 @layer base {
     [x-cloak] {
         display: none !important;

@@ -9,8 +9,7 @@ use Illuminate\Support\Facades\Route;
  * Menu sidebar dan data header per peran, satu sumber untuk seluruh halaman frontend.
  *
  * Peran ditentukan dari segmen pertama URL (/operator, /kurikulum, /guru, /wali-kelas, /siswa).
- * Ikon terbatas pada ikon yang tersedia di komponen sidebar; ikon desain yang belum ada
- * (kunci, buku, target, megafon, arsip, dll.) dipetakan ke ikon terdekat.
+ * Nama ikon merujuk ke daftar ikon di komponen sidebar (resources/views/components/sidebar.blade.php).
  *
  * TODO API: GET /api/auth/me (nama, peran aktif, kelas wali) dan semester aktif.
  */
@@ -37,11 +36,11 @@ class Navigation
                 'judul' => 'Operator',
                 'items' => [
                     self::item('Dashboard', 'grid', 'dashboard-operator.index'),
-                    self::item('Akun & Peran', 'shield', 'akun-peran.index'),
-                    self::item('Data Siswa', 'file', 'data-siswa.index'),
-                    self::item('Data Guru', 'file', 'data-guru.index'),
-                    self::item('Data Kelas', 'home', 'data-kelas.index'),
-                    self::item('Relasi Orang Tua-Anak', 'check', 'relasi-orang-tua.index'),
+                    self::item('Akun & Peran', 'key', 'akun-peran.index'),
+                    self::item('Data Siswa', 'user', 'data-siswa.index'),
+                    self::item('Data Guru', 'users', 'data-guru.index'),
+                    self::item('Data Kelas', 'building', 'data-kelas.index'),
+                    self::item('Relasi Orang Tua-Anak', 'link', 'relasi-orang-tua.index'),
                 ],
             ],
             'kurikulum' => [
@@ -49,23 +48,23 @@ class Navigation
                 'items' => [
                     self::item('Dashboard', 'grid', 'dashboard-kurikulum.index'),
                     self::item('Tahun Ajaran', 'calendar', 'tahun-ajaran.index'),
-                    self::item('Mata Pelajaran', 'file', 'mapel.index'),
-                    self::item('Rombel & Pengampu', 'home', 'rombel.index'),
-                    self::item('Wali Kelas', 'check', 'wali-kelas.index'),
-                    self::item('Periode & Penguncian', 'shield', 'periode-penguncian.index'),
-                    self::item('KKTP & Deskripsi', 'pencil', 'kktp.index'),
+                    self::item('Mata Pelajaran', 'book', 'mapel.index'),
+                    self::item('Rombel & Pengampu', 'layers', 'rombel.index'),
+                    self::item('Wali Kelas', 'user-star', 'wali-kelas.index'),
+                    self::item('Periode & Penguncian', 'lock', 'periode-penguncian.index'),
+                    self::item('KKTP & Deskripsi', 'sliders', 'kktp.index'),
                     self::item('Rekap Nilai (DKN)', 'table', 'kurikulum.rekap-nilai.index'),
-                    self::item('Format Rapor', 'file', 'format-rapor.index'),
+                    self::item('Format Rapor', 'file-text', 'format-rapor.index'),
                     self::item('Cetak Rapor', 'printer', 'kurikulum.cetak-rapor.index'),
-                    self::item('Terbitkan Rapor', 'scan', 'terbitkan-rapor.index'),
-                    self::item('Arsip Rapor', 'history', 'arsip-rapor.index'),
+                    self::item('Terbitkan Rapor', 'megaphone', 'terbitkan-rapor.index'),
+                    self::item('Arsip Rapor', 'archive', 'arsip-rapor.index'),
                 ],
             ],
             'guru' => [
                 'judul' => 'Guru',
                 'items' => [
                     self::item('Dashboard', 'grid', 'dashboard-guru.index'),
-                    self::item('Kelola TP', 'check', 'tp.index'),
+                    self::item('Kelola TP', 'target', 'tp.index'),
                     self::item('Input Nilai', 'pencil', 'input-nilai.index'),
                     self::item('Rekap Nilai (DKN)', 'table', 'guru.rekap-nilai.index'),
                 ],
@@ -84,9 +83,9 @@ class Navigation
                 'judul' => null,
                 'items' => [
                     self::item('Beranda Akademik', 'home', 'beranda-akademik.index'),
-                    self::item('Rapor Saya', 'file', 'rapor-saya.index'),
+                    self::item('Rapor Saya', 'file-text', 'rapor-saya.index'),
                     self::item('Nilai per Mapel', 'table', 'nilai-per-mapel.index'),
-                    self::item('Riwayat Rapor', 'history', 'riwayat-rapor.index'),
+                    self::item('Riwayat Rapor', 'clock', 'riwayat-rapor.index'),
                 ],
             ],
         ];
@@ -96,8 +95,8 @@ class Navigation
      * Menu sidebar dalam format prop `menu` komponen sidebar.
      * - Item A2 yang halamannya belum dibuat (route belum terdaftar) disembunyikan.
      * - Portal Orang Tua (A4) tidak masuk sidebar: orang tua memakai web tersendiri.
-     * - Kode modul (A1, A2, …) tetap dikirim karena dibutuhkan komponen, tetapi
-     *   disembunyikan lewat CSS (lihat resources/css/app.css).
+     * - Kode modul (A1, A2, …) tidak ditampilkan komponen sidebar (keputusan tim);
+     *   tetap dikirim sebagai metadata.
      */
     public static function menu(string $peran): array
     {

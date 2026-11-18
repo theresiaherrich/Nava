@@ -13,6 +13,8 @@ Pengguna dibagi ke dalam lima peran dengan hak akses berbeda: **Admin**, **Guru*
 
 > Repository ini dikembangkan sebagai proyek Capstone Project. Konteks lengkap kebutuhan dan rancangan ada di dokumen proposal.
 
+Untuk branch integrasi A2, ikuti [setup Windows dan Laragon](docs/integration/02_SETUP_LOKAL.md) serta [panduan pengujian end-to-end](docs/integration/04_PANDUAN_TESTING_E2E.md).
+
 ---
 
 ## Daftar Isi
@@ -117,7 +119,7 @@ Struktur standar Laravel dengan beberapa tambahan berikut. Sesuaikan jika ada pe
 
 Pastikan perangkat sudah terpasang:
 
-- PHP 8.2 atau lebih baru, beserta ekstensi yang umum dipakai Laravel (`pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `fileinfo`, `gd`, `zip`)
+- PHP 8.3 atau lebih baru, beserta ekstensi yang umum dipakai Laravel (`pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `fileinfo`, `gd`, `zip`)
 - [Composer](https://getcomposer.org/)
 - Node.js (disarankan versi LTS) dan npm
 - MySQL 8.0 atau MariaDB

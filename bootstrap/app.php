@@ -34,13 +34,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->prepend(JsonApi::class);
 
-        // Pengecualian CSRF hanya untuk uji Postman lokal, tidak pernah di produksi.
-        $middleware->validateCsrfTokens(except: (
-            env('APP_ENV') === 'local' && filter_var(env('SIAKAD_DEV_SKIP_CSRF', false), FILTER_VALIDATE_BOOLEAN)
-        ) ? ['api/*'] : []);
+        $middleware->preventRequestForgery();
 
-        // API tidak punya halaman login: tamu mendapat 401 JSON, bukan redirect.
-        $middleware->redirectGuestsTo(fn () => null);
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : route('login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $api = fn (Request $r) => $r->is('api/*') || $r->expectsJson();
@@ -56,6 +52,8 @@ return Application::configure(basePath: dirname(__DIR__))
                     'errors' => $e->errors ?: null,
                 ]), $e->status);
             }
+
+            return response()->view('errors.akademik', ['message' => $e->getMessage()], $e->status);
         });
         $exceptions->render(function (ValidationException $e, Request $r) use ($api) {
             if ($api($r)) {

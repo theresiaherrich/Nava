@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Ekskul;
 use App\Models\Notifikasi;
 use App\Models\PaketNilai;
+use App\Models\PesertaEkskul;
 use App\Models\Rapor;
 use App\Models\Sekolah;
 use App\Models\TemplateRapor;
@@ -137,6 +139,71 @@ class RaporTest extends TestCase
         $this->getJson('/api/portal/anak')->assertOk()->assertJsonCount(1, 'data');
         $this->getJson('/api/portal/nilai')->assertOk();
         $this->getJson('/api/portal/nilai?id_siswa='.$this->peserta[1]->riwayatKelas->id_siswa)->assertForbidden();
+    }
+
+    public function test_rapor_sts_menyimpan_nilai_per_tp_dan_pratinjau_memakai_pdf_tersimpan(): void
+    {
+        $this->nilaiDikunci();
+        $id = $this->cetak()->assertOk()->json('data.id_rapor');
+        $rapor = Rapor::findOrFail($id);
+        $data = $rapor->data_final;
+        $this->assertEquals([1 => 80], $data['mapel'][0]['tp']);
+        $this->assertEquals(80, $data['mapel'][0]['nilai']);
+        $this->assertStringContainsString('TP1', view('rapor.sts', ['items' => [$data + ['versi' => 1]]])->render());
+
+        $preview = $this->get("/api/wali/rapor/{$id}/unduh?pratinjau=1")->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('inline;', $preview->headers->get('Content-Disposition'));
+        $this->assertSame(Storage::disk('local')->get($rapor->file_pdf), $preview->getContent());
+    }
+
+    public function test_rapor_semester_menghitung_tp_terakhir_sekali_dan_menampilkan_predikat(): void
+    {
+        $this->nilaiDikunci();
+        $this->bukaSas();
+        TemplateRapor::create(['jenis' => 'SAS', 'nama' => 'Semester', 'view' => 'rapor.semester', 'aktif' => true]);
+        $ekskul = Ekskul::create(['nama' => 'Pramuka']);
+        PesertaEkskul::create(['id_ekskul' => $ekskul->id_ekskul, 'id_riwayat_kelas' => $this->peserta[0]->id_riwayat_kelas, 'predikat' => 'SB']);
+
+        $this->sebagai($this->userGuru, 'GURU');
+        $idTp = $this->postJson("/api/guru/rombel/{$this->rombel->id_rombel}/tp", ['deskripsi' => 'Sumatif akhir semester'])
+            ->assertCreated()->json('data.id_tp');
+        $tp = $this->rombel->tp()->findOrFail($idTp);
+        $this->isi($this->sas, [[$this->peserta[0], $tp, 100], [$this->peserta[1], $tp, 70]])->assertOk();
+        $this->isi($this->sas, [[$this->peserta[0], $tp, 100]])->assertOk();
+        $this->assertDatabaseCount('nilai_tp', 4);
+        $paket = $this->postJson("/api/guru/rombel/{$this->rombel->id_rombel}/paket/kirim", [
+            'id_periode' => $this->sas->id_periode, 'id_kelas' => $this->kelasXA->id_kelas,
+        ])->assertOk()->json('data.paket.id_paket_nilai');
+
+        $this->sebagai($this->userWali, 'WALI_KELAS')->postJson("/api/wali/paket/{$paket}/setujui")->assertOk();
+        $this->sebagai($this->userKurikulum)->postJson("/api/kurikulum/periode/{$this->sas->id_periode}/kelas/{$this->kelasXA->id_kelas}/kunci")->assertOk();
+        $id = $this->sebagai($this->userWali, 'WALI_KELAS')->postJson('/api/wali/rapor/cetak', [
+            'id_periode' => $this->sas->id_periode, 'id_riwayat_kelas' => $this->peserta[0]->id_riwayat_kelas,
+        ])->assertOk()->json('data.id_rapor');
+        $rapor = Rapor::findOrFail($id);
+        $this->assertEquals(90, $rapor->data_final['mapel'][0]['nilai']);
+        $this->assertEquals(100, $rapor->data_final['mapel'][0]['nilai_sas']);
+        $this->assertSame('SB', $rapor->data_final['ekskul'][0]['predikat']);
+        $html = view('rapor.semester', ['items' => [$rapor->data_final + ['versi' => 1]]])->render();
+        $this->assertStringContainsString($rapor->data_final['siswa']['nama'], $html);
+        $this->assertStringContainsString('Pramuka', $html);
+        $this->assertStringContainsString('>SB<', $html);
+        $this->assertStringStartsWith('%PDF', Storage::disk('local')->get($rapor->file_pdf));
+    }
+
+    public function test_rapor_draf_tidak_dapat_diterbitkan_saat_koreksi_terbuka(): void
+    {
+        $this->nilaiDikunci();
+        $this->cetak()->assertOk();
+        $paket = PaketNilai::firstOrFail();
+        $this->sebagai($this->userKurikulum)->postJson("/api/kurikulum/paket/{$paket->id_paket_nilai}/buka-koreksi", [
+            'catatan' => 'Satu nilai akan dikoreksi.',
+        ])->assertOk();
+        $this->postJson('/api/kurikulum/rapor/terbitkan', [
+            'id_periode' => $this->sts->id_periode, 'id_kelas' => $this->kelasXA->id_kelas,
+        ])->assertUnprocessable()->assertJsonPath('code', 'LOCKED');
+        $this->assertDatabaseHas('rapor', ['status' => 'draf']);
     }
 
     public function test_detail_nilai_menandai_perlu_penguatan(): void

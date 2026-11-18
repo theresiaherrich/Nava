@@ -62,6 +62,13 @@ class RaporService
                 ? 'Belum ada nilai mapel untuk kelas ini.'
                 : 'Rapor hanya dapat dicetak setelah semua nilai dikunci. Belum dikunci: '.implode(', ', $status['belum_dikunci']).'.');
         }
+        $paket = PaketNilai::with('rombel')->where('id_periode', $periode->id_periode)
+            ->where('id_kelas', $kelas->id_kelas)->where('status', 'dikunci')->get();
+        foreach ($paket as $p) {
+            if (! $this->nilai->kelengkapan($p->rombel, $periode, $kelas->id_kelas)['lengkap']) {
+                throw new AturanBisnisException('Nilai '.$p->rombel->nama.' belum lengkap. Koreksi nilai sebelum mencetak rapor.', 'PAKET_BELUM_LENGKAP');
+            }
+        }
 
         $template = TemplateRapor::aktifUntuk($periode->jenis)
             ?? throw new AturanBisnisException("Template rapor {$periode->jenis} yang aktif belum diatur Kurikulum.", 'TEMPLATE_MISSING');
@@ -93,6 +100,9 @@ class RaporService
                 'kelompok' => $m->kelompok ?: 'Umum',
                 'urutan' => $m->urutan_rapor,
                 'nilai' => $sas ? $h['nilai_akhir'] : $h['nilai_sts'],
+                'tp' => $sas ? [] : $p->rombel->tp
+                    ->filter(fn (Tp $t) => $t->hanya_sts || ($idSts !== null && (int) $n->get($t->id_tp)?->id_periode === (int) $idSts))
+                    ->mapWithKeys(fn (Tp $t) => [$t->urutan => $n->get($t->id_tp)?->nilai])->all(),
                 'nilai_sas' => $sas ? $h['nilai_sas'] : null,
                 'deskripsi' => $sas && $template->tampilkan_deskripsi ? $this->deskripsi($p->rombel->tp, $n, $m) : null,
             ];
@@ -136,8 +146,10 @@ class RaporService
             }
 
             $versi = ($terakhir?->versi ?? 0) + 1;
-            $path = "rapor/{$periode->id_periode}/{$anggota->id_kelas}/".Str::slug($data['siswa']['nis'])."-v{$versi}.pdf";
-            $this->disk()->put($path, $this->render([$data + ['versi' => $versi]], $template));
+            $path = "rapor/{$periode->id_periode}/{$anggota->id_kelas}/{$anggota->id_riwayat_kelas}/".Str::slug($data['siswa']['nis'])."-v{$versi}.pdf";
+            if (! $this->disk()->put($path, $this->render([$data + ['versi' => $versi]], $template))) {
+                throw new AturanBisnisException('PDF gagal disimpan. Coba cetak kembali.', 'RAPOR_WRITE_FAILED', 500);
+            }
 
             $rapor = Rapor::create([
                 'id_riwayat_kelas' => $anggota->id_riwayat_kelas, 'id_periode' => $periode->id_periode,
@@ -182,6 +194,7 @@ class RaporService
     public function terbitkan(Kelas $kelas, PeriodeNilai $periode): int
     {
         return DB::transaction(function () use ($kelas, $periode) {
+            $template = $this->pastikanBisaCetak($kelas, $periode);
             $terbaru = Rapor::with('riwayatKelas.siswa.orangTua')->where('id_periode', $periode->id_periode)
                 ->whereHas('riwayatKelas', fn ($q) => $q->where('id_kelas', $kelas->id_kelas))
                 ->lockForUpdate()->get()->groupBy('id_riwayat_kelas')->map(fn (Collection $g) => $g->sortByDesc('versi')->first());
@@ -195,6 +208,11 @@ class RaporService
             foreach ($terbaru as $r) {
                 if ($r->status !== 'draf') {
                     continue;
+                }
+                if ((int) $r->id_template !== (int) $template->id_template
+                    || $r->data_final != $this->normal($this->bangun($r->riwayatKelas, $periode, $template))
+                    || ! $this->disk()->exists($r->file_pdf)) {
+                    throw new AturanBisnisException('Data rapor berubah atau PDF tidak tersedia. Cetak ulang sebelum menerbitkan.', 'RAPOR_PERLU_DICETAK_ULANG');
                 }
                 $r->update(['status' => 'terbit', 'diterbitkan_oleh' => Auth::id(), 'waktu_terbit' => now()]);
                 $n++;

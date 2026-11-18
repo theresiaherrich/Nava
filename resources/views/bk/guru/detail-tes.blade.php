@@ -34,24 +34,19 @@
         $initials = collect(explode(' ', $rekap->nama ?? ''))->take(2)->map(fn($w) => strtoupper(substr($w, 0, 1)))->implode('');
     @endphp
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
         <x-page-label />
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-1">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Detail Hasil Tes</h1>
-                <p class="text-xs text-gray-500 mt-1">Profil RIASEC dan rekomendasi minat siswa.</p>
+                <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Detail Hasil Tes</h1>
+                <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Profil RIASEC dan rekomendasi minat siswa.</p>
             </div>
-            <div class="flex items-center gap-2 flex-wrap">
-                <a href="{{ route('bk.rekap-tes') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-200 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <polyline points="15 18 9 12 15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Kembali
-                </a>
+            <div class="flex items-center gap-2 flex-wrap flex-none">
                 <a href="#"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-[#009bf2] text-white text-xs font-bold rounded-xl hover:bg-blue-600 transition">
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-[#089BD5] text-white text-xs font-bold font-['Plus_Jakarta_Sans'] rounded-xl hover:bg-[#078ec4] transition shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
@@ -66,7 +61,7 @@
         {{-- Kartu Profil Siswa --}}
         <div class="lg:col-span-1 space-y-4">
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center text-center gap-3">
-                <div class="w-16 h-16 rounded-full bg-[#009bf2] text-white flex items-center justify-center text-xl font-black">
+                <div class="w-16 h-16 rounded-full bg-[#089BD5] text-white flex items-center justify-center text-xl font-black">
                     {{ $initials }}
                 </div>
                 <div>
@@ -195,5 +190,7 @@
 
         </div>
     </div>
+
+    </div>{{-- /max-w-6xl --}}
 
 </x-layouts.admin>

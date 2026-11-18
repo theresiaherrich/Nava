@@ -1,26 +1,13 @@
 <x-layouts.admin title="Rekomendasi Mapel Pilihan - Peminatan & Konseling">
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
-        <div class="flex items-center gap-2 text-[11px] font-bold tracking-wider uppercase mb-1.5" style="color: #0284c7;">
-            <span>SMA NEGERI 1 KOTA MALANG</span>
-            <span>&bull;</span>
-            <span>KELAS {{ $tingkat ?? 'X' }}</span>
-            <span>&bull;</span>
-            <span>MAPEL PILIHAN</span>
-        </div>
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Rekomendasi Mata Pelajaran Pilihan</h1>
-                <p class="text-xs text-gray-500 mt-1">Daftar rekomendasi mapel pilihan berdasarkan hasil asesmen minat RIASEC Kelas X kamu.</p>
-            </div>
-            <a href="{{ route('siswa.dashboard') }}"
-                class="px-4 py-2 bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-50 shadow-xs transition flex items-center gap-1.5 w-fit">
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <polyline points="15 18 9 12 15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Kembali ke Dashboard
-            </a>
+        <x-page-label />
+        <div class="mt-1">
+            <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Rekomendasi Mata Pelajaran Pilihan</h1>
+            <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Daftar rekomendasi mapel pilihan berdasarkan hasil asesmen minat RIASEC Kelas X kamu.</p>
         </div>
     </div>
 
@@ -98,5 +85,7 @@
             @endforelse
         </div>
     </div>
+
+    </div>{{-- /max-w-6xl --}}
 
 </x-layouts.admin>

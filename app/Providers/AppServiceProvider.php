@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Semester;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Carbon::setLocale('id');
         View::composer('components.layouts.admin', function ($view): void {
             $user = auth()->user();
 

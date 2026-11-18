@@ -66,26 +66,22 @@
         $namaDominanString = !empty($namaDominanArr) ? implode(' – ', $namaDominanArr) : 'Investigative – Artistic – Social';
     @endphp
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
-        <div class="flex items-center gap-2 text-[11px] font-bold tracking-wider uppercase mb-1.5" style="color: #0284c7;">
-            <span>SMA NEGERI 1 KOTA MALANG</span>
-            <span>&bull;</span>
-            <span>KELAS {{ $tingkat ?? 'X' }}</span>
-            <span>&bull;</span>
-            <span>HASIL &amp; REKOMENDASI</span>
-        </div>
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <x-page-label />
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-0 mt-1">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Hasil Tes RIASEC-mu</h1>
-                <p class="text-xs text-gray-500 mt-1">
-                    Diselesaikan pada {{ $sesiTes->waktu_mulai ? \Carbon\Carbon::parse($sesiTes->waktu_mulai)->isoFormat('D MMMM Y, HH:mm') : '-' }} &bull; Kenali pola minat dominanmu sebagai panduan studi.
+                <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Hasil Tes RIASEC-mu</h1>
+                <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">
+                    Diselesaikan pada {{ $sesiTes->waktu_mulai ? \Carbon\Carbon::parse($sesiTes->waktu_mulai)->locale('id')->isoFormat('D MMMM Y, HH:mm') : '-' }} · Kenali pola minat dominanmu sebagai panduan studi.
                 </p>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 flex-none">
                 <a href="{{ route('siswa.riwayat-tes') }}"
-                    class="px-4 py-2 bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-xl hover:bg-gray-50 shadow-xs transition flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="px-4 py-2 bg-white rounded-xl outline outline-[0.80px] outline-slate-200 text-slate-600 text-xs font-bold font-['Plus_Jakarta_Sans'] hover:bg-gray-50 transition flex items-center gap-1.5 w-fit shadow-2xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
@@ -305,112 +301,18 @@
                     <polyline points="9 18 15 12 9 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
                 </svg>
             </a>
+        @else
+            <a href="{{ route('siswa.rekomendasi-prodi') }}"
+               class="px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm hover:opacity-95 transition flex items-center justify-center gap-2 flex-none"
+               style="background-color: #0284c7;">
+                <span>Lihat Rekomendasi Prodi</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <polyline points="9 18 15 12 9 6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                </svg>
+            </a>
         @endif
     </div>
 
-    {{-- Rekomendasi Mapel Pilihan (Tampil langsung jika ada) --}}
-    @if(isset($rekomendasiMapel) && $rekomendasiMapel->count() > 0)
-        <div class="mb-6 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-            <div class="flex items-center justify-between mb-5">
-                <div>
-                    <span class="text-[10px] font-bold text-sky-600 uppercase tracking-widest block mb-0.5">REKOMENDASI KELAS {{ $tingkat }}</span>
-                    <h2 class="text-sm font-bold text-slate-900">5 Rekomendasi Mata Pelajaran Pilihan</h2>
-                    <p class="text-xs text-gray-400">Mata pelajaran dengan indeks kesesuaian tertinggi berdasarkan profil RIASEC kamu</p>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                @foreach($rekomendasiMapel as $mapel)
-                    <div class="p-4 rounded-xl border flex items-center justify-between gap-3 hover:shadow-xs transition"
-                         style="background-color: #f8fafc; border-color: #e2e8f0;">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-9 h-9 rounded-xl text-white flex items-center justify-center font-black text-xs flex-none"
-                                 style="background-color: #0284c7;">
-                                {{ $mapel->peringkat ?? $loop->iteration }}
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-xs font-bold text-slate-800 truncate">{{ $mapel->nama ?? '-' }}</p>
-                                <p class="text-[10px] text-gray-500">{{ $mapel->rumpun ?? 'Mapel Pilihan' }}</p>
-                                @if(!empty($mapel->kode_riasec))
-                                    <span class="inline-block mt-0.5 px-2 py-0.2 text-[9px] font-bold font-mono rounded"
-                                          style="background-color: #e0f2fe; color: #0369a1;">
-                                        RIASEC: {{ $mapel->kode_riasec }}
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                        @if(isset($mapel->skor))
-                            <span class="px-2 py-1 text-[10px] font-bold rounded-lg flex-none border"
-                                  style="background-color: #ecfdf5; color: #047857; border-color: #a7f3d0;">
-                                {{ round($mapel->skor, 1) }}% Match
-                            </span>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    @endif
-
-    {{-- Rekomendasi Program Studi & Prospek Karir (Untuk Kelas XII) --}}
-    @if(isset($rekomendasiProdi) && $rekomendasiProdi->count() > 0)
-        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mb-6">
-            <div class="mb-5">
-                <span class="text-[10px] font-bold text-purple-600 uppercase tracking-widest block mb-0.5">REKOMENDASI STUDI LANJUT</span>
-                <h2 class="text-sm font-bold text-slate-900">5 Rekomendasi Program Studi &amp; Prospek Karier</h2>
-                <p class="text-xs text-gray-400">Pilihan program studi dan karir masa depan yang paling selaras dengan potensi kepribadianmu</p>
-            </div>
-            <div class="space-y-4">
-                @foreach($rekomendasiProdi as $prodi)
-                    <div class="p-5 rounded-2xl border space-y-3"
-                         style="background-color: #faf5ff; border-color: #f3e8ff;">
-                        <div class="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
-                            <div class="flex items-center gap-3.5 min-w-0">
-                                <div class="w-10 h-10 rounded-xl text-white flex items-center justify-center font-black text-sm flex-none"
-                                     style="background-color: #7e22ce;">
-                                    {{ $prodi->peringkat ?? $loop->iteration }}
-                                </div>
-                                <div class="min-w-0">
-                                    <h3 class="text-xs font-bold text-slate-800">{{ $prodi->nama ?? '-' }}</h3>
-                                    <p class="text-[10px] text-gray-500">{{ $prodi->rumpun ?? 'Program Studi Perguruan Tinggi' }}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                @if(!empty($prodi->kode_riasec))
-                                    <span class="px-2.5 py-0.5 text-[10px] font-bold font-mono rounded-full border"
-                                          style="background-color: #f3e8ff; color: #6b21a8; border-color: #d8b4fe;">
-                                        RIASEC: {{ $prodi->kode_riasec }}
-                                    </span>
-                                @endif
-                                @if(isset($prodi->skor))
-                                    <span class="px-2.5 py-1 text-[11px] font-extrabold rounded-lg border"
-                                          style="background-color: #ecfdf5; color: #047857; border-color: #a7f3d0;">
-                                        {{ round($prodi->skor, 1) }}% Match
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-
-                        @if(!empty($prodi->deskripsi) || !empty($prodi->tentang))
-                            <p class="text-xs text-gray-600 leading-relaxed bg-white/70 p-3 rounded-xl border border-purple-100">
-                                {{ $prodi->deskripsi ?: $prodi->tentang }}
-                            </p>
-                        @endif
-
-                        @if(isset($prodi->profesi) && $prodi->profesi->count() > 0)
-                            <div class="pt-2 border-t border-purple-100">
-                                <span class="text-[10px] font-bold text-purple-700 uppercase tracking-wider block mb-1.5">Prospek Profesi:</span>
-                                <div class="flex flex-wrap gap-1.5">
-                                    @foreach($prodi->profesi as $pf)
-                                        <span class="px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-white border border-purple-200 text-slate-700 shadow-2xs">
-                                            {{ $pf->nama }}
-                                        </span>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    @endif
+    </div>{{-- /max-w-6xl --}}
 
 </x-layouts.admin>

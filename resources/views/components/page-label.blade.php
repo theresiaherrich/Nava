@@ -38,4 +38,4 @@
     $label = collect(['SMA Negeri 1 Kota Malang', $peran, $fitur])->filter()->implode(' · ');
 @endphp
 
-<p {{ $attributes->merge(['class' => 'text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1']) }}>{{ $label }}</p>
+<p {{ $attributes->merge(['class' => "text-[10px] font-bold text-[#089BD5] uppercase tracking-widest mb-1 font-['Plus_Jakarta_Sans']"]) }}>{{ $label }}</p>

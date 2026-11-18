@@ -1,15 +1,17 @@
 <x-layouts.admin title="Petunjuk Tes RIASEC - Peminatan & Konseling">
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
         <x-page-label />
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-1">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Petunjuk Tes RIASEC</h1>
-                <p class="text-xs text-gray-500 mt-1">Baca petunjuk berikut dengan saksama sebelum memulai tes.</p>
+                <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Petunjuk Tes RIASEC</h1>
+                <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Baca petunjuk berikut dengan saksama sebelum memulai tes.</p>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs text-gray-600 shadow-sm w-fit">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center gap-2 px-3 py-2 bg-white rounded-xl outline outline-[0.80px] outline-slate-200 text-xs text-slate-600 font-['Plus_Jakarta_Sans'] shadow-2xs w-fit flex-none">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                 </svg>
                 <span>{{ $semester->nama_semester ?? 'Semester Aktif' }}</span>
@@ -19,7 +21,7 @@
 
     {{-- Info Siswa --}}
     <div class="mb-6 p-4 bg-sky-50/60 border border-sky-100 rounded-2xl flex items-center gap-4">
-        <div class="w-11 h-11 rounded-full bg-[#009bf2] text-white flex items-center justify-center text-sm font-bold flex-none">
+        <div class="w-11 h-11 rounded-full bg-[#089BD5] text-white flex items-center justify-center text-sm font-bold flex-none">
             {{ strtoupper(substr($siswa->nama ?? 'S', 0, 1)) }}
         </div>
         <div>
@@ -36,14 +38,14 @@
             {{-- Ringkasan Tes --}}
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h2 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-[#009bf2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-[#089BD5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     Informasi Tes
                 </h2>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <div class="p-4 bg-blue-50 rounded-xl text-center">
-                        <p class="text-2xl font-black text-[#009bf2]">{{ $jumlahSoal }}</p>
+                    <div class="p-4 bg-sky-50 rounded-xl text-center">
+                        <p class="text-2xl font-black text-[#089BD5]">{{ $jumlahSoal }}</p>
                         <p class="text-[11px] text-gray-500 mt-1">Jumlah Soal</p>
                     </div>
                     <div class="p-4 bg-amber-50 rounded-xl text-center">
@@ -162,7 +164,7 @@
                     </div>
                 @else
                     <a href="{{ route('siswa.tes.soal') }}"
-                        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#009bf2] text-white text-xs font-bold rounded-xl hover:bg-blue-600 transition mb-3">
+                        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#089BD5] text-white text-xs font-bold rounded-xl hover:bg-[#078ec4] transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -170,12 +172,10 @@
                         Mulai Tes
                     </a>
                 @endif
-                <a href="{{ route('siswa.dashboard') }}"
-                    class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-200 transition">
-                    Kembali ke Dashboard
-                </a>
             </div>
         </div>
     </div>
+
+    </div>{{-- /max-w-6xl --}}
 
 </x-layouts.admin>

@@ -33,21 +33,14 @@
         $balasanValue = old('balasan', $pengajuan->balasan ?? '');
     @endphp
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
         <x-page-label />
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Tindak Lanjut Pengajuan</h1>
-                <p class="text-xs text-gray-500 mt-1">Proses dan tindak lanjuti pengajuan bimbingan siswa.</p>
-            </div>
-            <a href="{{ route('bk.pengajuan') }}"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-200 transition w-fit">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <polyline points="15 18 9 12 15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Kembali
-            </a>
+        <div class="mt-1">
+            <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Tindak Lanjut Pengajuan</h1>
+            <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Proses dan tindak lanjuti pengajuan bimbingan siswa.</p>
         </div>
     </div>
 
@@ -85,7 +78,7 @@
                 </div>
 
                 <div class="flex items-center gap-3 mb-4">
-                    <div class="w-11 h-11 rounded-full bg-[#009bf2] text-white flex items-center justify-center text-sm font-bold flex-none">
+                    <div class="w-11 h-11 rounded-full bg-[#089BD5] text-white flex items-center justify-center text-sm font-bold flex-none">
                         {{ $initials }}
                     </div>
                     <div>
@@ -176,7 +169,7 @@
 
                         <div class="flex gap-3 pt-2">
                             <button type="submit"
-                                class="flex-1 py-2.5 bg-[#009bf2] text-white text-xs font-bold rounded-xl hover:bg-blue-600 transition flex items-center justify-center gap-2">
+                                class="flex-1 py-2.5 bg-[#089BD5] text-white text-xs font-bold rounded-xl hover:bg-[#078ec4] transition flex items-center justify-center gap-2 shadow-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
@@ -192,6 +185,8 @@
             </div>
         </div>
     </div>
+
+    </div>{{-- /max-w-6xl --}}
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

@@ -1,14 +1,16 @@
 <x-layouts.admin title="Rekap Tes RIASEC - SIAKAD SMAN 1 Malang">
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
         <x-page-label />
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-1">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Rekap Tes RIASEC</h1>
-                <p class="text-xs text-gray-500 mt-1">Daftar hasil tes pemetaan minat seluruh siswa.</p>
+                <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Rekap Tes RIASEC</h1>
+                <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Daftar hasil tes pemetaan minat seluruh siswa.</p>
             </div>
-            <a href="#" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white text-xs font-bold rounded-xl hover:bg-emerald-600 transition w-fit">
+            <a href="#" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white text-xs font-bold font-['Plus_Jakarta_Sans'] rounded-xl hover:bg-emerald-600 transition w-fit shadow-xs flex-none">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
@@ -160,5 +162,7 @@
             </div>
         @endif
     </div>
+
+    </div>{{-- /max-w-6xl --}}
 
 </x-layouts.admin>

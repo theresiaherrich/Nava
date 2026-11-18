@@ -41,8 +41,11 @@ Route::middleware(['auth', 'role:SISWA'])->prefix('siswa')->name('siswa.')->grou
     // Hasil & Rekomendasi
     Route::get('/hasil', [HasilController::class, 'index'])->name('hasil');
 
-    // Mapel Pilihan — kelas XI saja
+    // Rekomendasi Mapel Pilihan (Kelas X & XI)
     Route::get('/mapel-pilihan', [HasilController::class, 'mapelPilihan'])->name('mapel-pilihan');
+
+    // Rekomendasi Program Studi & Prospek Karir (Kelas XII)
+    Route::get('/rekomendasi-prodi', [HasilController::class, 'rekomendasiProdi'])->name('rekomendasi-prodi');
 
     // Riwayat Tes
     Route::get('/riwayat-tes', [RiwayatController::class, 'index'])->name('riwayat-tes');

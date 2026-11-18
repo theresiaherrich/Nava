@@ -1,20 +1,13 @@
 <x-layouts.admin title="Pengajuan BK - Peminatan & Konseling">
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
         <x-page-label />
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Bimbingan & Konseling</h1>
-                <p class="text-xs text-gray-500 mt-1">Konsultasikan minat belajar, perencanaan studi lanjut, atau kendala belajarmu dengan Guru BK.</p>
-            </div>
-            <a href="{{ route('siswa.dashboard') }}"
-                class="px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-200 transition flex items-center gap-1.5 w-fit">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <polyline points="15 18 9 12 15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Kembali ke Dashboard
-            </a>
+        <div class="mt-1">
+            <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Bimbingan & Konseling</h1>
+            <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Konsultasikan minat belajar, perencanaan studi lanjut, atau kendala belajarmu dengan Guru BK.</p>
         </div>
     </div>
 
@@ -41,9 +34,9 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
         {{-- Form Pengajuan BK --}}
-        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-            <h2 class="text-sm font-bold text-slate-900 mb-1">Form Pengajuan Bimbingan Baru</h2>
-            <p class="text-xs text-gray-400 mb-5">Pilih topik dan sampaikan hal yang ingin kamu diskusikan.</p>
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl outline outline-[0.80px] outline-slate-200 shadow-[0px_3px_12px_0px_rgba(32,48,75,0.04)]">
+            <h2 class="text-sm font-bold text-slate-900 font-['Plus_Jakarta_Sans'] mb-1">Form Pengajuan Bimbingan Baru</h2>
+            <p class="text-xs text-gray-400 font-['Plus_Jakarta_Sans'] mb-5">Pilih topik dan sampaikan hal yang ingin kamu diskusikan.</p>
             @if($guruBkList->isEmpty())
                 <p class="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
                     Pengajuan belum dapat dikirim karena belum ada Guru BK yang ditugaskan untuk jenjangmu pada semester aktif.
@@ -59,7 +52,7 @@
                         Topik Bimbingan <span class="text-red-500">*</span>
                     </label>
                     <select name="topik" required
-                        class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5]">
                         <option value="">— Pilih Topik Konsultasi —</option>
                         @foreach($topikList as $topik)
                             <option value="{{ $topik }}" {{ old('topik') === $topik ? 'selected' : '' }}>
@@ -77,44 +70,46 @@
                     </label>
                     <textarea name="deskripsi" rows="4" required minlength="20" maxlength="500"
                         placeholder="Ceritakan kendala, pertanyaan minat bakat, atau kebutuhan konsultasimu secara singkat..."
-                        class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none">{{ old('deskripsi') }}</textarea>
+                        class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5] resize-none">{{ old('deskripsi') }}</textarea>
                 </div>
 
                 <button type="submit"
-                    @disabled($guruBkList->isEmpty())
-                    class="px-6 py-2.5 bg-[#009bf2] text-white text-xs font-bold rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                    </svg>
-                    Kirim Pengajuan
-                </button>
-            </form>
-        </div>
+    @disabled($guruBkList->isEmpty())
+    class="px-6 py-2.5 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+    style="background-color: #089BD5;"
+    onmouseover="if(!this.disabled) this.style.backgroundColor='#078ec4'"
+    onmouseout="this.style.backgroundColor='#089BD5'">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+    </svg>
+    Kirim Pengajuan
+</button>
 
-        {{-- Kartu Guru BK Pendamping --}}
-        <div class="space-y-4">
-            <div class="bg-gradient-to-br from-[#009bf2] to-blue-600 p-5 rounded-2xl text-white shadow-md">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-sky-100 mb-1">Guru BK Penanggung Jawab</p>
-                <h3 class="text-lg font-black mb-3">Layanan Konseling</h3>
-                <div class="space-y-3">
-                    @forelse($guruBkList as $guruBk)
-                        <div class="p-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-white text-blue-600 flex items-center justify-center font-black text-xs flex-none">
-                                BK
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold text-white">{{ $guruBk->nama }}</p>
-                                <p class="text-[10px] text-sky-100">{{ $guruBk->email ?? 'Guru Bimbingan Konseling' }}</p>
-                                <p class="text-[10px] text-sky-200 mt-1">Guru BK yang ditugaskan untuk jenjangmu.</p>
-                            </div>
-                        </div>
-                    @empty
-                        <p class="text-xs text-sky-100">Belum ada Guru BK yang ditugaskan untuk jenjang ini pada semester aktif.</p>
-                    @endforelse
+       {{-- Kartu Guru BK Pendamping --}}
+<div class="space-y-4">
+    <div class="p-5 rounded-2xl text-white shadow-sm"
+         style="background: linear-gradient(to bottom right, #09A3DE, #089BD5, #0688BC);">
+        <p class="text-[10px] font-extrabold uppercase tracking-wider text-sky-100 mb-1">Guru BK Penanggung Jawab</p>
+        <h3 class="text-lg font-bold mb-3">Layanan Konseling</h3>
+        <div class="space-y-3">
+            @forelse($guruBkList as $guruBk)
+                <div class="p-3 rounded-xl border border-white/20 flex items-start gap-3"
+                     style="background: rgba(255,255,255,0.15); backdrop-filter: blur(12px);">
+                    <div class="w-8 h-8 rounded-lg bg-white text-[#089BD5] flex items-center justify-center font-black text-xs flex-none shadow-sm">
+                        BK
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-white">{{ $guruBk->nama }}</p>
+                        <p class="text-[10px] text-sky-100">{{ $guruBk->email ?? 'Guru Bimbingan Konseling' }}</p>
+                        <p class="text-[10px] mt-1" style="color: rgba(224,242,254,0.9);">Guru BK yang ditugaskan untuk jenjangmu.</p>
+                    </div>
                 </div>
-            </div>
+            @empty
+                <p class="text-xs text-sky-100">Belum ada Guru BK yang ditugaskan untuk jenjang ini pada semester aktif.</p>
+            @endforelse
         </div>
     </div>
+</div>
 
     {{-- Daftar Riwayat Pengajuan Siswa --}}
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -185,5 +180,7 @@
             </table>
         </div>
     </div>
+
+    </div>{{-- /max-w-6xl --}}
 
 </x-layouts.admin>

@@ -9,12 +9,14 @@
         $errorPassword = $errors->hasAny(['password_lama', 'password_baru']);
     @endphp
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Header --}}
     <div class="mb-6">
         <x-page-label />
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Profil Guru BK</h1>
-            <p class="text-xs text-gray-500 mt-1">Kelola informasi akun dan data profil Anda.</p>
+        <div class="mt-1">
+            <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Profil Guru BK</h1>
+            <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Kelola informasi akun dan data profil Anda.</p>
         </div>
     </div>
 
@@ -43,7 +45,7 @@
 
             {{-- Avatar Card --}}
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center text-center gap-3">
-                <div class="w-20 h-20 rounded-full bg-[#009bf2] text-white flex items-center justify-center text-2xl font-black">
+                <div class="w-20 h-20 rounded-full bg-[#089BD5] text-white flex items-center justify-center text-2xl font-black">
                     {{ $initials }}
                 </div>
                 <div>
@@ -94,7 +96,7 @@
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Password Lama</label>
                                 <input type="password" name="password_lama" required
-                                    class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                    class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5]">
                                 @error('password_lama')
                                     <p class="text-[11px] text-red-500 mt-0.5">{{ $message }}</p>
                                 @enderror
@@ -102,7 +104,7 @@
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Password Baru</label>
                                 <input type="password" name="password_baru" required
-                                    class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                    class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5]">
                                 @error('password_baru')
                                     <p class="text-[11px] text-red-500 mt-0.5">{{ $message }}</p>
                                 @enderror
@@ -110,10 +112,10 @@
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">Konfirmasi Password Baru</label>
                                 <input type="password" name="password_baru_confirmation" required
-                                    class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                                    class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5]">
                             </div>
                             <button type="submit"
-                                class="w-full py-2 bg-[#009bf2] text-white text-xs font-bold rounded-xl hover:bg-blue-600 transition">
+                                class="w-full py-2 bg-[#089BD5] text-white text-xs font-bold rounded-xl hover:bg-[#078ec4] transition shadow-sm">
                                 Simpan Password
                             </button>
                         </div>
@@ -131,7 +133,7 @@
                         <p class="text-xs text-gray-400">Data diri dan kontak Guru BK</p>
                     </div>
                     <button type="button" id="open-edit-modal"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-[#009bf2] text-white text-xs font-bold rounded-xl hover:bg-blue-600 transition">
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-[#089BD5] text-white text-xs font-bold rounded-xl hover:bg-[#078ec4] transition shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>
@@ -178,7 +180,7 @@
             {{-- Header modal --}}
             <div class="flex items-start justify-between px-6 py-5 border-b border-gray-100">
                 <div>
-                    <p class="text-[10px] font-bold text-[#009bf2] uppercase tracking-widest">SMA Negeri 1 Kota Malang</p>
+                    <p class="text-[10px] font-bold text-[#089BD5] uppercase tracking-widest">SMA Negeri 1 Kota Malang</p>
                     <h2 id="modal-edit-title" class="text-lg font-semibold text-[#0f1b33] mt-0.5">Edit Profil</h2>
                 </div>
                 <button type="button" data-close-modal aria-label="Tutup"
@@ -197,7 +199,7 @@
                     <div class="sm:col-span-2">
                         <label class="block text-[11px] font-bold text-gray-800 mb-1.5">Nama Lengkap</label>
                         <input type="text" name="nama" value="{{ old('nama', $namaGuru) }}" required maxlength="100"
-                            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5]">
                         @error('nama')
                             <p class="text-[11px] text-red-500 mt-1">{{ $message }}</p>
                         @enderror
@@ -212,7 +214,7 @@
                     <div>
                         <label class="block text-[11px] font-bold text-gray-800 mb-1.5">Nomor Telepon</label>
                         <input type="text" name="no_telepon" value="{{ old('no_telepon', $teleponGuru) }}" maxlength="25"
-                            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5]">
                         @error('no_telepon')
                             <p class="text-[11px] text-red-500 mt-1">{{ $message }}</p>
                         @enderror
@@ -221,7 +223,7 @@
                     <div class="sm:col-span-2">
                         <label class="block text-[11px] font-bold text-gray-800 mb-1.5">Email</label>
                         <input type="email" name="email" value="{{ old('email', $emailGuru) }}" maxlength="100"
-                            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5]">
                         @error('email')
                             <p class="text-[11px] text-red-500 mt-1">{{ $message }}</p>
                         @enderror
@@ -231,7 +233,7 @@
                         <label class="block text-[11px] font-bold text-gray-800 mb-1.5">Jadwal Layanan</label>
                         <input type="text" name="jadwal_layanan" value="{{ old('jadwal_layanan', $guruBk->jadwal_layanan ?? '') }}" maxlength="100"
                             placeholder="Contoh: Senin–Jumat, 08.00–14.00"
-                            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5]">
                         @error('jadwal_layanan')
                             <p class="text-[11px] text-red-500 mt-1">{{ $message }}</p>
                         @enderror
@@ -245,7 +247,7 @@
                         Batal
                     </button>
                     <button type="submit"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1a80e5] text-white text-xs font-bold rounded-xl hover:bg-blue-600 transition">
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#089BD5] text-white text-xs font-bold rounded-xl hover:bg-[#078ec4] transition shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
                             <polyline points="17 21 17 13 7 13 7 21" stroke-width="2"/>
@@ -296,5 +298,7 @@
             @endif
         });
     </script>
+
+    </div>{{-- /max-w-6xl --}}
 
 </x-layouts.admin>

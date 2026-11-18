@@ -1,20 +1,13 @@
 <x-layouts.admin title="Riwayat Tes RIASEC - Peminatan & Konseling">
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
         <x-page-label />
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Riwayat Tes Minat</h1>
-                <p class="text-xs text-gray-500 mt-1">Daftar semua sesi tes RIASEC yang pernah kamu selesaikan.</p>
-            </div>
-            <a href="{{ route('siswa.dashboard') }}"
-                class="px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-200 transition flex items-center gap-1.5 w-fit">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <polyline points="15 18 9 12 15 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Kembali ke Dashboard
-            </a>
+        <div class="mt-1">
+            <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Riwayat Tes Minat</h1>
+            <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Daftar semua sesi tes RIASEC yang pernah kamu selesaikan.</p>
         </div>
     </div>
 
@@ -76,5 +69,7 @@
             </table>
         </div>
     </div>
+
+    </div>{{-- /max-w-6xl --}}
 
 </x-layouts.admin>

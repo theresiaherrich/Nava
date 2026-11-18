@@ -46,13 +46,10 @@
         }
 
         $tanggalTes = $sesiTes?->waktu_selesai 
-            ? \Carbon\Carbon::parse($sesiTes->waktu_selesai)->isoFormat('D MMMM Y')
+            ? \Carbon\Carbon::parse($sesiTes->waktu_selesai)->locale('id')->isoFormat('D MMMM Y')
             : '18 Agustus 2025';
 
-        $tanggalHariIni = 'Senin, 18 Agustus 2025';
-        if (now()->format('Y') == '2026') {
-            $tanggalHariIni = now()->isoFormat('dddd, D MMMM Y');
-        }
+        $tanggalHariIni = now()->locale('id')->isoFormat('dddd, D MMMM Y');
     @endphp
 
     <div class="max-w-6xl mx-auto py-3">
@@ -179,11 +176,12 @@
             </div>
 
             {{-- Card 4: Rekomendasi --}}
-            <div class="min-h-28 p-5 bg-white rounded-2xl shadow-[0px_3px_12px_0px_rgba(32,48,75,0.04)] outline outline-[0.80px] outline-offset-[-0.80px] outline-slate-200 flex items-center gap-4">
-                <div class="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center flex-none">
+            <a href="{{ route($tingkatClean === 'XII' ? 'siswa.rekomendasi-prodi' : 'siswa.mapel-pilihan') }}"
+               class="min-h-28 p-5 bg-white rounded-2xl shadow-[0px_3px_12px_0px_rgba(32,48,75,0.04)] outline outline-[0.80px] outline-offset-[-0.80px] outline-slate-200 flex items-center gap-4 hover:shadow-md transition group">
+                <div class="w-12 h-12 bg-sky-50 rounded-xl flex items-center justify-center flex-none group-hover:scale-105 transition-transform">
                     <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
-                        <path d="M3.33203 3.33337H9.16536C9.82841 3.33337 10.4643 3.59677 10.9331 4.06561C11.402 4.53445 11.6654 5.17033 11.6654 5.83337V17.5C11.6654 16.837 11.402 16.2011 10.9331 15.7323C10.4643 15.2634 9.82841 15 9.16536 15H3.33203V3.33337Z" stroke="#7357D1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M16.668 3.33337H14.168C13.5049 3.33337 12.869 3.59677 12.4002 4.06561C11.9314 4.53445 11.668 5.17033 11.668 5.83337V17.5C11.668 16.837 11.9314 16.2011 12.4002 15.7323C12.869 15.2634 13.5049 15 14.168 15H16.668V3.33337Z" stroke="#7357D1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M3.33203 3.33337H9.16536C9.82841 3.33337 10.4643 3.59677 10.9331 4.06561C11.402 4.53445 11.6654 5.17033 11.6654 5.83337V17.5C11.6654 16.837 11.402 16.2011 10.9331 15.7323C10.4643 15.2634 9.82841 15 9.16536 15H3.33203V3.33337Z" stroke="#089BD5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16.668 3.33337H14.168C13.5049 3.33337 12.869 3.59677 12.4002 4.06561C11.9314 4.53445 11.668 5.17033 11.668 5.83337V17.5C11.668 16.837 11.9314 16.2011 12.4002 15.7323C12.869 15.2634 13.5049 15 14.168 15H16.668V3.33337Z" stroke="#089BD5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
                 <div>
@@ -192,10 +190,10 @@
                         {{ $jumlahRekomendasi }} Pilihan
                     </div>
                     <div class="text-gray-400 text-[9px] font-normal font-['Plus_Jakarta_Sans'] mt-0.5">
-                        {{ $tingkatClean === 'XII' ? 'Program Studi' : 'Mata Pelajaran' }}
+                        {{ $tingkatClean === 'XII' ? 'Program Studi' : 'Mata Pelajaran' }} &rarr;
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         {{-- Profil Minat RIASEC & Aktivitas Terbaru --}}
@@ -298,7 +296,8 @@
 
                 <div class="p-6 flex flex-col divide-y divide-slate-100">
                     {{-- Item 1 --}}
-                    <div class="py-3 flex items-start gap-3.5">
+                    <a href="{{ route($tingkatClean === 'XII' ? 'siswa.rekomendasi-prodi' : 'siswa.mapel-pilihan') }}"
+                       class="py-3 flex items-start gap-3.5 hover:bg-slate-50/80 -mx-3 px-3 rounded-xl transition">
                         <div class="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center flex-none">
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                                 <path d="M3.33203 3.33331H9.16536C9.82841 3.33331 10.4643 3.59671 10.9331 4.06555C11.402 4.53439 11.6654 5.17027 11.6654 5.83331V17.5C11.6654 16.8369 11.402 16.2011 10.9331 15.7322C10.4643 15.2634 9.82841 15 9.16536 15H3.33203V3.33331Z" stroke="#089BD5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -313,16 +312,16 @@
                                 {{ $tingkatClean === 'XII' ? 'Teknik Informatika & Sains Data paling sesuai' : 'Sains & Teknologi Kreatif paling sesuai' }}
                             </div>
                             <div class="text-slate-400 text-[8.5px] font-normal font-['Plus_Jakarta_Sans'] mt-1">
-                                12 menit lalu
+                                12 menit lalu &bull; <span class="text-sky-600 font-semibold">Buka &rarr;</span>
                             </div>
                         </div>
-                    </div>
+                    </a>
 
                     {{-- Item 2 --}}
                     <div class="py-3 flex items-start gap-3.5">
-                        <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center flex-none">
+                        <div class="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center flex-none">
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                <path d="M3.33464 15.8334V7.50002M3.33464 15.8334H8.33464M3.33464 15.8334H1.66797M8.33464 15.8334V4.16669M8.33464 15.8334H13.3346M13.3346 15.8334V10M13.3346 15.8334H18.3346" stroke="#8B4FE6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M3.33464 15.8334V7.50002M3.33464 15.8334H8.33464M3.33464 15.8334H1.66797M8.33464 15.8334V4.16669M8.33464 15.8334H13.3346M13.3346 15.8334V10M13.3346 15.8334H18.3346" stroke="#089BD5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </div>
                         <div class="min-w-0 flex-1">

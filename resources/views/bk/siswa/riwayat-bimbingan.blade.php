@@ -1,12 +1,18 @@
 <x-layouts.admin title="Riwayat Bimbingan - SIAKAD SMA Negeri 1 Malang">
+
+    <div class="max-w-6xl mx-auto py-3">
+
     <div class="mb-6">
         <x-page-label fitur="Riwayat Bimbingan" />
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-1">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Riwayat Bimbingan</h1>
-                <p class="text-xs text-gray-500 mt-1">Status dan jadwal seluruh pengajuan bimbingan milikmu.</p>
+                <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Riwayat Bimbingan</h1>
+                <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Status dan jadwal seluruh pengajuan bimbingan milikmu.</p>
             </div>
-            <a href="{{ route('siswa.pengajuan-bk') }}" class="px-4 py-2 bg-[#009bf2] text-white text-xs font-bold rounded-xl hover:bg-blue-600">
+            <a href="{{ route('siswa.pengajuan-bk') }}" class="px-4 py-2 bg-[#089BD5] text-white text-xs font-bold font-['Plus_Jakarta_Sans'] rounded-xl hover:bg-[#078ec4] transition flex items-center gap-1.5 w-fit shadow-sm flex-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
                 Buat Pengajuan
             </a>
         </div>
@@ -68,4 +74,7 @@
             </table>
         </div>
     </section>
+
+    </div>{{-- /max-w-6xl --}}
+
 </x-layouts.admin>

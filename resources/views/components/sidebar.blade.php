@@ -88,6 +88,7 @@
             $a3Items = [
                 ['label' => 'Dashboard', 'icon' => 'home', 'route' => 'siswa.dashboard', 'pattern' => 'siswa.dashboard*'],
                 ['label' => 'Hasil Tes', 'icon' => 'chart', 'route' => 'siswa.hasil', 'pattern' => 'siswa.hasil*'],
+                ['label' => 'Rekomendasi Mapel', 'icon' => 'book', 'route' => 'siswa.mapel-pilihan', 'pattern' => 'siswa.mapel-pilihan*'],
                 ['label' => 'Riwayat Tes', 'icon' => 'history', 'route' => 'siswa.riwayat-tes', 'pattern' => 'siswa.riwayat-tes*'],
                 ['label' => 'Pengajuan BK', 'icon' => 'message', 'route' => 'siswa.pengajuan-bk', 'pattern' => 'siswa.pengajuan-bk*'],
             ];

@@ -6,7 +6,7 @@
             'GENAP' => 'Genap',
             default => $semester->nama ?? 'Ganjil',
         };
-        $tanggalHariIni = \Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y');
+        $tanggalHariIni = \Carbon\Carbon::now()->locale('id')->isoFormat('dddd, D MMMM Y');
         $namaGuru = $guru->nama ?? 'Guru BK';
 
         $totalSiswa = $rekapStats->total_siswa ?? 960;
@@ -38,9 +38,9 @@
         }
     @endphp
 
-    <div class="max-w-5xl mx-auto py-2">
+    <div class="max-w-6xl mx-auto py-3">
         {{-- Breadcrumb Eyebrow --}}
-        <div class="text-sky-600 text-[10px] font-bold font-['Plus_Jakarta_Sans'] tracking-wider uppercase mb-1">
+        <div class="text-[#089BD5] text-[10px] font-bold font-['Plus_Jakarta_Sans'] tracking-wider uppercase mb-1">
             SMA NEGERI 1 KOTA MALANG · BK
         </div>
 

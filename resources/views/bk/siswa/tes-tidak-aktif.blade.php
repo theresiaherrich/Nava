@@ -1,12 +1,14 @@
 <x-layouts.admin title="Tes Belum Dibuka - Peminatan & Konseling">
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
         <x-page-label />
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-1">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Periode Tes Tidak Aktif</h1>
-                <p class="text-xs text-gray-500 mt-1">Tes RIASEC belum dibuka untuk semester ini.</p>
+                <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Periode Tes Tidak Aktif</h1>
+                <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Tes RIASEC belum dibuka untuk semester ini.</p>
             </div>
         </div>
     </div>
@@ -61,15 +63,8 @@
                 @endif
 
                 <div class="mt-8 flex flex-col sm:flex-row gap-3">
-                    <a href="{{ route('siswa.dashboard') }}"
-                        class="px-6 py-2.5 bg-[#009bf2] text-white text-xs font-bold rounded-xl hover:bg-blue-600 transition flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                        </svg>
-                        Kembali ke Dashboard
-                    </a>
                     <a href="{{ route('siswa.riwayat-tes') }}"
-                        class="px-6 py-2.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-200 transition flex items-center gap-2">
+                        class="px-6 py-2.5 bg-[#089BD5] text-white text-xs font-bold rounded-xl hover:bg-[#078ec4] transition flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
@@ -85,7 +80,7 @@
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h2 class="text-sm font-bold text-slate-900 mb-4">Profil Siswa</h2>
                 <div class="flex items-center gap-3 mb-4">
-                    <div class="w-11 h-11 rounded-full bg-[#009bf2] text-white flex items-center justify-center text-sm font-bold flex-none">
+                    <div class="w-11 h-11 rounded-full bg-[#089BD5] text-white flex items-center justify-center text-sm font-bold flex-none">
                         {{ strtoupper(substr($siswa->nama ?? 'S', 0, 1)) }}
                     </div>
                     <div>
@@ -132,5 +127,7 @@
             </div>
         </div>
     </div>
+
+    </div>{{-- /max-w-6xl --}}
 
 </x-layouts.admin>

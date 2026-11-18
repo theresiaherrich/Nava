@@ -113,6 +113,42 @@ class HasilController extends Controller
         )));
     }
 
+    public function rekomendasiProdi()
+    {
+        $ctx = $this->getKonteksSiswa();
+        $tingkat = $ctx['riwayat']->kelas->tingkat;
+
+        $sesiTes = SesiTes::with(['hasilTes.dimensi'])
+            ->where('id_riwayat_kelas', $ctx['riwayat']->id_riwayat_kelas)
+            ->where('status', 'selesai')
+            ->orderByDesc('waktu_selesai')
+            ->first();
+
+        if (! $sesiTes) {
+            $riwayatLain = RiwayatKelas::where('id_siswa', $ctx['siswa']->id_siswa)
+                ->pluck('id_riwayat_kelas');
+
+            $sesiTes = SesiTes::with(['hasilTes.dimensi'])
+                ->whereIn('id_riwayat_kelas', $riwayatLain)
+                ->where('status', 'selesai')
+                ->orderByDesc('waktu_selesai')
+                ->first();
+        }
+
+        if (! $sesiTes) {
+            return redirect()->route('siswa.dashboard')
+                ->with('info', 'Kamu harus menyelesaikan tes RIASEC terlebih dahulu untuk melihat rekomendasi program studi.');
+        }
+
+        $rekomendasiProdi = $this->rekomendasiService->rekomendasiProdi($sesiTes->id_sesi_tes)->take(5);
+
+        return view('bk.siswa.rekomendasi-prodi', array_merge($ctx, compact(
+            'tingkat',
+            'sesiTes',
+            'rekomendasiProdi'
+        )));
+    }
+
     private function getKonteksSiswa(): array
     {
         $user = Auth::user();

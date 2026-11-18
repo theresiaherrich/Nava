@@ -1,15 +1,17 @@
 <x-layouts.admin title="Soal Tes RIASEC - Peminatan & Konseling">
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
         <x-page-label />
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-1">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Tes RIASEC</h1>
-                <p class="text-xs text-gray-500 mt-1">Jawab semua pernyataan berikut dengan jujur sesuai minat dan kepribadianmu.</p>
+                <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Tes RIASEC</h1>
+                <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Jawab semua pernyataan berikut dengan jujur sesuai minat dan kepribadianmu.</p>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs text-gray-600 shadow-sm w-fit">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center gap-2 px-3 py-2 bg-white rounded-xl outline outline-[0.80px] outline-slate-200 text-xs text-slate-600 font-['Plus_Jakarta_Sans'] shadow-2xs w-fit flex-none">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
@@ -25,7 +27,7 @@
             <span class="text-xs text-gray-500"><span id="answered-count">0</span> / {{ $soal->count() }} soal dijawab</span>
         </div>
         <div class="w-full bg-gray-100 rounded-full h-2">
-            <div id="progress-bar" class="bg-[#009bf2] h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            <div id="progress-bar" class="bg-[#089BD5] h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
         </div>
     </div>
 
@@ -39,7 +41,7 @@
                     <div class="flex items-start gap-4">
                         {{-- Nomor & Dimensi --}}
                         <div class="flex-none">
-                            <div class="w-9 h-9 rounded-xl bg-blue-50 text-[#009bf2] flex items-center justify-center text-xs font-black">
+                            <div class="w-9 h-9 rounded-xl bg-sky-50 text-[#089BD5] flex items-center justify-center text-xs font-black">
                                 {{ $i + 1 }}
                             </div>
                         </div>
@@ -71,8 +73,8 @@
                                             required
                                         />
                                         <span class="w-9 h-9 rounded-xl border-2 border-gray-200 flex items-center justify-center text-xs font-black text-gray-400
-                                            group-has-[:checked]:bg-[#009bf2] group-has-[:checked]:border-[#009bf2] group-has-[:checked]:text-white
-                                            hover:border-[#009bf2] hover:text-[#009bf2] transition-all duration-150">
+                                            group-has-[:checked]:bg-[#089BD5] group-has-[:checked]:border-[#089BD5] group-has-[:checked]:text-white
+                                            hover:border-[#089BD5] hover:text-[#089BD5] transition-all duration-150">
                                             {{ $nilai }}
                                         </span>
                                         <span class="text-[9px] text-gray-400 text-center leading-tight max-w-[52px] hidden sm:block">{{ $labelSkala }}</span>
@@ -94,7 +96,7 @@
                 Pastikan semua soal sudah dijawab sebelum menekan tombol selesaikan.
             </div>
             <button type="submit"
-                class="px-8 py-3 bg-[#009bf2] text-white text-xs font-bold rounded-xl hover:bg-blue-600 transition flex items-center gap-2 w-full sm:w-auto justify-center">
+                class="px-8 py-3 bg-[#089BD5] text-white text-xs font-bold rounded-xl hover:bg-[#078ec4] transition flex items-center gap-2 w-full sm:w-auto justify-center">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
@@ -102,6 +104,8 @@
             </button>
         </div>
     </form>
+
+    </div>{{-- /max-w-6xl --}}
 
     @vite('resources/js/bk/student-x.js')
 

@@ -1,13 +1,13 @@
 <x-layouts.admin title="Pengajuan BK - SIAKAD SMAN 1 Malang">
 
+    <div class="max-w-6xl mx-auto py-3">
+
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
         <x-page-label />
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f1b33]">Pengajuan BK</h1>
-                <p class="text-xs text-gray-500 mt-1">Daftar pengajuan bimbingan dan konseling dari siswa.</p>
-            </div>
+        <div class="mt-1">
+            <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Pengajuan BK</h1>
+            <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Daftar pengajuan bimbingan dan konseling dari siswa.</p>
         </div>
     </div>
 
@@ -137,5 +137,7 @@
             </div>
         @endif
     </div>
+
+    </div>{{-- /max-w-6xl --}}
 
 </x-layouts.admin>

@@ -140,18 +140,32 @@ class RekomendasiService
             ->where('id_sesi_tes', $idSesiTes)
             ->orderBy('peringkat')
             ->get()
-            ->map(fn ($r) => (object) [
-                'peringkat'   => $r->peringkat,
-                'skor'        => $r->skor,
-                'id_prodi'    => $r->id_prodi,
-                'nama'        => $r->prodi->nama ?? '-',
-                'rumpun'      => $r->prodi->rumpun ?? '-',
-                'tentang'     => $r->prodi->tentang ?? '',
-                'deskripsi'   => $r->prodi->deskripsi ?? '',
-                'kode_riasec' => $r->prodi->kode_riasec ?? '-',
-                'profesi'     => $r->prodi->profesi ?? collect(),
-                'alasan'      => $r->alasan,
-            ]);
+            ->map(function ($r) {
+                $detail = ProdiDetailHelper::getDetail(
+                    $r->prodi?->nama ?? '',
+                    $r->prodi?->rumpun ?? null,
+                    $r->prodi?->kode_riasec ?? null,
+                    $r->prodi?->tentang ?: ($r->prodi?->deskripsi ?: null),
+                    $r->prodi?->profesi ?? collect()
+                );
+
+                return (object) [
+                    'peringkat'          => $r->peringkat,
+                    'skor'               => $r->skor,
+                    'id_prodi'           => $r->id_prodi,
+                    'nama'               => $r->prodi->nama ?? '-',
+                    'rumpun'             => $r->prodi->rumpun ?? ($detail['rumpun'] ?? '-'),
+                    'tentang'            => $detail['deskripsi_ringkas'] ?: ($r->prodi->tentang ?? ''),
+                    'deskripsi'          => $detail['deskripsi_ringkas'] ?: ($r->prodi->deskripsi ?? ''),
+                    'kode_riasec'        => $r->prodi->kode_riasec ?? ($detail['kode_riasec'] ?? '-'),
+                    'profesi'            => $r->prodi->profesi ?? collect(),
+                    'alasan'             => $r->alasan,
+                    'jenjang_gelar'      => $detail['jenjang_gelar'] ?? 'Sarjana (S1)',
+                    'deskripsi_ringkas'  => $detail['deskripsi_ringkas'],
+                    'kesesuaian_singkat' => $detail['kesesuaian_singkat'],
+                    'profesi_list'       => $detail['profesi_list'] ?? [],
+                ];
+            });
     }
 
     /**

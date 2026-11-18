@@ -129,13 +129,28 @@ class ModulA3DemoSeeder extends Seeder
         // 5. PROFESI & PROGRAM STUDI KELAS XII
         // ==========================================
         $profesiData = [
-            ['Software Engineer', 'Merancang dan mengembangkan aplikasi sistem berskala besar.'],
-            ['Data Scientist', 'Mengolah big data dan melatih model kecerdasan buatan.'],
-            ['Dokter Umum', 'Mendiagnosis dan mengobati penyakit serta menjaga kesehatan publik.'],
-            ['Arsitek Bangunan', 'Merancang tata ruang dan estetika arsitektur berkelanjutan.'],
-            ['Akuntan Publik', 'Memeriksa laporan keuangan dan audit kepatuhan perusahaan.'],
-            ['Psikolog Klinis', 'Memberikan konseling, asesmen mental, dan terapi perilaku.'],
-            ['Diplomat', 'Mewakili kepentingan hubungan diplomasi bilateral dan multilateral.'],
+            ['Software Engineer', 'Merancang dan mengembangkan arsitektur perangkat lunak skala tinggi.'],
+            ['DevOps & Cloud Engineer', 'Mengelola infrastruktur cloud server, automasi CI/CD, dan keandalan sistem 24/7.'],
+            ['Cybersecurity Analyst', 'Mengidentifikasi celah keamanan, menguji penetrasi sistem, dan mencegah peretasan.'],
+            ['Data Scientist', 'Mengolah big data dan melatih model kecerdasan buatan berbasis machine learning.'],
+            ['Data Analyst', 'Menganalisis tren transaksi bisnis dan menyajikan dashboard visual eksekutif.'],
+            ['Data Engineer', 'Membangun jalur pipa data otomatis (ETL) berkapasitas pemrosesan terabytes.'],
+            ['Dokter Umum', 'Mendiagnosis dan mengobati penyakit serta memberikan layanan medis primer bagi publik.'],
+            ['Dokter Spesialis', 'Menangani kasus medis spesifik lanjutan setelah menyelesaikan pendidikan spesialisasi.'],
+            ['Peneliti Medis', 'Melakukan riset biomedis, uji klinis terapi obat baru, dan rekayasa vaksin kesehatan.'],
+            ['Arsitek Bangunan', 'Merancang konsep tata ruang, estetika bentuk, dan gambar kerja konstruksi bangunan.'],
+            ['BIM Manager', 'Mengintegrasikan permodelan 3D digital arsitektur, struktur sipil, dan mekanikal bangunan.'],
+            ['Urban Designer', 'Menata masterplan kawasan perkotaan terpadu, koridor pedestrian, dan taman terbuka hijau.'],
+            ['Akuntan Publik', 'Memeriksa independen laporan keuangan dan audit kepatuhan perusahaan di KAP.'],
+            ['Konsultan Pajak', 'Merancang strategi kepatuhan pajak korporasi legal dan efisiensi beban fiskal perusahaan.'],
+            ['Financial Analyst', 'Mengevaluasi kinerja portofolio emiten pasar modal, proyeksi kas, dan kelayakan investasi.'],
+            ['Internal Auditor', 'Mengawasi pengendalian internal operasional dan mitigasi risiko tata kelola Good Corporate Governance.'],
+            ['Psikolog Klinis', 'Memberikan asesmen kesehatan mental, konseling terapeutik, dan intervensi psikoterapi.'],
+            ['HR Specialist', 'Mengelola rekrutmen talenta, evaluasi performa kerja karyawan, dan program pelatihan SDM.'],
+            ['UX Researcher', 'Mengeksplorasi motivasi kognitif dan perilaku psikologis pengguna produk digital.'],
+            ['Diplomat', 'Mewakili kepentingan diplomasi bilateral dan multilateral negara di kedutaan luar negeri.'],
+            ['International NGO Officer', 'Mengelola program mitigasi kemanusiaan darurat, pengungsi, dan advokasi hak asasi PBB.'],
+            ['Political Risk Analyst', 'Menyediakan kajian risiko geopolitik dan kepatuhan regulasi bagi korporasi multinasional.'],
         ];
 
         $profesiMap = [];
@@ -148,13 +163,55 @@ class ModulA3DemoSeeder extends Seeder
         }
 
         $prodiData = [
-            ['Teknik Informatika', 'Teknologi', 'Program studi rekayasa sistem perangkat lunak modern.', 'IRC', ['Software Engineer', 'Data Scientist']],
-            ['Sains Data', 'Teknologi', 'Program studi analisis statistika komputasi dan machine learning.', 'IRC', ['Data Scientist']],
-            ['Pendidikan Dokter', 'Kesehatan', 'Program studi medis klinis untuk menjadi dokter profesional.', 'ISR', ['Dokter Umum']],
-            ['Arsitektur', 'Teknik & Desain', 'Program studi estetika rancang bangun dan tata lingkungan.', 'AIR', ['Arsitek Bangunan']],
-            ['Akuntansi', 'Ekonomi & Bisnis', 'Program studi auditing, perpajakan, dan sistem akuntansi.', 'CES', ['Akuntan Publik']],
-            ['Psikologi', 'Sosial Humaniora', 'Program studi perilaku manusia, kognisi, dan dinamika mental.', 'SAI', ['Psikolog Klinis']],
-            ['Hubungan Internasional', 'Sosial Humaniora', 'Program studi geopolitik, negosiasi, dan diplomasi global.', 'EAS', ['Diplomat']],
+            [
+                'Teknik Informatika',
+                'Teknologi',
+                'Program studi rekayasa sistem perangkat lunak modern, algoritma, cloud computing, kecerdasan buatan, dan keamanan siber.',
+                'IRC',
+                ['Software Engineer', 'DevOps & Cloud Engineer', 'Cybersecurity Analyst', 'Data Scientist'],
+            ],
+            [
+                'Sains Data',
+                'Teknologi',
+                'Program studi analisis statistika komputasi, machine learning, ekosistem big data, dan visualisasi prediktif.',
+                'IRC',
+                ['Data Scientist', 'Data Analyst', 'Data Engineer'],
+            ],
+            [
+                'Pendidikan Dokter',
+                'Kesehatan',
+                'Program studi medis klinis untuk mencetak dokter profesional dengan penguasaan biomedis dan keterampilan diagnosis holistik.',
+                'ISR',
+                ['Dokter Umum', 'Dokter Spesialis', 'Peneliti Medis'],
+            ],
+            [
+                'Arsitektur',
+                'Teknik & Desain',
+                'Program studi estetika rancang bangun, sains bangunan ramah lingkungan, komputasi 3D BIM, dan tata ruang perkotaan.',
+                'AIR',
+                ['Arsitek Bangunan', 'BIM Manager', 'Urban Designer'],
+            ],
+            [
+                'Akuntansi',
+                'Ekonomi & Bisnis',
+                'Program studi auditing independen, perpajakan korporasi, sistem informasi akuntansi digital ERP, dan analisis keuangan strategis.',
+                'CES',
+                ['Akuntan Publik', 'Konsultan Pajak', 'Financial Analyst', 'Internal Auditor'],
+            ],
+            [
+                'Psikologi',
+                'Sosial Humaniora',
+                'Program studi perilaku kognitif manusia, psikometri asesmen kepribadian, konseling suportif, dan manajemen talenta SDM.',
+                'SAI',
+                ['Psikolog Klinis', 'HR Specialist', 'UX Researcher'],
+            ],
+            [
+                'Hubungan Internasional',
+                'Sosial Humaniora',
+                'Program studi geopolitik kawasan, negosiasi diplomasi multilateral, hukum global, dan resolusi konflik antarbangsa.',
+                'EAS',
+                ['Diplomat', 'International NGO Officer', 'Political Risk Analyst'],
+            ],
         ];
 
         foreach ($prodiData as [$nama, $rumpun, $deskripsi, $riasec, $listProfesi]) {

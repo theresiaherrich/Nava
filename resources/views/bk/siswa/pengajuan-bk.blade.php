@@ -55,7 +55,7 @@
                         class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5]">
                         <option value="">— Pilih Topik Konsultasi —</option>
                         @foreach($topikList as $topik)
-                            <option value="{{ $topik }}" {{ old('topik') === $topik ? 'selected' : '' }}>
+                            <option value="{{ $topik }}" {{ old('topik', request('topik')) === $topik ? 'selected' : '' }}>
                                 {{ $topik }}
                             </option>
                         @endforeach
@@ -70,7 +70,7 @@
                     </label>
                     <textarea name="deskripsi" rows="4" required minlength="20" maxlength="500"
                         placeholder="Ceritakan kendala, pertanyaan minat bakat, atau kebutuhan konsultasimu secara singkat..."
-                        class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5] resize-none">{{ old('deskripsi') }}</textarea>
+                        class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#089BD5]/20 focus:border-[#089BD5] resize-none">{{ old('deskripsi', request('prodi') ? 'Saya ingin berkonsultasi dengan Guru BK mengenai pemilihan program studi ' . request('prodi') . ' dan perencanaan studi lanjut/SNBP/SNBT berdasarkan hasil rekomendasi tes minat RIASEC saya.' : '') }}</textarea>
                 </div>
 
                 <button type="submit"

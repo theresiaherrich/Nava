@@ -22,10 +22,11 @@
         $peran = $tingkat ? 'KELAS ' . $tingkat : 'SISWA';
         $map = [
             'siswa.tes*'           => 'Tes RIASEC',
-            'siswa.hasil*'         => 'Hasil & Rekomendasi',
-            'siswa.mapel-pilihan*' => 'Mapel Pilihan',
-            'siswa.riwayat-tes*'   => 'Riwayat Tes',
-            'siswa.pengajuan-bk*'  => 'Pengajuan BK',
+            'siswa.hasil*'             => 'Hasil & Rekomendasi',
+            'siswa.mapel-pilihan*'     => 'Mapel Pilihan',
+            'siswa.rekomendasi-prodi*' => 'Rekomendasi Program Studi',
+            'siswa.riwayat-tes*'       => 'Riwayat Tes',
+            'siswa.pengajuan-bk*'      => 'Pengajuan BK',
         ];
     }
 

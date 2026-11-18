@@ -93,7 +93,7 @@ class PortalController extends Controller
     }
 
     /** Hanya rapor milik siswa sendiri/anak dan berstatus terbit. */
-    public function unduh(Rapor $rapor, RaporController $raporController): Response
+    public function unduh(Request $request, Rapor $rapor, RaporController $raporController): Response
     {
         $rapor->load('riwayatKelas.siswa');
         RaporAccess::pastikanBolehLihatSiswa($rapor->riwayatKelas->siswa, $rapor->riwayatKelas->id_semester);
@@ -101,7 +101,7 @@ class PortalController extends Controller
             throw AturanBisnisException::dilarang('Rapor ini belum diterbitkan.', 'RAPOR_NOT_PUBLISHED');
         }
 
-        return $raporController->pdf($rapor);
+        return $raporController->pdf($rapor, $request->boolean('pratinjau'));
     }
 
     private function ringkasMapel(RiwayatKelas $anggota)

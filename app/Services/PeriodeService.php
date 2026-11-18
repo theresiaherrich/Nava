@@ -27,6 +27,7 @@ class PeriodeService
     public function __construct(
         private AuditService $audit,
         private NotifikasiService $notif,
+        private NilaiService $nilai,
     ) {}
 
     /** Setiap semester selalu punya periode STS & SAS (status awal belum_diatur). */
@@ -55,7 +56,11 @@ class PeriodeService
             $sebelum = $periode->only(['tgl_buka', 'tgl_tutup', 'status']) + ['tingkat' => $periode->tingkat];
             $baruDibuka = $periode->status === 'belum_diatur';
 
-            $periode->update(['tgl_buka' => Carbon::parse($buka), 'tgl_tutup' => Carbon::parse($tutup), 'status' => 'dibuka']);
+            $periode->update([
+                'tgl_buka' => Carbon::parse($buka)->setTimezone(config('app.timezone')),
+                'tgl_tutup' => Carbon::parse($tutup)->setTimezone(config('app.timezone')),
+                'status' => 'dibuka',
+            ]);
 
             if ($tingkat !== null) {
                 $dilepas = array_diff($periode->tingkat, $tingkat);
@@ -137,7 +142,7 @@ class PeriodeService
                 'kelas' => $k->nama,
                 'tingkat' => $k->tingkat,
                 'wali_kelas' => $wali->get($k->id_kelas)?->guru?->nama,
-                'mapel_siap' => $p->whereIn('status', self::SIAP_DIKUNCI)->count(),
+                'mapel_siap' => $p->whereIn('status', self::SIAP_DIKUNCI)->where('lengkap', true)->count(),
                 'mapel_total' => $p->count(),
                 'status' => $this->statusKelas($p),
                 'paket' => $p->map(fn (PaketNilai $x) => [
@@ -160,7 +165,7 @@ class PeriodeService
             $paket->every(fn ($p) => $p->status === 'dikunci') => 'dikunci',
             $paket->contains(fn ($p) => $p->koreksi) => 'dibuka_koreksi',
             $paket->contains(fn ($p) => $p->status === 'perlu_revisi') => 'perlu_revisi',
-            $paket->every(fn ($p) => in_array($p->status, self::SIAP_DIKUNCI, true)) => 'siap_dikunci',
+            $paket->every(fn ($p) => in_array($p->status, self::SIAP_DIKUNCI, true)) => $paket->every('lengkap') ? 'siap_dikunci' : 'nilai_belum_lengkap',
             $paket->contains(fn ($p) => $p->status === 'terkirim') => 'menunggu_verifikasi',
             default => 'pengisian',
         };
@@ -184,6 +189,10 @@ class PeriodeService
             $belum = $paket->reject(fn ($p) => in_array($p->status, self::SIAP_DIKUNCI, true));
             if ($belum->isNotEmpty()) {
                 throw new AturanBisnisException('Masih ada mapel yang belum disetujui wali kelas: '.$belum->pluck('rombel.nama')->implode(', ').'.', 'PAKET_BELUM_SIAP');
+            }
+            $tidakLengkap = $paket->filter(fn (PaketNilai $p) => ! $this->nilai->kelengkapan($p->rombel, $periode, $kelas->id_kelas)['lengkap']);
+            if ($tidakLengkap->isNotEmpty()) {
+                throw new AturanBisnisException('Nilai belum lengkap: '.$tidakLengkap->pluck('rombel.nama')->implode(', ').'.', 'PAKET_BELUM_LENGKAP');
             }
 
             $now = now();

@@ -15,6 +15,10 @@ class EnsurePasswordChanged
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->user()?->must_change_password) {
+            if (! $request->is('api/*') && ! $request->expectsJson()) {
+                return redirect()->route('password.change');
+            }
+
             return response()->json([
                 'message' => 'Anda wajib mengganti kata sandi sebelum melanjutkan.',
                 'code' => 'MUST_CHANGE_PASSWORD',

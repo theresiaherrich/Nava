@@ -16,6 +16,7 @@ use App\Support\AcademicAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 /** Cetak, arsip & versi, terbit/cabut rapor (wali kelas: kelasnya; Kurikulum: semua). */
 class RaporController extends Controller
@@ -75,12 +76,12 @@ class RaporController extends Controller
         ]);
     }
 
-    public function unduh(Rapor $rapor): Response
+    public function unduh(Request $request, Rapor $rapor): Response
     {
         $rapor->load('riwayatKelas.kelas');
         RaporAccess::pastikanKelolaKelas($rapor->riwayatKelas->kelas, $rapor->riwayatKelas->id_semester);
 
-        return $this->pdf($rapor);
+        return $this->pdf($rapor, $request->boolean('pratinjau'));
     }
 
     public function riwayatCetak(Request $request): JsonResponse
@@ -114,13 +115,13 @@ class RaporController extends Controller
         return $this->ok($this->rapor->cabut($rapor, $request->string('alasan'))->only(['id_rapor', 'versi', 'status']), 'Rapor dicabut.');
     }
 
-    public function pdf(Rapor $rapor): Response
+    public function pdf(Rapor $rapor, bool $pratinjau = false): Response
     {
-        $nama = 'rapor-'.$rapor->data_final['siswa']['nis'].'-'.strtolower($rapor->data_final['jenis']).'-v'.$rapor->versi.'.pdf';
+        $nama = 'rapor-'.Str::slug($rapor->data_final['siswa']['nis']).'-'.strtolower($rapor->data_final['jenis']).'-v'.$rapor->versi.'.pdf';
 
         return response($this->rapor->isiFile($rapor), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="'.$nama.'"',
+            'Content-Disposition' => ($pratinjau ? 'inline' : 'attachment').'; filename="'.$nama.'"',
         ]);
     }
 }

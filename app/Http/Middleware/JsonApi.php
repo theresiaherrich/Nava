@@ -17,7 +17,7 @@ class JsonApi
 
         $response = $next($request);
 
-        if ($request->is('api/*')) {
+        if ($request->is('api/*') || ($request->hasSession() && $request->user())) {
             $response->headers->set('Cache-Control', 'no-store, private');
         }
 

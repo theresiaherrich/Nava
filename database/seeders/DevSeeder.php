@@ -41,7 +41,7 @@ class DevSeeder extends Seeder
         $islam = Agama::where('nama', 'Islam')->value('id_agama');
         $kristen = Agama::where('nama', 'Kristen')->value('id_agama');
 
-        Sekolah::updateOrCreate(['id_sekolah' => 1], [
+        Sekolah::firstOrCreate(['id_sekolah' => 1], [
             'npsn' => '20533708', 'nama' => 'SMA Negeri 1 Kota Malang', 'kota' => 'Malang',
             'alamat' => 'Jl. Tugu Utara No. 1, Kota Malang', 'kepala_sekolah' => 'Kepala Sekolah Contoh',
         ]);
@@ -67,23 +67,34 @@ class DevSeeder extends Seeder
         $guru2 = $this->guru(null, 'GTT', 'Sari Wulandari', 'P', $kristen, 'sari');
 
         // Sari = wali kelas X-B; peran WALI_KELAS diberikan otomatis lewat penetapan ini.
-        WaliKelas::updateOrCreate(
+        WaliKelas::firstOrCreate(
             ['id_kelas' => $kelas['X-B']->id_kelas, 'id_semester' => $ganjil->id_semester],
             ['id_guru' => $guru2->id_guru],
         );
         $this->beriPeran($guru2->user, 'WALI_KELAS');
+        $waliXa = $this->guru(null, 'GTT', 'Wali Contoh X-A', 'P', $islam, 'wali_xa');
+        WaliKelas::firstOrCreate(
+            ['id_kelas' => $kelas['X-A']->id_kelas, 'id_semester' => $ganjil->id_semester],
+            ['id_guru' => $waliXa->id_guru],
+        );
+        $this->beriPeran($waliXa->user, 'WALI_KELAS');
 
         $siswa = [
             ['1001', '0081234561', 'Andi Pratama', 'L', $islam, 'X-B', 'andi'],
             ['1002', '0081234562', 'Bunga Lestari', 'P', $kristen, 'X-B', 'bunga'],
             ['1003', '0081234563', 'Citra Ayu', 'P', $islam, 'X-A', 'citra'],
         ];
+        foreach (range(4, 12) as $nomor) {
+            $siswa[] = [(string) (1000 + $nomor), (string) (8800000000 + $nomor),
+                sprintf('Siswa Fiktif %02d', $nomor), $nomor % 2 ? 'L' : 'P', $islam,
+                $nomor === 12 ? 'X-A' : 'X-B', sprintf('siswa_a2_%02d', $nomor)];
+        }
         $profilSiswa = [];
         foreach ($siswa as [$nis, $nisn, $nama, $jk, $agama, $namaKelas, $username]) {
             $s = Siswa::firstOrCreate(['nis' => $nis], [
                 'nisn' => $nisn, 'nama' => $nama, 'jenis_kelamin' => $jk, 'id_agama' => $agama, 'tahun_masuk' => 2026,
             ]);
-            $this->tautkan($s, $this->akun($username, $nama, ['SISWA']));
+            $this->tautkan($s, $this->akun($username, $nama, ['SISWA'], $username === 'citra'));
             RiwayatKelas::firstOrCreate(
                 ['id_siswa' => $s->id_siswa, 'id_semester' => $ganjil->id_semester],
                 ['id_kelas' => $kelas[$namaKelas]->id_kelas],
@@ -97,13 +108,13 @@ class DevSeeder extends Seeder
 
         $this->call(DevPenilaianSeeder::class);
 
-        $this->command?->info('Akun contoh: superadmin, operator, kurikulum, kesiswaan, budi (guru), sari (guru + wali X-B), andi, bunga, citra (siswa), hendra (orang tua). Sandi = SEED_DEFAULT_PASSWORD.');
+        $this->command?->info('Daftar akun contoh tersedia di docs/integration/03_AKUN_DUMMY.md. Sandi awal ditentukan oleh SEED_DEFAULT_PASSWORD.');
     }
 
-    private function akun(string $username, string $nama, array $roles): User
+    private function akun(string $username, string $nama, array $roles, bool $ubahSandi = false): User
     {
         $user = User::firstOrCreate(['username' => $username], [
-            'nama' => $nama, 'password' => $this->password, 'status_akun' => 'aktif', 'must_change_password' => false,
+            'nama' => $nama, 'password' => $this->password, 'status_akun' => 'aktif', 'must_change_password' => $ubahSandi,
         ]);
         foreach ($roles as $r) {
             $this->beriPeran($user, $r);

@@ -153,7 +153,7 @@ Baca juga untuk ADMIN & KESISWAAN: `GET /kurikulum/tahun-ajaran`, `GET /kurikulu
 | POST | `/kurikulum/rapor/cetak` | `id_periode`, `id_riwayat_kelas` | |
 | POST | `/kurikulum/rapor/cetak-kelas` | `id_periode`, `id_kelas`, `format` (`pdf`/`zip`) | Unduhan |
 | GET | `/kurikulum/rapor/riwayat-cetak` | `id_kelas`, `id_semester?` | |
-| GET | `/kurikulum/rapor/{id}/unduh` | | |
+| GET | `/kurikulum/rapor/{id}/unduh` | `pratinjau?` (boolean) | `pratinjau=1` menampilkan PDF tersimpan secara inline |
 | POST | `/kurikulum/rapor/terbitkan` | `id_kelas`, `id_periode` | Versi terbaru tiap siswa → `terbit`; notifikasi siswa & ortu |
 | POST | `/kurikulum/rapor/{id}/cabut` | `alasan` | |
 
@@ -216,7 +216,7 @@ Orang tua dengan lebih dari satu anak wajib mengirim `?id_siswa=`; anak yang tid
 | GET | `/portal/nilai?id_semester=` | Nilai per mapel (STS, SAS, akhir, kelengkapan, perlu penguatan) |
 | GET | `/portal/nilai/{idRombel}` | Detail per TP: nilai, KKTP, `perlu_penguatan` |
 | GET | `/portal/rapor` | Riwayat rapor **terbit** + versi |
-| GET | `/portal/rapor/{id}/unduh` | Hanya rapor terbit milik sendiri/anak |
+| GET | `/portal/rapor/{id}/unduh` | Hanya rapor terbit milik sendiri/anak. `?pratinjau=1` menampilkan PDF secara inline. |
 | GET | `/portal/analitik/tren` | Tren nilai antarsemester |
 
 ### 4.9 Analitik — KURIKULUM, WALI_KELAS, GURU
@@ -243,3 +243,5 @@ Cakupan: `id_rombel` **atau** `id_kelas`, plus `id_periode`. Kurikulum semua; wa
 - Status paket: `draf → terkirim → disetujui → dikunci`; `terkirim/disetujui → perlu_revisi` (wali, catatan wajib); `dikunci → perlu_revisi` (buka koreksi Kurikulum, alasan wajib). Riwayat di `verifikasi_nilai` (append-only).
 - Periode menjadi `dikunci` otomatis bila semua paketnya dikunci. Struktur TP terkunci bila periode SAS dikunci.
 - Rapor hanya bisa dicetak bila semua paket kelas pada periode itu `dikunci`. Data berubah → versi baru; versi lama tetap. Siswa/ortu hanya bisa mengunduh versi `terbit`.
+- Penguncian memeriksa kelengkapan nilai terkini pada semua paket yang disetujui. Paket belum lengkap dapat dikembalikan untuk revisi dan tidak dapat dikunci.
+- Rapor STS menyimpan nilai per TP yang masuk periode STS. Saat penerbitan, sistem memeriksa penguncian kelas, isi draf, templat aktif, dan keberadaan berkas PDF. Cetak kembali bila data draf sudah berubah.

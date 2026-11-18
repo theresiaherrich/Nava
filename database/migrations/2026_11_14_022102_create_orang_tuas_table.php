@@ -1,4 +1,3 @@
-
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -10,6 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('orang_tua', function (Blueprint $table) {
+            $table->increments('id_orang_tua');
+
             $table->unsignedInteger('id_siswa');
 
             $table->enum('hubungan', [
@@ -37,11 +38,15 @@ return new class extends Migration
 
             $table->dateTime('waktu_verifikasi')->nullable();
 
-            $table->primary(
+            // Satu siswa hanya memiliki satu data untuk
+            // setiap jenis hubungan (Ayah, Ibu, atau Wali).
+            $table->unique(
                 ['id_siswa', 'hubungan'],
-                'pk_orang_tua'
+                'uq_orang_tua_siswa_hubungan'
             );
 
+            // Satu akun orang tua dapat terhubung
+            // dengan banyak siswa.
             $table->unique(
                 ['id_user', 'id_siswa'],
                 'uq_ortu_user_siswa'

@@ -13,23 +13,26 @@ class QrSiswaController extends Controller
     {
         $user = $request->user();
 
-        // Siswa hanya boleh melihat QR miliknya sendiri.
-        if ($user->role === 'SISWA') {
-            $siswaLogin = $user->siswa;
-
-            if (!$siswaLogin || (int) $siswaLogin->id_siswa !== $id_siswa) {
-                abort(403, 'Kamu hanya dapat melihat QR Code milikmu sendiri.');
-            }
-        } elseif (!in_array($user->role, ['ADMIN', 'BUDAYA_POSITIF'], true)) {
-            abort(403, 'Kamu tidak memiliki akses untuk melihat QR Code ini.');
+        // QR Code hanya dapat diakses oleh siswa.
+        if ($user->role !== 'SISWA') {
+            abort(403, 'QR Code hanya dapat diakses oleh siswa.');
         }
 
+        // Siswa hanya boleh melihat QR Code miliknya sendiri.
+        $siswaLogin = $user->siswa;
+
+        if (!$siswaLogin || (int) $siswaLogin->id_siswa !== $id_siswa) {
+            abort(403, 'Kamu hanya dapat melihat QR Code milikmu sendiri.');
+        }
+
+        // Mengambil QR Code berdasarkan ID siswa.
         $qrSiswa = QrSiswa::where('id_siswa', $id_siswa)->first();
 
         if (!$qrSiswa) {
             abort(404, 'QR Code siswa tidak ditemukan.');
         }
 
+        // Menghasilkan gambar QR Code dalam format SVG.
         $gambarQr = QrCode::size(300)
             ->generate($qrSiswa->kode_qr);
 

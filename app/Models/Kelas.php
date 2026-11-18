@@ -19,6 +19,7 @@ class Kelas extends Model
         'tingkat',
         'fase',
         'id_tahun_ajaran',
+        'id_guru',
     ];
 
     public function riwayatKelas(): HasMany
@@ -36,6 +37,15 @@ class Kelas extends Model
             TahunAjaran::class,
             'id_tahun_ajaran',
             'id_tahun_ajaran'
+        );
+    }
+
+    public function waliKelas(): BelongsTo
+    {
+        return $this->belongsTo(
+            Guru::class,
+            'id_guru',
+            'id_guru'
         );
     }
 }

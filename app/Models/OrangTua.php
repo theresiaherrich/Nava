@@ -9,12 +9,7 @@ class OrangTua extends Model
 {
     protected $table = 'orang_tua';
 
-    // Tabel menggunakan primary key gabungan.
-    // Eloquent tidak mendukung composite primary key
-    // untuk operasi update/delete standar.
-    protected $primaryKey = 'id_siswa';
-
-    public $incrementing = false;
+    protected $primaryKey = 'id_orang_tua';
 
     public $timestamps = false;
 
@@ -46,6 +41,15 @@ class OrangTua extends Model
             Siswa::class,
             'id_siswa',
             'id_siswa'
+        );
+    }
+
+    public function verifikator(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'diverifikasi_oleh',
+            'id_user'
         );
     }
 }

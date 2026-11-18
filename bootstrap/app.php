@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'must_change_password' => \App\Http\Middleware\MustChangePassword::class,
         ]);
         $middleware->redirectGuestsTo(
             fn (Request $request) => $request->is('api/*') ? null : route('login')

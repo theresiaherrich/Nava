@@ -36,4 +36,13 @@ class RiwayatKelas extends Model
             'id_kelas'
         );
     }
+
+    public function semester(): BelongsTo
+    {
+        return $this->belongsTo(
+            Semester::class,
+            'id_semester',
+            'id_semester'
+        );
+    }
 }

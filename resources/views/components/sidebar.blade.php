@@ -1,6 +1,7 @@
 @props([
     'menu'         => null,
     'academicYear' => '2026/2027 • Ganjil',
+    'logoutRoute'  => null,
 ])
 
 @php
@@ -37,6 +38,11 @@
     ];
 
     $menu = $menu ?? $defaultMenu;
+
+    // Portal Orang Tua tetap memakai route logout default; Admin dapat mengirim admin.logout.
+    $logoutRoute = $logoutRoute ?? (\Illuminate\Support\Facades\Route::has('logout')
+        ? 'logout'
+        : (\Illuminate\Support\Facades\Route::has('admin.logout') ? 'admin.logout' : null));
 
     $resolve  = fn (?string $route) => ($route && \Illuminate\Support\Facades\Route::has($route)) ? route($route) : '#';
     $isActive = fn (?string $pattern) => $pattern && request()->routeIs($pattern);
@@ -83,11 +89,18 @@
                     @if (count($items))
                         @if (! empty($m['route']))
                             {{-- Menu induk yang juga punya halaman sendiri (mis. Portal Orang Tua -> Dashboard) --}}
-                            <a href="{{ $resolve($m['route']) }}"
+                            <!-- <a href="{{ $resolve($m['route']) }}"
                                class="sb-item sb-toggle {{ $groupActive ? 'is-active' : '' }}"
                                aria-expanded="{{ $groupActive ? 'true' : 'false' }}">
                                 {!! $svg($m['icon']) !!}
-                                <span class="sb-item__code">{{ $m['code'] }}</span>
+                                <!-- <span class="sb-item__code">{{ $m['code'] }}</span> -->
+                                <span class="sb-item__text">{{ $m['label'] }}</span>
+                                {!! $svg('chev', 'sb-chevron') !!}
+                            </a> -->
+                            <a href="{{ $resolve($m['route']) }}"
+                            class="sb-item sb-toggle {{ $groupActive ? 'is-active' : '' }}"
+                            aria-expanded="{{ $groupActive ? 'true' : 'false' }}">
+                                {!! $svg($m['icon']) !!}
                                 <span class="sb-item__text">{{ $m['label'] }}</span>
                                 {!! $svg('chev', 'sb-chevron') !!}
                             </a>
@@ -96,7 +109,6 @@
                                     class="sb-item sb-toggle {{ $groupActive ? 'is-active' : '' }}"
                                     aria-expanded="{{ $groupActive ? 'true' : 'false' }}">
                                 {!! $svg($m['icon']) !!}
-                                <span class="sb-item__code">{{ $m['code'] }}</span>
                                 <span class="sb-item__text">{{ $m['label'] }}</span>
                                 {!! $svg('chev', 'sb-chevron') !!}
                             </button>
@@ -140,19 +152,14 @@
             </div>
         </div>
 
-        @if (\Illuminate\Support\Facades\Route::has('logout'))
-            <form method="POST" action="{{ route('logout') }}">
+        @if ($logoutRoute && \Illuminate\Support\Facades\Route::has($logoutRoute))
+            <form method="POST" action="{{ route($logoutRoute) }}">
                 @csrf
                 <button type="submit" class="sb-sub sb-logout">
                     {!! $svg('logout') !!}
                     <span class="sb-item__text">Keluar</span>
                 </button>
             </form>
-        @else
-            <a href="#" class="sb-sub sb-logout">
-                {!! $svg('logout') !!}
-                <span class="sb-item__text">Keluar</span>
-            </a>
         @endif
     </div>
 </aside>

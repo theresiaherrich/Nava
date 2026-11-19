@@ -1,0 +1,8 @@
+@extends('admin.layouts.app')
+@section('title','Notifikasi WhatsApp')
+@section('content')
+<div class="page-heading"><div><p class="eyebrow">Portal Orang Tua</p><h1>Notifikasi WhatsApp</h1><p class="muted">Informasi konfigurasi dan kesiapan integrasi notifikasi.</p></div></div>
+<div class="notice-banner"><b>Informasi ketersediaan data</b><p>Skema database Nava saat ini belum memiliki tabel riwayat/pengiriman pesan WhatsApp. Karena itu, halaman ini belum menampilkan jumlah pesan gagal atau riwayat status terkirim agar tidak menyajikan angka yang tidak bersumber dari database.</p></div>
+<div class="stats-grid two-stats"><article class="stat-card"><span>Konfigurasi layanan WhatsApp</span><strong class="small-stat">{{ $waConfigured ? 'Terkonfigurasi' : 'Belum lengkap' }}</strong><small>Memeriksa WA_SERVICE_URL dan WA_SERVICE_TOKEN</small><b class="stat-icon">♧</b></article><article class="stat-card"><span>Riwayat notifikasi</span><strong class="small-stat">Belum tersedia</strong><small>Memerlukan tabel log notifikasi atau endpoint riwayat dari layanan WhatsApp.</small><b class="stat-icon red-icon">!</b></article></div>
+<section class="panel"><div class="panel-heading"><div><h2>Catatan Integrasi</h2><p class="muted">Ruang lingkup halaman administrator A4</p></div></div><ul class="note-list"><li>Pengiriman pesan tetap dijalankan oleh service WhatsApp milik tim integrasi.</li><li>Admin A4 tidak mengubah konfigurasi atau file service WhatsApp.</li><li>Untuk menampilkan pesan terkirim/gagal, tim perlu menyediakan endpoint riwayat atau menyimpan status callback ke tabel log.</li><li>Data notifikasi presensi dan nilai berasal dari modul kelompok terkait setelah integrasi selesai.</li></ul></section>
+@endsection

@@ -1,0 +1,468 @@
+/* Admin A4 — menggunakan design system Portal Orang Tua (pt-). */
+.pt--admin { min-height:100vh; }
+.pt--admin .pt-admin-topbar { gap:12px; }
+.pt--admin .pt-admin-search { width:min(420px,45vw); }
+.pt--admin .pt-admin-notification { display:inline-grid; place-items:center; width:36px; height:36px; border-radius:10px; background:var(--pt-blue-tint); color:var(--pt-blue-strong); }
+.pt--admin .pt-avatar { display:grid; place-items:center; width:36px; height:36px; flex:none; border-radius:50%; background:var(--pt-blue-soft); color:var(--pt-blue-strong); font-size:11px; font-weight:800; }
+.pt--admin .pt-admin-logout-form { margin:0; }
+.pt--admin .pt-admin-page { width:100%; max-width:1280px; }
+.pt--admin .page-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin:0 0 22px; }
+.pt--admin .page-heading h1 { margin:2px 0 5px; color:var(--pt-ink); font-size:27px; line-height:1.2; letter-spacing:-.02em; font-weight:800; }
+.pt--admin .eyebrow { margin:0 0 6px; color:var(--pt-blue); font-size:10.5px; font-weight:700; letter-spacing:.07em; }
+.pt--admin .muted, .pt--admin .hint { color:var(--pt-muted); font-size:11.5px; line-height:1.65; }
+.pt--admin .year-pill, .pt--admin .summary-pill { display:inline-flex; align-items:center; gap:12px; padding:10px 14px; border:1px solid var(--pt-line); border-radius:12px; background:#fff; color:var(--pt-text); font-size:11px; }
+.pt--admin .summary-pill b { color:var(--pt-blue-strong); font-size:20px; }
+.pt--admin .stats-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin:0 0 22px; }
+.pt--admin .stats-grid.two-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.pt--admin .stat-card, .pt--admin .panel, .pt--admin .table-panel { min-width:0; padding:21px; border:1px solid rgba(227,235,245,.8); border-radius:var(--pt-radius); background:var(--pt-card); box-shadow:var(--pt-shadow); }
+.pt--admin .stat-card { position:relative; min-height:130px; }
+.pt--admin .stat-card>span { display:block; padding-right:48px; color:var(--pt-muted); font-size:11.5px; }
+.pt--admin .stat-card>strong { display:block; margin:7px 0 4px; color:var(--pt-ink); font-size:27px; font-weight:800; }
+.pt--admin .stat-card>small { color:var(--pt-muted); font-size:10px; }
+.pt--admin .stat-icon { position:absolute; top:18px; right:18px; display:grid; place-items:center; width:39px; height:39px; border-radius:12px; background:var(--pt-blue-soft); color:var(--pt-blue-strong); font-size:18px; }
+.pt--admin .stat-icon.red-icon { background:#fff0f0; color:#c43d4b; }
+.pt--admin .warning-text { color:#c43d4b!important; }
+.pt--admin .panel { margin:0 0 20px; }
+.pt--admin .panel-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin:0 0 16px; }
+.pt--admin .panel-heading h2 { margin:0 0 4px; color:var(--pt-ink); font-size:16px; font-weight:700; }
+.pt--admin .panel-heading>small { color:var(--pt-muted); font-size:10px; }
+.pt--admin .integration-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.pt--admin .integration-card { min-width:0; min-height:112px; padding:15px; border:1px solid var(--pt-line); border-radius:12px; background:var(--pt-blue-tint); }
+.pt--admin .integration-top { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:15px; }
+.pt--admin .integration-top>b { color:var(--pt-muted); font-size:9.5px; }
+.pt--admin .integration-card>strong { display:block; margin-bottom:5px; color:var(--pt-ink); font-size:11.5px; }
+.pt--admin .integration-card>small { color:var(--pt-muted); font-size:9.5px; }
+.pt--admin .status-chip { display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border-radius:999px; background:var(--pt-blue-soft); color:var(--pt-blue-strong); font-size:10px; white-space:nowrap; }
+.pt--admin .status-chip.good { background:var(--pt-green-soft); color:var(--pt-green); }
+.pt--admin .status-chip.pending { background:var(--pt-gold-soft); color:var(--pt-gold); }
+.pt--admin .status-chip.bad { background:#fff0f0; color:#c43d4b; }
+.pt--admin .activity-row { display:flex; align-items:center; gap:13px; padding:12px 2px; border-bottom:1px solid var(--pt-line); }
+.pt--admin .activity-row:last-child { border-bottom:0; }
+.pt--admin .activity-icon { display:grid; place-items:center; width:36px; height:36px; flex:none; border-radius:11px; background:var(--pt-blue-soft); color:var(--pt-blue-strong); }
+.pt--admin .activity-text { flex:1; min-width:0; }
+.pt--admin .activity-text b, .pt--admin .activity-text small { display:block; }
+.pt--admin .activity-text b { color:var(--pt-ink); font-size:11.5px; }
+.pt--admin .activity-text small, .pt--admin .activity-row time { color:var(--pt-muted); font-size:10px; }
+.pt--admin .toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:16px 0 13px; }
+.pt--admin .filter-form { display:flex; flex:1; flex-wrap:wrap; gap:9px; }
+.pt--admin input, .pt--admin select, .pt--admin textarea { min-height:39px; max-width:100%; padding:9px 12px; border:1px solid var(--pt-line); border-radius:10px; outline:0; background:#fff; color:var(--pt-ink); font:inherit; font-size:11.5px; }
+.pt--admin input:focus, .pt--admin select:focus, .pt--admin textarea:focus { border-color:var(--pt-blue); box-shadow:0 0 0 3px rgba(11,111,168,.12); }
+.pt--admin .filter-form input { width:min(340px,38vw); }
+.pt--admin label { display:grid; gap:6px; margin:0 0 13px; color:var(--pt-text); font-size:11px; font-weight:600; }
+.pt--admin label input, .pt--admin label select, .pt--admin label textarea { width:100%; font-weight:400; }
+.pt--admin .btn { display:inline-flex; justify-content:center; align-items:center; gap:7px; min-height:37px; padding:8px 14px; border:0; border-radius:10px; font:inherit; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap; }
+.pt--admin .btn-primary { background:var(--pt-blue-strong); color:#fff; box-shadow:0 5px 13px rgba(10,92,138,.18); }
+.pt--admin .btn-primary:hover { background:#084d73; }
+.pt--admin .btn-soft { background:var(--pt-blue-soft); color:var(--pt-blue-strong); }
+.pt--admin .btn-full { width:100%; }
+.pt--admin .table-panel { padding:0; overflow:hidden; }
+.pt--admin .table-wrap { overflow-x:auto; }
+.pt--admin table { width:100%; min-width:700px; border-collapse:collapse; }
+.pt--admin thead { background:var(--pt-blue-tint); }
+.pt--admin th { padding:13px 15px; color:var(--pt-muted); text-align:left; font-size:9.5px; font-weight:700; white-space:nowrap; }
+.pt--admin td { padding:13px 15px; border-bottom:1px solid var(--pt-line); color:var(--pt-text); font-size:11px; vertical-align:middle; }
+.pt--admin td small { display:block; margin-top:3px; color:var(--pt-muted); font-size:9.5px; }
+.pt--admin .person-cell { display:flex; align-items:center; gap:10px; min-width:175px; }
+.pt--admin .person-cell b { color:var(--pt-ink); font-size:11px; }
+.pt--admin .initials { display:grid; place-items:center; width:35px; height:35px; flex:none; border-radius:50%; background:var(--pt-blue-soft); color:var(--pt-blue-strong); font-size:10px; font-weight:800; }
+.pt--admin .class-chip { padding:4px 9px; border-radius:999px; background:var(--pt-blue-soft); color:var(--pt-blue-strong); font-size:9.5px; }
+.pt--admin .action-menu { position:relative; }
+.pt--admin .action-menu summary { padding:5px; color:var(--pt-muted); font-weight:800; cursor:pointer; list-style:none; }
+.pt--admin .action-menu[open] { z-index:5; }
+.pt--admin .action-menu form { position:relative; min-width:190px; padding:10px; border:1px solid var(--pt-line); border-radius:10px; background:#fff; box-shadow:0 8px 25px rgba(15,60,120,.12); }
+.pt--admin .action-menu .text-action { padding:7px 0; border:0; background:none; color:var(--pt-text); font:inherit; font-size:10.5px; cursor:pointer; }
+.pt--admin .danger-text { color:#c43d4b!important; }
+.pt--admin .pagination-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 17px; color:var(--pt-muted); font-size:10px; }
+.pt--admin .pagination-row nav { display:flex; gap:4px; }
+.pt--admin .pagination-row nav a, .pt--admin .pagination-row nav span { padding:5px 9px; border-radius:7px; color:var(--pt-blue-strong); text-decoration:none; }
+.pt--admin .pagination-row nav [aria-current=page] span { background:var(--pt-blue-strong); color:#fff; }
+.pt--admin .empty-state { padding:30px; color:var(--pt-muted); text-align:center; font-size:11px; }
+.pt--admin .modal { width:min(480px,calc(100% - 30px)); padding:23px; border:1px solid var(--pt-line); border-radius:16px; background:#fff; box-shadow:0 20px 60px rgba(15,60,120,.2); }
+.pt--admin .modal::backdrop { background:rgba(15,27,51,.45); }
+.pt--admin .modal-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+.pt--admin .modal-head h2 { margin:0; color:var(--pt-ink); font-size:17px; }
+.pt--admin .close-modal { width:30px; height:30px; border:0; border-radius:50%; background:var(--pt-blue-tint); color:var(--pt-blue-strong); font-size:20px; cursor:pointer; }
+.pt--admin .notice-banner { margin:0 0 20px; padding:17px 19px; border-left:4px solid var(--pt-blue); border-radius:12px; background:var(--pt-blue-tint); }
+.pt--admin .notice-banner p { margin:6px 0 0; color:var(--pt-muted); font-size:11px; line-height:1.7; }
+.pt--admin .note-list { padding-left:19px; color:var(--pt-text); font-size:11px; line-height:2; }
+.pt--admin .settings-panel { border-top:3px solid var(--pt-blue); }
+.pt--admin .settings-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 20px; }
+.pt--admin .settings-grid label small { color:var(--pt-muted); font-size:9.5px; font-weight:400; }
+.pt--admin .settings-form>.btn { margin-top:8px; }
+.pt--admin .small-stat { font-size:20px!important; }
+.pt--admin .alert { margin-bottom:14px; }
+.pt-admin-alert { padding:11px 14px; border-radius:10px; font-size:11px; }
+.pt-admin-alert--success { background:var(--pt-green-soft); color:var(--pt-green); }
+.pt-admin-alert--error { background:#fff0f0; color:#c43d4b; }
+/* Sidebar component menampilkan fallback link jika route bernama logout tidak ada.
+   Pada layout admin tombol Keluar aktif berada di topbar. */
+body:has(.pt--admin) .sb-footer > a.sb-logout { display:none; }
+
+
+/* ==========================================================
+   LOGIN ADMINISTRATOR
+   Design System SIAKAD
+   ========================================================== */
+
+.pt-admin-login {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 24px;
+
+    background: linear-gradient(
+        135deg,
+        #12a8dc 0%,
+        #1b6fd0 55%,
+        #1555a8 100%
+    );
+
+    font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+}
+
+/* Card Login */
+.pt-admin-login__card {
+    width: min(430px, 100%);
+    padding: 34px;
+
+    border: 1px solid rgba(255,255,255,.5);
+    border-radius: 20px;
+
+    background: #fff;
+
+    box-shadow: 0 20px 60px rgba(8,45,100,.2);
+}
+
+/* Logo */
+.pt-admin-login__brand {
+    display: grid;
+    place-items: center;
+
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 15px;
+    padding: 8px;
+
+    border-radius: 16px;
+    background: var(--pt-blue-soft);
+}
+
+.pt-admin-login__logo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Judul */
+.pt-admin-login__card .eyebrow {
+    margin: 0 0 6px;
+    color: var(--pt-blue);
+    text-align: center;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .07em;
+}
+
+.pt-admin-login__card h1 {
+    margin: 4px 0 7px;
+    color: var(--pt-ink);
+    text-align: center;
+    font-size: 23px;
+    font-weight: 800;
+}
+
+.pt-admin-login__card .muted {
+    margin-bottom: 24px;
+    color: var(--pt-muted);
+    text-align: center;
+    font-size: 11.5px;
+}
+
+/* Form */
+.pt-admin-login__card label {
+    display: grid;
+    gap: 7px;
+    margin-bottom: 15px;
+
+    color: var(--pt-text);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.pt-admin-login__card input {
+    width: 100%;
+    min-height: 43px;
+    padding: 10px 13px;
+
+    border: 1px solid var(--pt-line);
+    border-radius: 10px;
+
+    background: #fff;
+    color: var(--pt-ink);
+
+    font: inherit;
+    font-size: 12px;
+
+    outline: none;
+    transition: .2s ease;
+}
+
+.pt-admin-login__card input:focus {
+    border-color: var(--pt-blue);
+    box-shadow: 0 0 0 3px rgba(11,111,168,.12);
+}
+
+/* Tombol Masuk Pink */
+.pt-admin-login__card .pt-btn--primary {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    min-height: 44px;
+    margin-top: 8px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: linear-gradient(
+        90deg,
+        #e8147e,
+        #f0408f
+    );
+
+    color: #fff;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow: 0 6px 15px rgba(232,20,126,.22);
+    transition: .2s ease;
+}
+
+.pt-admin-login__card .pt-btn--primary:hover {
+    background: linear-gradient(
+        90deg,
+        #ce106d,
+        #e52d80
+    );
+
+    box-shadow: 0 8px 20px rgba(232,20,126,.3);
+    transform: translateY(-1px);
+}
+
+.pt-admin-login__card .pt-btn--primary:active {
+    transform: translateY(0);
+}
+
+/* Error Login */
+.pt-admin-login__error {
+    margin-bottom: 15px;
+    padding: 11px 13px;
+
+    border-radius: 10px;
+
+    background: #fff0f0;
+    color: #c43d4b;
+
+    font-size: 11px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .pt-admin-login {
+        padding: 18px;
+    }
+
+    .pt-admin-login__card {
+        padding: 26px 22px;
+    }
+}
+
+
+/* ==========================================================
+   TOPBAR ADMIN A4
+   Menggunakan design system asli Portal Orang Tua.
+   ========================================================== */
+
+/* Struktur utama mengikuti .pt-topbar milik Portal Orang Tua */
+.pt--admin .pt-admin-topbar {
+    /* Tidak menimpa style bawaan Portal Orang Tua */
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+/* Search bar menggunakan ukuran dan tampilan portal orang tua */
+.pt--admin .pt-admin-topbar .pt-search {
+    width: 260px;
+    max-width: 100%;
+    flex: none;
+}
+
+/* Reset input agar tidak terkena style input form admin */
+.pt--admin .pt-admin-topbar .pt-search input {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    min-height: 0;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    outline: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--pt-ink);
+    font: inherit;
+    font-size: 12px;
+}
+
+/* Tombol notifikasi */
+.pt--admin .pt-admin-notification {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--pt-blue-soft);
+    color: var(--pt-blue-strong);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .15s ease;
+}
+
+.pt--admin .pt-admin-notification:hover {
+    background: var(--pt-blue-tint);
+}
+
+/* Identitas Admin mengikuti .pt-user Portal Orang Tua */
+.pt--admin .pt-admin-topbar .pt-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+}
+
+/* Teks identitas */
+.pt--admin .pt-admin-topbar .pt-user__txt {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.pt--admin .pt-admin-topbar .pt-user__txt strong {
+    font-size: 12px;
+    color: var(--pt-ink);
+    font-weight: 700;
+}
+
+.pt--admin .pt-admin-topbar .pt-user__txt span {
+    font-size: 10.5px;
+    color: var(--pt-muted);
+}
+
+/* Avatar Admin */
+.pt--admin .pt-admin-topbar .pt-avatar {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--pt-blue-soft);
+    color: var(--pt-blue-strong);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+/* Responsive */
+@media (max-width: 760px) {
+
+    .pt--admin .pt-admin-topbar {
+        padding: 12px 14px;
+    }
+
+    .pt--admin .pt-admin-topbar .pt-search {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+    }
+
+    .pt--admin .pt-admin-topbar .pt-user__txt {
+        display: none;
+    }
+
+    .pt--admin .pt-admin-notification {
+        width: 36px;
+        min-width: 36px;
+        padding: 0;
+        font-size: 0;
+    }
+
+    .pt--admin .pt-admin-notification svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* Logo SIAKAD pada halaman Login Admin */
+/* .pt-admin-login__brand {
+    display: grid;
+    place-items: center;
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 15px;
+    padding: 8px;
+    border-radius: 16px;
+    background: var(--pt-blue-soft);
+} */
+
+.pt-admin-login__logo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Wrapper logo */
+.pt-admin-login__brand {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 120px;
+    height: 120px;
+
+    margin: 0 auto 18px;
+    padding: 0;
+
+    background: linear-gradient(
+        135deg,
+        #12a8dc 0%,
+        #1b6fd0 55%,
+        #1555a8 100%
+    );
+    border-radius: 20;
+}
+
+/* Gambar logo */
+.pt-admin-login__logo {
+    display: block;
+    width: 115px;
+    height: 115px;
+    object-fit: contain;
+    object-position: center;
+    margin: 0 auto;
+}

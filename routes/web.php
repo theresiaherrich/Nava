@@ -12,6 +12,13 @@ use App\Http\Controllers\ProfilSiswaController;
 use App\Http\Controllers\RekapPresensiController;
 use App\Http\Controllers\AkademikNilaiController;
 use App\Http\Controllers\MinatBakatController;
+use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\ManajemenPenggunaController;
+use App\Http\Controllers\Admin\RelasiOrangTuaController;
+use App\Http\Controllers\Admin\NotifikasiController;
+use App\Http\Controllers\Admin\PengaturanAdminController;
+use App\Http\Middleware\EnsureAdmin;
 use Illuminate\Support\Facades\DB;
 
 Route::get('/test-database', function () {
@@ -94,6 +101,37 @@ Route::prefix('portal-orang-tua')
         Route::get('/rapor/unduh', [AkademikNilaiController::class, 'unduh'])->name('rapor.unduh');
         Route::get('/presensi/unduh', [RekapPresensiController::class, 'unduh'])->name('presensi.unduh');
     });
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit');
+    Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+
+    Route::middleware(EnsureAdmin::class)->group(function () {
+        // 1. Dashboard Admin
+        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+        // 2. Manajemen Pengguna
+        Route::get('/pengguna', [ManajemenPenggunaController::class, 'index'])->name('users.index');
+        Route::get('/pengguna/export', [ManajemenPenggunaController::class, 'export'])->name('users.export');
+        Route::post('/pengguna', [ManajemenPenggunaController::class, 'store'])->name('users.store');
+        Route::put('/pengguna/{id}/username', [ManajemenPenggunaController::class, 'updateUsername'])->name('users.username');
+        Route::put('/pengguna/{id}/password', [ManajemenPenggunaController::class, 'resetPassword'])->name('users.password');
+
+        // 3. Relasi Orang Tua
+        Route::get('/relasi', [RelasiOrangTuaController::class, 'index'])->name('relations.index');
+        Route::post('/relasi', [RelasiOrangTuaController::class, 'store'])->name('relations.store');
+        Route::put('/relasi/{idSiswa}/{hubungan}/verifikasi', [RelasiOrangTuaController::class, 'verify'])->name('relations.verify');
+        Route::delete('/relasi/{idSiswa}/{hubungan}', [RelasiOrangTuaController::class, 'destroy'])->name('relations.destroy');
+
+        // 4. Notifikasi WhatsApp
+        Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifications.index');
+
+        // 5. Pengaturan Admin
+        Route::get('/pengaturan', [PengaturanAdminController::class, 'index'])->name('settings.index');
+        Route::put('/pengaturan/password', [PengaturanAdminController::class, 'updatePassword'])->name('settings.password');
+    });
+});
 
 // Placeholder, nanti diganti dengan controller sungguhan
 Route::get('/rekap-nilai/export/{scope}', function ($scope) {

@@ -14,6 +14,7 @@ export default defineConfig({
                 'resources/js/rekap-nilai.js',
                 'resources/css/verifikasi-nilai.css',
                 'resources/js/verifikasi-nilai.js',
+                'resources/css/admin.css'
             ],
             refresh: true,
             fonts: [

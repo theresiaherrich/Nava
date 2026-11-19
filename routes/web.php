@@ -12,6 +12,27 @@ use App\Http\Controllers\ProfilSiswaController;
 use App\Http\Controllers\RekapPresensiController;
 use App\Http\Controllers\AkademikNilaiController;
 use App\Http\Controllers\MinatBakatController;
+use Illuminate\Support\Facades\DB;
+
+Route::get('/test-database', function () {
+    try {
+        $database = DB::select('SELECT DATABASE() AS nama');
+
+        $jumlahSiswa = DB::table('siswa')->count();
+
+        return response()->json([
+            'status' => 'Berhasil terhubung!',
+            'database' => $database[0]->nama,
+            'jumlah_siswa' => $jumlahSiswa,
+        ]);
+
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'Gagal terhubung',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
 
 Route::get('/', function () {
     return view('welcome');

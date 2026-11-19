@@ -94,7 +94,7 @@
 
         <dl class="pt-dl">
             <div><dt><x-portal.icon name="calendar" :size="14" /> Tempat, Tanggal Lahir</dt>
-                 <dd>{{ $siswa->tempat_lahir }}, {{ $siswa->tanggal_lahir->locale('id')->translatedFormat('d F Y') }} ({{ $siswa->umur }} Thn)</dd></div>
+                 <dd>{{ $siswa->tempat_lahir }}, {{ $siswa->tanggal_lahir?->locale('id')->translatedFormat('d F Y') }} ({{ $siswa->umur }} Thn)</dd></div>
             <div><dt><x-portal.icon name="users" :size="14" /> Jenis Kelamin</dt><dd>{{ $siswa->jenis_kelamin }}</dd></div>
             <div><dt><x-portal.icon name="building" :size="14" /> Agama</dt><dd>{{ $siswa->agama }}</dd></div>
         </dl>

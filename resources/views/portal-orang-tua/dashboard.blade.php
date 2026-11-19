@@ -66,7 +66,9 @@
         <p class="pt-stat__value">{{ number_format($rataRata, 2) }}
             <span class="pt-chip pt-chip--blue pt-chip--sm">Predikat {{ $predikat }}</span></p>
         <div class="pt-bar"><i style="width: {{ min(100, $rataRata) }}%"></i></div>
-        <p class="pt-stat__note">Peringkat <b>{{ $peringkat['posisi'] }}</b> dari <b>{{ $peringkat['dari'] }} siswa</b> di kelas {{ str_replace(' - ', ' ', $siswa->kelas) }}.</p>
+        <p class="pt-stat__note">
+    Data peringkat kelas belum tersedia.
+</p>
     </article>
 
     <article class="pt-card pt-stat">
@@ -150,11 +152,26 @@
         </div>
 
         <div class="pt-grid pt-grid--2 pt-grid--tight">
-            <div class="pt-strip pt-strip--sm"><span class="pt-iconbox pt-iconbox--sm"><x-portal.icon name="bulb" :size="16" /></span>
-                <div><small>Tes Psikologi</small><strong>{{ $tes->status }}</strong></div></div>
-            <div class="pt-strip pt-strip--sm"><span class="pt-iconbox pt-iconbox--sm"><x-portal.icon name="headset" :size="16" /></span>
-                <div><small>Konseling BK</small><strong>{{ $bk->status }}</strong></div></div>
+    <div class="pt-strip pt-strip--sm">
+        <span class="pt-iconbox pt-iconbox--sm">
+            <x-portal.icon name="bulb" :size="16" />
+        </span>
+        <div>
+            <small>Tes Psikologi</small>
+            <strong>{{ $tes->status ?? 'Belum tersedia' }}</strong>
         </div>
+    </div>
+
+    <div class="pt-strip pt-strip--sm">
+        <span class="pt-iconbox pt-iconbox--sm">
+            <x-portal.icon name="headset" :size="16" />
+        </span>
+        <div>
+            <small>Konseling BK</small>
+            <strong>{{ $bk->status ?? 'Belum ada data' }}</strong>
+        </div>
+    </div>
+</div>
 
         <div class="pt-card__foot">
             <a href="{{ route('portal.minat-bakat') }}" class="pt-btn pt-btn--soft">Lihat Detail Asesmen <x-portal.icon name="external" :size="14" /></a>

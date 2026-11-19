@@ -3,373 +3,228 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
-/**
- * Dasar untuk semua controller A4 - Portal Orang Tua.
- *
- * Berisi helper tampilan dan data bersama (siswa, orang tua, nilai, presensi, dst).
- * Semua data masih DUMMY: method "data*" adalah titik sambung ke database.
- * Ganti isinya dengan query Eloquent, tapi pertahankan bentuk hasilnya agar Blade tidak berubah.
- */
+/** A4: seluruh sumber data portal diambil dari database SIAKAD. */
 abstract class PortalBaseController extends Controller
 {
-    protected const KKTP          = 75;
+    protected const KKTP = 75;
     protected const NILAI_OPTIMAL = 85;
-    protected const HARI_EFEKTIF  = 80;
 
-    /* ======================================================================
-     |  Helper tampilan
-     * ====================================================================== */
+    /** Pengganti sementara Auth sampai integrasi PIC Auth selesai. */
+    protected function siswaId(): ?int
+    {
+        $id = session('portal_siswa_id') ?: env('PORTAL_SISWA_ID');
+        if ($id) return (int) $id;
+        if (app()->environment(['local', 'testing'])) {
+            return DB::table('siswa')->value('id_siswa') ? (int) DB::table('siswa')->value('id_siswa') : null;
+        }
+        return null;
+    }
+
+    protected function siswaRow(): ?object
+    {
+        $id = $this->siswaId();
+        return $id ? DB::table('siswa')->where('id_siswa', $id)->first() : null;
+    }
+
+    protected function riwayatAktif(): ?object
+    {
+        $id = $this->siswaId();
+        if (!$id) return null;
+        return DB::table('riwayat_kelas as rk')
+            ->join('kelas as k', 'k.id_kelas', '=', 'rk.id_kelas')
+            ->join('semester as sm', 'sm.id_semester', '=', 'rk.id_semester')
+            ->join('tahun_ajaran as ta', 'ta.id_tahun_ajaran', '=', 'sm.id_tahun_ajaran')
+            ->where('rk.id_siswa', $id)
+            ->orderByDesc('sm.aktif')->orderByDesc('ta.aktif')->orderByDesc('rk.id_riwayat_kelas')
+            ->select('rk.*', 'k.nama as kelas_nama', 'k.tingkat', 'k.fase', 'sm.nama as semester_nama', 'sm.aktif as semester_aktif', 'ta.nama as tahun_ajaran')
+            ->first();
+    }
+
+    protected function inisial(?string $nama): string
+    {
+        return collect(preg_split('/\s+/', trim((string) $nama)))->filter()->take(2)->map(fn ($x) => mb_substr($x, 0, 1))->implode('') ?: '—';
+    }
 
     protected function sapaan(): string
     {
         $jam = (int) now()->format('G');
-
-        return match (true) {
-            $jam < 11 => 'Selamat Pagi',
-            $jam < 15 => 'Selamat Siang',
-            $jam < 18 => 'Selamat Sore',
-            default   => 'Selamat Malam',
-        };
+        return $jam < 11 ? 'Selamat Pagi' : ($jam < 15 ? 'Selamat Siang' : ($jam < 18 ? 'Selamat Sore' : 'Selamat Malam'));
     }
 
-    /** Konversi nilai -> predikat. Sesuaikan dengan aturan sekolah. */
     protected function predikat(float $n): string
     {
-        return match (true) {
-            $n >= 90 => 'A',
-            $n >= 85 => 'B+',
-            $n >= 80 => 'B',
-            $n >= self::KKTP => 'C',
-            default  => 'D',
-        };
+        return match (true) { $n >= 90 => 'A', $n >= 85 => 'B+', $n >= 80 => 'B', $n >= self::KKTP => 'C', default => 'D' };
     }
 
-    /** Konversi nilai -> ketercapaian TP. */
     protected function ketercapaian(float $n): array
     {
         return match (true) {
             $n >= 90 => ['label' => 'Sangat Baik', 'kelas' => 'sangat-baik'],
             $n >= 80 => ['label' => 'Baik', 'kelas' => 'baik'],
             $n >= self::KKTP => ['label' => 'Cukup', 'kelas' => 'cukup'],
-            default  => ['label' => 'Perlu Penguatan', 'kelas' => 'perlu'],
+            default => ['label' => 'Perlu Penguatan', 'kelas' => 'perlu'],
         };
     }
 
     protected function rataRata($nilai): float
     {
-        return round((float) $nilai->avg('nilai'), 2);
+        $terisi = $nilai->filter(fn ($row) => $row->nilai !== null);
+        return $terisi->isEmpty() ? 0.0 : round((float) $terisi->avg('nilai'), 2);
     }
 
     protected function labelStatus(): array
     {
-        return [
-            'hadir'     => 'Hadir Tepat Waktu',
-            'toleransi' => 'Terlambat Toleransi',
-            'izin'      => 'Izin',
-            'sakit'     => 'Sakit',
-            'alpha'     => 'Alpha',
-            'libur'     => 'Libur',
-            'belum'     => 'Belum berlangsung',
-        ];
+        return ['hadir'=>'Hadir Tepat Waktu','toleransi'=>'Terlambat','izin'=>'Izin','sakit'=>'Sakit','alpha'=>'Alpha','libur'=>'Libur','belum'=>'Belum ada catatan'];
     }
-
-    /**
-     * Log RFID satu hari. DUMMY: status dibuat deterministik dari tanggalnya.
-     * Ganti dengan query tabel presensi/log RFID.
-     */
-    protected function logHarian(Carbon $d, Carbon $hariIni): array
-    {
-        $dasar = [
-            'tanggal_label' => $d->copy()->locale('id')->translatedFormat('l, j F Y'),
-            'status' => 'belum', 'masuk' => null, 'pulang' => null, 'keterangan' => null,
-            'gerbang' => null, 'suhu' => null, 'metode' => null, 'catatan' => null,
-        ];
-
-        if ($d->isWeekend()) {
-            return ['status' => 'libur', 'keterangan' => 'Libur akhir pekan'] + $dasar;
-        }
-        if ($d->gt($hariIni)) {
-            return $dasar;
-        }
-
-        $hari = $d->day;
-
-        if ($hari === 8) {
-            return ['status' => 'sakit', 'keterangan' => 'Surat dokter terverifikasi',
-                    'catatan' => 'Siswa tidak hadir karena sakit (kondisi medis).'] + $dasar;
-        }
-        if ($hari === 15) {
-            return ['status' => 'izin', 'keterangan' => 'Dispensasi OSN Kebumian',
-                    'catatan' => 'Mengikuti kegiatan lomba mewakili sekolah.'] + $dasar;
-        }
-
-        $toleransi = $hari % 9 === 3 && $hari > 3;
-        $menit     = $toleransi ? 56 + ($hari % 8) : 30 + (($hari * 7) % 24);   // gerbang ditutup 06.55
-        $masuk     = Carbon::createFromTime(6, 0)->addMinutes($menit);
-
-        return [
-            'status'     => $toleransi ? 'toleransi' : 'hadir',
-            'masuk'      => $masuk->format('H.i'),
-            'pulang'     => '15.' . str_pad((string) (30 + ($hari % 10)), 2, '0', STR_PAD_LEFT),
-            'keterangan' => $toleransi ? 'Masuk di jam toleransi' : 'Hadir tepat waktu',
-            'gerbang'    => 'Gerbang Utama Tugu',
-            'suhu'       => '36.' . ($hari % 6) . '°C (Normal)',
-            'metode'     => 'Smart Card ID Siswa',
-            'catatan'    => 'KBM normal & praktikum berjalan sesuai jadwal.',
-        ] + $dasar;
-    }
-
-    /* ======================================================================
-     |  DATA DUMMY  ->  ganti dengan query database
-     * ====================================================================== */
 
     protected function dataSiswa(): object
     {
-        $lahir = Carbon::create(2009, 5, 14);
-
+        $s = $this->siswaRow();
+        $rk = $this->riwayatAktif();
+        $wali = null;
+        if ($rk) {
+            $wali = DB::table('wali_kelas as wk')->join('guru as g', 'g.id_guru', '=', 'wk.id_guru')
+                ->where('wk.id_kelas', $rk->id_kelas)->where('wk.id_semester', $rk->id_semester)
+                ->select('g.nama', 'g.nip')->first();
+        }
+        $nama = $s->nama ?? 'Data siswa belum tersedia';
         return (object) [
-            'nama'          => 'Raditya Arya Pratama',
-            'nama_pendek'   => 'Raditya Arya',
-            'inisial'       => 'RA',
-            'nis'           => '222310452',
-            'nisn'          => '0078945612',
-            'no_presensi'   => 24,
-            'kelas'         => 'XI - MIPA 1',
-            'kelas_singkat' => 'XI-MIPA 1',
-            'peminatan'     => 'Peminatan Unggulan Sains Terpadu',
-            'fase'          => 'Fase F',
-            'tahun_ajaran'  => '2026/2027',
-            'semester'      => 'Ganjil',
-            'angkatan'      => 2025,
-            'jalur'         => 'Jalur Prestasi Akademik',
-            'status'        => 'Siswa Reguler Aktif',
-            'foto'          => null,                                    // mis. 'images/siswa/222310452.jpg' (di /public)
-            'tempat_lahir'  => 'Malang',
-            'tanggal_lahir' => $lahir,
-            'umur'          => $lahir->age,
-            'jenis_kelamin' => 'Laki-laki',
-            'agama'         => 'Islam',
-            'alamat'        => 'Jl. Ijen No. 42, RT 03 / RW 02, Kel. Gading Kasri, Kec. Klojen, Kota Malang, Jawa Timur 65115',
-            'jarak_sekolah' => '± 1.4 km',
-            'kurikulum'     => 'Kurikulum Merdeka Mandiri Berbagi',
-            'ruang'         => 'Gedung Mitreka Satata Lt. 2, R.204',
-            'rombel_label'  => 'Kelas XI - MIPA 1 (Sains Unggulan)',
-            'wali_kelas'    => (object) [
-                'nama'    => 'Dra. Endang Kusuma, M.Pd.',
-                'nip'     => '19740512 199802 2 001',
-                'inisial' => 'EK',
-                'tersedia' => true,
-            ],
+            'tersedia' => (bool) $s, 'id_siswa' => $s->id_siswa ?? null, 'nama' => $nama,
+            'nama_pendek' => $nama, 'inisial' => $this->inisial($nama), 'nis' => $s->nis ?? null, 'nisn' => $s->nisn ?? null,
+            'no_presensi' => $s->urutan_masuk ?? null, 'kelas' => $rk->kelas_nama ?? '—', 'kelas_singkat' => $rk->kelas_nama ?? '—',
+            'peminatan' => null, 'fase' => isset($rk->fase) ? 'Fase '.$rk->fase : '—', 'tahun_ajaran' => $rk->tahun_ajaran ?? null,
+            'semester' => isset($rk->semester_nama) ? ucfirst(strtolower($rk->semester_nama)) : '—', 'angkatan' => $s->tahun_masuk ?? null,
+            'jalur' => null, 'status' => '—', 'foto' => null, 'tempat_lahir' => null, 'tanggal_lahir' => null, 'umur' => null,
+            'jenis_kelamin' => ($s->jenis_kelamin ?? null) === 'L' ? 'Laki-laki' : ((($s->jenis_kelamin ?? null) === 'P') ? 'Perempuan' : '—'),
+            'agama' => $s->agama ?? null, 'alamat' => $s->alamat ?? null, 'jarak_sekolah' => null, 'kurikulum' => null, 'ruang' => null,
+            'rombel_label' => $rk->kelas_nama ?? '—',
+            'wali_kelas' => (object) ['nama' => $wali->nama ?? '—', 'nip' => $wali->nip ?? '—', 'inisial' => $this->inisial($wali->nama ?? ''), 'tersedia' => (bool) $wali],
         ];
     }
 
-    /** Akun orang tua yang sedang login. */
     protected function dataOrtu(): object
     {
-        return (object) [
-            'nama'    => 'Ibu Sri Rahayu',
-            'peran'   => 'Wali Raditya Arya (XI-MIPA 1)',
-            'foto'    => null,
-            'inisial' => 'SR',
-        ];
+        $o = $this->siswaId() ? DB::table('orang_tua')->where('id_siswa', $this->siswaId())->orderByRaw("FIELD(hubungan,'Ibu','Ayah','Wali')")->first() : null;
+        $s = $this->dataSiswa();
+        return (object) ['nama' => $o->nama ?? 'Orang Tua', 'peran' => $o ? $o->hubungan.' · '.$s->nama : 'Wali Siswa', 'foto' => null, 'inisial' => $this->inisial($o->nama ?? 'Orang Tua')];
     }
 
     protected function dataWaliMurid(): array
     {
-        return [
-            (object) ['nama' => 'Sri Rahayu, S.E.', 'hubungan' => 'Ibu Kandung', 'inisial' => 'SR',
-                      'keterangan' => 'Terhubung sebagai Penanggung Jawab Utama', 'utama' => true,
-                      'wa' => '+62 812-3456-7890'],
-            (object) ['nama' => 'Hendra Pratama, M.T.', 'hubungan' => 'Ayah Kandung', 'inisial' => 'HP',
-                      'keterangan' => 'Terdaftar dalam Berkas Kesiswaan SMAN 1', 'utama' => false,
-                      'wa' => null],
-        ];
+        if (!$this->siswaId()) return [];
+        return DB::table('orang_tua')->where('id_siswa', $this->siswaId())->orderByRaw("FIELD(hubungan,'Ibu','Ayah','Wali')")->get()->map(fn ($o) => (object) [
+            'nama'=>$o->nama, 'hubungan'=>$o->hubungan, 'inisial'=>$this->inisial($o->nama),
+            'keterangan'=>match($o->status_verifikasi){'verified'=>'Terverifikasi','rejected'=>'Ditolak',default=>'Menunggu verifikasi'},
+            'utama'=>false, 'wa'=>$o->no_telepon,
+        ])->all();
     }
 
     protected function dataKegiatan(): array
     {
-        return [
-            (object) ['judul' => 'Kepramukaan (Wajib)', 'ikon' => 'compass', 'badge' => 'Nilai: A (Sangat Baik)', 'tipe' => 'hijau',
-                      'detail' => 'Ambalan Mitreka Satata Gugus Depan SMAN 1 Kota Malang'],
-            (object) ['judul' => 'Klub Robotika & IT (Mitreka IT)', 'ikon' => 'file', 'badge' => 'Anggota Aktif', 'tipe' => 'biru',
-                      'detail' => 'Divisi Pemrograman Algoritma & Olimpiade Sains Komputer'],
-            (object) ['judul' => 'Juara 2 OSN-K Informatika 2026', 'ikon' => 'trophy', 'badge' => 'Tingkat Kota', 'tipe' => 'emas',
-                      'detail' => 'Olimpiade Sains Nasional jenjang SMA se-Kota Malang • Lolos Seleksi Provinsi'],
-        ];
+        if (!$this->siswaId()) return [];
+        return DB::table('peserta_ekskul as pe')->join('ekskul as e','e.id_ekskul','=','pe.id_ekskul')
+            ->leftJoin('predikat as p','p.id_predikat','=','pe.id_predikat')->where('pe.id_siswa',$this->siswaId())
+            ->select('e.nama as judul','p.predikat','p.keterangan','pe.catatan')->get()->map(fn($r)=>(object)[
+                'judul'=>$r->judul,'ikon'=>'compass','badge'=>$r->predikat ? 'Predikat: '.$r->predikat : 'Terdaftar',
+                'tipe'=>'biru','detail'=>$r->catatan ?: ($r->keterangan ?: '—')
+            ])->all();
     }
 
     protected function dataKehadiranHariIni(): object
     {
-        return (object) ['jam' => '06.42', 'gerbang' => 'Gate Utara', 'label' => 'Hadir Tepat Waktu'];
+        $r = $this->siswaId() ? DB::table('presensi')->where('id_siswa',$this->siswaId())->whereDate('tanggal',today())->first() : null;
+        $label = !$r ? 'Belum ada catatan' : ($r->status === 'Terlambat' ? 'Terlambat' : $r->status);
+        return (object)['jam'=>$r?->waktu_presensi ? Carbon::parse($r->waktu_presensi)->format('H.i') : '—','gerbang'=>'—','label'=>$label];
     }
 
     protected function dataPresensiSemester(): object
     {
-        $hadir = 78; $sakit = 1; $izin = 1; $alpha = 0;
-        $efektif = self::HARI_EFEKTIF;
-
-        return (object) [
-            'efektif'      => $efektif,
-            'hadir'        => $hadir,
-            'sakit'        => $sakit,
-            'izin'         => $izin,
-            'alpha'        => $alpha,
-            'tepat_waktu'  => 75,
-            'toleransi'    => 3,
-            'persen_hadir' => round($hadir / $efektif * 100, 1),
-            'persen_sakit' => round($sakit / $efektif * 100, 2),
-            'persen_izin'  => round($izin / $efektif * 100, 2),
-            'persen_alpha' => round($alpha / $efektif * 100, 2),
-            'tren'         => 1.2,
-            'ket_sakit'    => 'Surat dokter terverifikasi',
-            'ket_izin'     => 'Dispensasi OSN Kebumian',
-        ];
+        $rows = $this->siswaId() ? DB::table('presensi')->where('id_siswa',$this->siswaId())->get() : collect();
+        $total=$rows->count(); $hadir=$rows->where('status','Hadir')->count(); $telat=$rows->where('status','Terlambat')->count();
+        $sakit=$rows->where('status','Sakit')->count(); $izin=$rows->where('status','Izin')->count(); $alpha=$rows->where('status','Alpa')->count();
+        $efektif=$hadir+$telat+$sakit+$izin+$alpha;
+        return (object)['efektif'=>$efektif,'hadir'=>$hadir+$telat,'sakit'=>$sakit,'izin'=>$izin,'alpha'=>$alpha,'tepat_waktu'=>$hadir,'toleransi'=>$telat,
+            'persen_hadir'=>$efektif ? round(($hadir+$telat)/$efektif*100,1):0,'persen_sakit'=>$efektif?round($sakit/$efektif*100,2):0,
+            'persen_izin'=>$efektif?round($izin/$efektif*100,2):0,'persen_alpha'=>$efektif?round($alpha/$efektif*100,2):0,'tren'=>null,'ket_sakit'=>null,'ket_izin'=>null];
     }
 
-    /** @return \Illuminate\Support\Collection<int, object> */
-    protected function dataNilai()
+    protected function dataNilai(): Collection
     {
-        $rows = [
-            // [mapel, kelompok, nilai, guru, capaian]
-            ['Pendidikan Agama & Budi Pekerti', 'Umum', 90, 'Drs. Ahmad Fauzi, M.Pd.I', 'Memahami toleransi beragama dan implementasi akhlak mulia dalam pergaulan sekolah.'],
-            ['Pendidikan Pancasila', 'Umum', 88, 'Siti Aminah, S.Pd', 'Aktif dalam penalaran kritis norma hukum konstitusional dan tata kelola kewarganegaraan.'],
-            ['Bahasa Indonesia', 'Umum', 87, 'Dra. Lestari Wulandari', 'Mahir menyusun teks eksposisi dan artikel ilmiah populer dengan rujukan literatur valid.'],
-            ['Matematika', 'Umum', 86, 'Bpk. Agus Hendrawan, M.Si', 'Menerapkan konsep fungsi dan statistika dalam pemecahan masalah kontekstual.'],
-            ['Bahasa Inggris', 'Umum', 90, 'Ms. Dian Anggraini, S.Pd', 'Menyampaikan gagasan secara lisan dan tulisan dengan tata bahasa yang tepat.'],
-            ['Sejarah Indonesia', 'Umum', 86, 'Drs. Bambang Irawan', 'Menganalisis peristiwa sejarah secara kronologis dan kausal.'],
-            ['PJOK', 'Umum', 89, 'Rudi Hartono, S.Pd', 'Menunjukkan kebugaran jasmani dan sportivitas yang baik dalam permainan.'],
-            ['Informatika', 'Umum', 93, 'Yoga Prasetyo, S.Kom', 'Menyusun algoritma dan program sederhana secara efisien dan terstruktur.'],
-            ['Seni Budaya', 'Umum', 87, 'Rina Maharani, S.Sn', 'Mengapresiasi dan mengekspresikan karya seni dengan kreatif.'],
-            ['Muatan Lokal Bahasa Jawa', 'Umum', 86, 'Sri Wahyuni, S.Pd', 'Menggunakan unggah-ungguh basa dalam komunikasi sehari-hari.'],
-            ['Matematika Tingkat Lanjut', 'Peminatan MIPA', 94, 'Bpk. Agus Hendrawan, M.Si', 'Sangat menguasai konsep matriks, polinomial, dan trigonometri analitis berstandar olimpiade.'],
-            ['Fisika', 'Peminatan MIPA', 91, 'Ibu Ratna Dewi, S.Pd', 'Menunjukkan pemahaman mendalam dinamika fluida, asas Bernoulli, dan gelombang bunyi.'],
-            ['Kimia', 'Peminatan MIPA', 89, 'Drs. M. Taufik, M.Pd', 'Menguasai stoikiometri larutan, konfigurasi orbital, dan peramalan ikatan kimia molekuler.'],
-            ['Biologi', 'Peminatan MIPA', 85, 'Dewi Kartika, S.Si', 'Memahami bioteknologi konvensional dan mekanisme metabolisme sel tumbuhan secara deskriptif.'],
-            ['Bahasa Inggris Tingkat Lanjut', 'Pilihan', 92, 'Ms. Dian Anggraini, S.Pd', 'Fasih dalam presentasi akademik, debat terstruktur, dan penulisan esai kritis bertema iptek.'],
-        ];
-
-        return collect($rows)->map(function ($r, $i) {
-            return (object) [
-                'no'          => $i + 1,
-                'mapel'       => $r[0],
-                'kelompok'    => $r[1],
-                'kelompok_kelas' => $r[1] === 'Umum' ? 'umum' : ($r[1] === 'Pilihan' ? 'pilihan' : 'mipa'),
-                'nilai'       => $r[2],
-                'guru'        => $r[3],
-                'capaian'     => $r[4],
-                'predikat'    => $this->predikat($r[2]),
-                'tp'          => $this->ketercapaian($r[2]),
-                'kktp'        => self::KKTP,
-            ];
-        });
+        $rk=$this->riwayatAktif(); if(!$rk) return collect();
+        $capaian = DB::table('siswa_rombel as sr')->join('nilai_tp as nt','nt.id_siswarombel','=','sr.id_siswarombel')
+            ->join('tp as t','t.id_tp','=','nt.id_tp')->where('sr.id_riwayat_kelas',$rk->id_riwayat_kelas)
+            ->select('sr.id_rombel',DB::raw("GROUP_CONCAT(DISTINCT t.deskripsi SEPARATOR ' · ') as capaian"))
+            ->groupBy('sr.id_rombel');
+        return DB::table('nilai_semester as ns')->join('rombel as r','r.id_rombel','=','ns.id_rombel')
+            ->join('mapel as m','m.id_mapel','=','r.id_mapel')
+            ->leftJoin('guru_rombel as gr','gr.id_rombel','=','r.id_rombel')->leftJoin('guru as g','g.id_guru','=','gr.id_guru')
+            ->leftJoinSub($capaian,'tp_siswa',fn($j)=>$j->on('tp_siswa.id_rombel','=','r.id_rombel'))
+            ->where('ns.id_riwayat_kelas',$rk->id_riwayat_kelas)
+            ->select('m.nama as mapel','r.kelompok_rapor as kelompok','ns.nilai_akhir as nilai','g.nama as guru','tp_siswa.capaian')
+            ->orderBy('m.nama')->get()->map(function($r,$i){$n=$r->nilai !== null ? (float)$r->nilai : null;return(object)[
+                'no'=>$i+1,'mapel'=>$r->mapel,'kelompok'=>$r->kelompok ?: '—','kelompok_kelas'=>strtolower($r->kelompok ?: 'umum'),
+                'nilai'=>$n,'guru'=>$r->guru ?: '—','capaian'=>$r->capaian ?: '', 'predikat'=>$n === null ? '—' : $this->predikat($n), 'tp'=>$n === null ? ['label'=>'—','kelas'=>'kosong'] : $this->ketercapaian($n),'kktp'=>self::KKTP];});
     }
 
     protected function dataCatatanSekolah(): array
     {
-        return [
-            (object) [
-                'nama' => 'Dra. Endang Kusuma, M.Pd.', 'peran' => 'Wali Kelas XI MIPA 1',
-                'nip' => '19740512 199802 2 001', 'tanggal' => Carbon::create(2026, 10, 28),
-                'isi' => 'Raditya menunjukkan dedikasi belajar yang luar biasa dan aktif berdiskusi di kelas. Mohon tetap didampingi dalam manajemen waktu antara tugas akademik reguler dan jadwal pemusatan latihan lomba OSN tingkat provinsi agar waktu istirahat tetap terjaga.',
-                'inisial' => 'EK', 'aksi' => 'Balas Catatan', 'aksi_ikon' => 'message',
-            ],
-            (object) [
-                'nama' => 'Drs. Heru Suwondo', 'peran' => 'Guru Bimbingan Konseling (BK)',
-                'nip' => '19710408 199802 1 003', 'tanggal' => Carbon::create(2026, 11, 2),
-                'isi' => 'Potensi logika analitis Raditya sangat matang dan konsisten. Direkomendasikan mempertahankan ritme belajar ini menjelang persiapan pemilihan program studi perguruan tinggi (Fakultas Teknik / Ilmu Komputer) pada awal Semester Genap nanti.',
-                'inisial' => 'HS', 'aksi' => 'Jadwalkan Konsultasi BK', 'aksi_ikon' => 'clock',
-            ],
-        ];
+        $rk=$this->riwayatAktif(); if(!$rk) return [];
+        $wali=DB::table('wali_kelas as wk')->join('guru as g','g.id_guru','=','wk.id_guru')
+            ->where('wk.id_kelas',$rk->id_kelas)->where('wk.id_semester',$rk->id_semester)->select('g.nama','g.nip')->first();
+        return DB::table('pelengkap_rapor')->where('id_riwayat_kelas',$rk->id_riwayat_kelas)
+            ->whereNotNull('catatan_wali')->where('catatan_wali','!=','')->get()
+            ->map(fn($r)=>(object)['nama'=>$wali->nama ?? 'Wali Kelas','peran'=>'Catatan Wali Kelas','nip'=>$wali->nip ?? '—',
+                'tanggal'=>null,'isi'=>$r->catatan_wali,'inisial'=>$this->inisial($wali->nama ?? ''),'aksi'=>'Informasi','aksi_ikon'=>'info'])->all();
     }
 
-    protected function dataPortofolio(): array
+    protected function dataRiasec(): ?object
     {
-        return [
-            (object) ['judul' => 'Praktikum Fisika & Analisis Fluida', 'foto' => 'images/portal/praktikum-fisika.jpg',
-                      'teks' => 'Aktif menyelesaikan 8 modul berbasis proyek saintifik dengan predikat kepemimpinan kelompok memuaskan.'],
-            (object) ['judul' => 'Presentasi Kolokium Matematika', 'foto' => 'images/portal/kolokium-matematika.jpg',
-                      'teks' => 'Berpartisipasi aktif dalam sesi tanya jawab kritis seputar aplikasi aljabar linear pada komputasi modern.'],
-        ];
+        $rk=$this->riwayatAktif(); if(!$rk) return null;
+        $sesi=DB::table('sesi_tes')->where('id_riwayat_kelas',$rk->id_riwayat_kelas)->orderByDesc('waktu_selesai')->orderByDesc('id_sesi_tes')->first(); if(!$sesi) return null;
+        $rows=DB::table('hasil_tes_riasec as h')->join('dimensi_riasec as d','d.id_dimensi','=','h.id_dimensi')->where('h.id_sesi_tes',$sesi->id_sesi_tes)->where(function($q){$q->whereNotNull('h.skor_normal')->orWhereNotNull('h.skor_mentah');})->get();
+        if($rows->isEmpty()) return null;
+        $skor=[];$nama=[];foreach($rows as $r){$skor[$r->kode]=(float)($r->skor_normal ?? $r->skor_mentah ?? 0);$nama[$r->kode]=$r->nama;} arsort($skor);
+        $dua=array_slice(array_keys($skor),0,2);$tanggal=$sesi->waktu_selesai ?: $sesi->waktu_mulai;
+        return (object)['skor'=>$skor,'nama'=>$nama,'kode'=>$sesi->kode_holland ?: implode('',$dua),'judul'=>implode(' & ',array_map(fn($k)=>$nama[$k],$dua)),
+            'diperbarui'=>$tanggal?Carbon::parse($tanggal):null,'oleh'=>'—','tag'=>[]];
     }
 
-    /** Skor RIASEC 0-100 dari hasil tes minat. */
-    protected function dataRiasec(): object
+    protected function dataTes(): ?object
     {
-        $nama = [
-            'R' => 'Realistik', 'I' => 'Investigatif', 'A' => 'Artistik',
-            'S' => 'Sosial', 'E' => 'Enterprising', 'C' => 'Konvensional',
-        ];
-        $skor = ['R' => 58, 'I' => 92, 'A' => 46, 'S' => 52, 'E' => 61, 'C' => 84];
-
-        arsort($skor);
-        $dua = array_slice(array_keys($skor), 0, 2);
-
-        return (object) [
-            'skor'      => $skor,
-            'nama'      => $nama,
-            'kode'      => implode('', $dua),
-            'judul'     => $nama[$dua[0]] . ' & ' . $nama[$dua[1]],
-            'diperbarui' => Carbon::create(2026, 10, 14),
-            'oleh'      => 'Guru BK',
-            'tag'       => ['RIASEC Fase F', 'Teknik & Sains'],
-        ];
+        $rk=$this->riwayatAktif(); if(!$rk) return null;
+        $s=DB::table('sesi_tes')->where('id_riwayat_kelas',$rk->id_riwayat_kelas)->orderByDesc('id_sesi_tes')->first(); if(!$s)return null;
+        $tanggal=$s->waktu_selesai ?: $s->waktu_mulai;
+        return (object)['status'=>$s->waktu_selesai?'Selesai':'Sedang berlangsung','tanggal'=>$tanggal?Carbon::parse($tanggal):null,'penyelenggara'=>'—'];
     }
 
-    protected function dataTes(): object
+    protected function dataBk(): ?object
     {
-        return (object) [
-            'status'   => 'Selesai & Valid',
-            'tanggal'  => Carbon::create(2026, 10, 14),
-            'penyelenggara' => 'Layanan Bimbingan Konseling SMAN 1 Malang',
-        ];
-    }
-
-    protected function dataBk(): object
-    {
-        return (object) [
-            'nama'    => 'Drs. Heru Suwondo',
-            'status'  => 'Direkomendasikan',
-            'tanggal' => Carbon::create(2026, 11, 2),
-            'catatan' => 'Potensi logika analitis sangat matang dan konsisten. Dianjurkan mempertahankan ritme belajar ini dan mulai menyusun peta pilihan perguruan tinggi pada semester genap.',
-        ];
+        if(!$this->siswaId()) return null;
+        $r=DB::table('permintaan_konsultasi')->where('id_siswa',$this->siswaId())->orderByDesc('created_at')->first(); if(!$r)return null;
+        return (object)['nama'=>'Layanan BK','status'=>$r->status ?: 'Tercatat','tanggal'=>Carbon::parse($r->created_at),'catatan'=>$r->catatan ?: '—'];
     }
 
     protected function dataRekomendasiProdi(): array
     {
-        return [
-            (object) ['rumpun' => 'Teknik & Informatika', 'cocok' => 94,
-                      'prodi' => ['Teknik Informatika (ITS / UB)', 'Sains Data', 'Teknik Elektro'],
-                      'alasan' => 'Skor Investigatif dan Konvensional tertinggi, selaras dengan capaian Matematika Tingkat Lanjut dan prestasi OSN Informatika.'],
-            (object) ['rumpun' => 'Sains Murni & Matematika', 'cocok' => 88,
-                      'prodi' => ['Matematika', 'Statistika', 'Fisika'], 'alasan' => null],
-            (object) ['rumpun' => 'Teknik Industri & Sistem', 'cocok' => 81,
-                      'prodi' => ['Teknik Industri', 'Sistem Informasi'], 'alasan' => null],
-        ];
+        $rk=$this->riwayatAktif(); if(!$rk)return [];
+        $s=DB::table('sesi_tes')->where('id_riwayat_kelas',$rk->id_riwayat_kelas)->orderByDesc('id_sesi_tes')->first(); if(!$s)return [];
+        return DB::table('hasil_tes_riasec as h')->join('dimensi_riasec as d','d.id_dimensi','=','h.id_dimensi')->join('program_studi as p','p.id_dimensi','=','d.id_dimensi')
+            ->where('h.id_sesi_tes',$s->id_sesi_tes)->where(function($q){$q->whereNotNull('h.skor_normal')->orWhereNotNull('h.skor_mentah');})->select('d.nama as rumpun',DB::raw('COALESCE(h.skor_normal,h.skor_mentah) as cocok'),'p.nama as prodi')->orderByDesc('h.skor_normal')->get()
+            ->groupBy('rumpun')->map(fn($g,$nama)=>(object)['rumpun'=>$nama,'cocok'=>(float)$g->first()->cocok,'prodi'=>$g->pluck('prodi')->all(),'alasan'=>null])->values()->all();
     }
 
-    protected function dataLangkahKarier(): array
+    /** Kolom kalender diisi hanya dari presensi yang benar-benar tersimpan. */
+    protected function logHarian(Carbon $d, Carbon $hariIni): array
     {
-        return [
-            (object) ['judul' => 'Seleksi OSN tingkat Provinsi', 'waktu' => 'Semester Ganjil', 'status' => 'berjalan'],
-            (object) ['judul' => 'Konsultasi pemilihan program studi dengan Guru BK', 'waktu' => 'Awal Semester Genap', 'status' => 'berikut'],
-            (object) ['judul' => 'Sosialisasi SNBP & pemilihan konsentrasi perguruan tinggi', 'waktu' => 'Semester Genap', 'status' => 'berikut'],
-            (object) ['judul' => 'Persiapan portofolio prestasi untuk jalur prestasi', 'waktu' => 'Kelas XII', 'status' => 'berikut'],
-        ];
-    }
-
-    protected function dataPengumuman(): array
-    {
-        return [
-            (object) ['kategori' => 'Kurikulum & Asesmen', 'tanggal' => Carbon::create(2026, 11, 18), 'ikon' => 'calendar',
-                      'judul' => 'Jadwal Penilaian Akhir Semester (SAS) Ganjil 2026/2027',
-                      'ringkas' => 'Pelaksanaan Sumatif Akhir Semester dimulai serentak pada pekan ketiga November.'],
-            (object) ['kategori' => 'Paguyuban SMAN 1', 'tanggal' => Carbon::create(2026, 11, 12), 'ikon' => 'users',
-                      'judul' => 'Undangan Pertemuan Paguyuban Orang Tua Siswa Kelas XI',
-                      'ringkas' => 'Pertemuan koordinasi program pembinaan bakat dan prestasi siswa.'],
-            (object) ['kategori' => 'Bimbingan Karier', 'tanggal' => Carbon::create(2026, 11, 5), 'ikon' => 'cap',
-                      'judul' => 'Sosialisasi SNBP & Pemilihan Konsentrasi Perguruan Tinggi',
-                      'ringkas' => 'Panduan jalur prestasi nasional dan perumusan strategi pemilihan program studi.'],
-        ];
+        $base=['tanggal_label'=>$d->copy()->locale('id')->translatedFormat('l, j F Y'),'status'=>'belum','masuk'=>null,'pulang'=>null,'keterangan'=>null,'gerbang'=>null,'suhu'=>null,'metode'=>null,'catatan'=>null];
+        if($d->isWeekend()) return ['status'=>'libur','keterangan'=>'Libur akhir pekan']+$base;
+        if($d->gt($hariIni)) return $base;
+        $r=$this->siswaId()?DB::table('presensi')->where('id_siswa',$this->siswaId())->whereDate('tanggal',$d->toDateString())->first():null;
+        if(!$r)return $base;
+        $status=match($r->status){'Hadir'=>'hadir','Terlambat'=>'toleransi','Sakit'=>'sakit','Izin'=>'izin','Alpa'=>'alpha',default=>'belum'};
+        return ['status'=>$status,'masuk'=>$r->waktu_presensi?Carbon::parse($r->waktu_presensi)->format('H.i'):null,'keterangan'=>$r->status,'metode'=>$r->metode]+$base;
     }
 }

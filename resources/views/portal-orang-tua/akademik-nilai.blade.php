@@ -142,10 +142,9 @@
         </div>
 
         <div class="pt-strip pt-strip--target">
-            <x-portal.icon name="trophy" :size="16" />
-            <span>Target Akademik Semester: <b>{{ $target['teks'] }}</b></span>
-            <span class="pt-chip pt-chip--white pt-chip--sm">{{ $target['status'] }}</span>
-        </div>
+        <x-portal.icon name="trophy" :size="16" />
+        <span>Target Akademik Semester: <b>Belum tersedia</b></span>
+    </div>
     </article>
 </section>
 
@@ -209,7 +208,15 @@
     </div>
 
     <footer class="pt-rekap__foot">
-        <p class="pt-note pt-note--plain"><x-portal.icon name="info" :size="14" /> Nilai telah disahkan oleh Dewan Pendidik SMAN 1 Malang per {{ $disahkanPada->locale('id')->translatedFormat('d F Y') }}.</p>
+        <p class="pt-note pt-note--plain">
+    <x-portal.icon name="info" :size="14" />
+    @if ($disahkanPada)
+        Nilai telah disahkan pada
+        {{ $disahkanPada->locale('id')->translatedFormat('d F Y') }}.
+    @else
+        Tanggal pengesahan nilai belum tersedia.
+    @endif
+</p>
         <div class="pt-rekap__btns">
             <a href="{{ route('portal.rapor.unduh') }}" class="pt-btn pt-btn--ghost"><x-portal.icon name="file" :size="14" /> Unduh Transkrip Nilai Sementara</a>
             <a href="{{ route('portal.rapor.unduh') }}" class="pt-btn pt-btn--primary"><x-portal.icon name="download" :size="14" /> Unduh Lembar Hasil Belajar STS (PDF)</a>

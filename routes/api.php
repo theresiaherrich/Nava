@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,13 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('role:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU,SISWA');
 
         Route::post('/siswa', [SiswaController::class, 'store'])
+            ->middleware('role:ADMIN');
+
+        // Template dan import Excel siswa
+        Route::get('/siswa/template', [SiswaController::class, 'downloadTemplate'])
+            ->middleware('role:ADMIN');
+
+        Route::post('/siswa/import', [SiswaController::class, 'importExcel'])
             ->middleware('role:ADMIN');
 
         // QR Code siswa

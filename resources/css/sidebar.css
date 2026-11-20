@@ -12,8 +12,8 @@
     --sb-text-soft: rgba(255, 255, 255, .72);
     --sb-line: rgba(255, 255, 255, .28);
 
-    --sb-width: 208px;
-    --sb-pad-x: 12px;
+    --sb-width: 260px;
+    --sb-pad-x: 15px;
     --sb-radius: 8px;
 
     width: var(--sb-width);
@@ -28,7 +28,7 @@
     padding: 28px var(--sb-pad-x) 14px;
     background: linear-gradient(180deg, var(--sb-bg-top) 0%, var(--sb-bg-bottom) 100%);
     color: var(--sb-text);
-    font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     overflow: hidden;
 }
 
@@ -43,21 +43,53 @@
 .sb-brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     padding: 0 4px;
     color: inherit;
     text-decoration: none;
     border-radius: var(--sb-radius);
 }
-.sb-brand:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.sb-brand__logo { width: 28px; height: auto; flex: none; display: block; }
-.sb-brand__name { font-size: 12px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+
+.sb-brand:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+.sb-brand__logo {
+    width: 28px;
+    height: auto;
+    flex: none;
+    display: block;
+}
+
+.sb-brand__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sb-brand__name {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.sb-brand__school {
+    font-size: 12px;
+    font-weight: 100;
+    letter-spacing: .08em;
+    line-height: 1.3;
+    white-space: nowrap;
+    color: var(--sb-text-soft);
+}
 
 /* ---------- Area tengah ---------- */
 .sb-scroll {
     flex: 1 1 auto;
     min-height: 0;
-    margin-top: 24px;
+    margin-top: 40px;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: none;
@@ -67,7 +99,7 @@
 .sb .sb-label {
     margin: 0 0 8px;
     padding: 0 4px;
-    font-size: 7.5px;
+    font-size: 10px;
     font-weight: 500;
     letter-spacing: .12em;
     text-transform: uppercase;
@@ -75,7 +107,7 @@
     white-space: nowrap;
 }
 
-.sb-nav { display: flex; flex-direction: column; gap: 3px; }
+.sb-nav { display: flex; flex-direction: column; gap: 4px; }
 
 /* ---------- Item menu ---------- */
 .sb-item,
@@ -93,8 +125,8 @@
     text-align: left;
     transition: background-color .15s ease;
 }
-.sb-item { height: 32px; padding: 0 10px; gap: 8px; font-size: 11px; }
-.sb-sub  { height: 28px; padding: 0 10px; gap: 8px; font-size: 10px; position: relative; }
+.sb-item { height: 40px; padding: 0 10px; gap: 12px; font-size: 14px; }
+.sb-sub  { height: 40px; padding: 0 10px; gap: 12px; font-size: 14px; position: relative; }
 
 .sb-icon { width: 14px; height: 14px; flex: none; }
 .sb-item > .sb-icon { width: 15px; height: 15px; }
@@ -110,9 +142,15 @@
 
 /* Aktif: menu utama (pink) */
 .sb-item.is-active {
-    font-weight: 600;
-    background: linear-gradient(90deg, var(--sb-pink-1), var(--sb-pink-2));
-    box-shadow: 0 6px 14px rgba(232, 20, 126, .35);
+    font-weight: 200;
+    background: linear-gradient(
+        110deg,
+        #E20A7A 0%,
+        #f268ad 75%,
+        #F9A8D4 100%
+    );
+    color: #FFFFFF;
+    box-shadow: 0 0 2px rgba(232, 20, 126, .35);
 }
 .sb-item.is-active .sb-item__code { opacity: 1; }
 
@@ -148,8 +186,8 @@
 .sb-submenu { display: none; padding: 6px 0 4px 8px; }
 .sb-group.is-open > .sb-submenu { display: block; }
 .sb-submenu .sb-label { margin: 2px 0 6px; }
-.sb-submenu .sb-nav { gap: 2px; }
-.sb-submenu .sb-sub { padding-left: 12px; }
+.sb-submenu .sb-nav { gap: 4px; }
+.sb-submenu .sb-sub { padding-left: 12px; font-size: 14px; }
 
 /* ---------- Footer ---------- */
 .sb-footer {
@@ -158,11 +196,11 @@
     padding-top: 12px;
     border-top: 1px solid var(--sb-line);
 }
-.sb-year { display: flex; align-items: center; gap: 8px; padding: 0 10px 8px; }
-.sb-year__label { font-size: 8.5px; color: var(--sb-text-soft); }
-.sb-year__value { margin-top: 1px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.sb-year { display: flex; align-items: center; gap: 12px; padding: 0 10px 8px; }
+.sb-year__label { font-size: 12px; color: var(--sb-text-soft); }
+.sb-year__value { margin-top: 1px; font-size: 14px; font-weight: 200; white-space: nowrap; }
 .sb-footer form { margin: 0; }
-.sb-logout { color: var(--sb-text-soft); }
+.sb-logout { font-size: 12px; font-weight: 400;}
 
 /* ---------- Layar kecil: sidebar jadi drawer ---------- */
 .sb-overlay { display: none; }

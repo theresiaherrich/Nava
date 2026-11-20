@@ -9,6 +9,7 @@ use App\Http\Controllers\PeriodePenguncianController;
 use App\Http\Controllers\PelengkapRaporController;
 use App\Http\Controllers\CetakRaporController;
 use App\Http\Controllers\PresensiController;
+use App\Http\Controllers\AuthController;
 
 // ==========================================
 // PEMBAGIAN MODUL PROYEK NAVA
@@ -31,6 +32,10 @@ Route::view('/test-sidebar', 'test-sidebar');
 
 // FE - Halaman Login & Register
 Route::view('/login', 'auth.login')->name('login');
+
+Route::post('/login', [AuthController::class, 'loginWeb'])
+    ->name('login.submit');
+    
 Route::view('/register', 'auth.register')->name('register');
 
 Route::view('/ganti-password', 'auth.ganti-password')

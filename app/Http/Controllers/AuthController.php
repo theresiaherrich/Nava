@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -48,6 +49,54 @@ class AuthController extends Controller
                 ],
                 'token' => $token,
             ],
+        ]);
+    }
+
+        // ==========================================
+    // LOGIN WEB (SESSION)
+    // ==========================================
+
+    public function loginWeb(Request $request)
+    {
+        $validated = $request->validate([
+            'username' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $user = User::where('username', $validated['username'])->first();
+
+        if (
+            !$user ||
+            !Hash::check($validated['password'], $user->password)
+        ) {
+            return response()->json([
+                'message' => 'Username atau password salah.',
+            ], 401);
+        }
+
+        Auth::login($user);
+
+        $request->session()->regenerate();
+
+        if ($user->must_change_password) {
+            return response()->json([
+                'message' => 'Silakan ganti password terlebih dahulu.',
+                'redirect' => route('password.change'),
+            ]);
+        }
+
+        $halamanRole = [
+            'SISWA' => '/presensi/siswa',
+            'GURU' => '/presensi/guru',
+            'ADMIN' => '/presensi/admin',
+            'BUDAYA_POSITIF' => '/presensi/budaya-positif',
+            'KURIKULUM' => '/presensi/kurikulum',
+            'ORANG_TUA' => '/',
+        ];
+
+        return response()->json([
+            'message' => 'Login berhasil.',
+            'redirect' => $halamanRole[$user->role] ?? '/',
         ]);
     }
 

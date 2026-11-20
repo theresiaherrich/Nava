@@ -56,7 +56,8 @@ async function requestJSON(url, payload) {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
             },
             body: JSON.stringify(payload)
         });
@@ -159,47 +160,18 @@ if (formLogin) {
         if (btn) btn.disabled = true;
 
         try {
-            const result = await requestJSON('/api/login', {
+            const result = await requestJSON('/login', {
                 username: f.username.value.trim(),
                 password: f.password.value
             });
 
-            const token = result.data?.token;
-            const user = result.data?.user;
-
-            if (!token || !user) {
+            if (!result.redirect) {
                 throw new Error(
-                    'Respons login tidak lengkap. Periksa AuthController Laravel.'
+                    result.message || 'Login gagal.'
                 );
             }
 
-            // Simpan token dan informasi pengguna.
-            localStorage.setItem('siakad_token', token);
-
-            localStorage.setItem(
-                'siakad_user',
-                JSON.stringify(user)
-            );
-
-            // Pengguna wajib mengganti password.
-            if (user.must_change_password) {
-                window.location.href = '/ganti-password';
-                return;
-            }
-
-            // Pengalihan berdasarkan role.
-            const halamanRole = {
-                SISWA: '/presensi/siswa',
-                GURU: '/presensi/guru',
-                GURU_WALI_KELAS: '/presensi/guru',
-                ADMIN: '/presensi/admin',
-                BUDAYA_POSITIF: '/presensi/budaya-positif',
-                KURIKULUM: '/presensi/kurikulum',
-                ORANG_TUA: '/presensi/orang-tua'
-            };
-
-            window.location.href =
-                halamanRole[user.role] || '/';
+            window.location.href = result.redirect;
 
         } catch (err) {
             console.error('Login error:', err);

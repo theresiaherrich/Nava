@@ -25,7 +25,7 @@ const BATAS_TEPAT_WAKTU = '07.00';
 const BATAS_TERLAMBAT = '07.30';
 
 // Aturan langsung muncul saat halaman dibuka
-const ATURAN_OTOMATIS = true;
+const ATURAN_OTOMATIS = false;
 
 /*
  * TODO API:

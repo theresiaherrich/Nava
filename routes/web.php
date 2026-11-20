@@ -210,6 +210,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // 4. Notifikasi WhatsApp
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifications.index');
+        Route::post('/notifikasi/kirim-sekarang', [NotifikasiController::class, 'kirimSekarang'])->name('notifications.send');
+        Route::post('/notifikasi/{id}/ulang', [NotifikasiController::class, 'ulang'])->name('notifications.retry');
+        Route::post('/notifications/rekap', [\App\Http\Controllers\Admin\NotifikasiController::class, 'kirimRekap'])->name('notifications.rekap');
 
         // 5. Pengaturan Admin
         Route::get('/pengaturan', [PengaturanAdminController::class, 'index'])->name('settings.index');

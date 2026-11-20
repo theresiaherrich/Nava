@@ -38,11 +38,13 @@ function getStatus() {
 
 async function sendText(number, text) {
   const id = await client.getNumberId(number);
+
   if (!id) {
     const err = new Error('Nomor tidak terdaftar di WhatsApp');
     err.code = 'NOT_ON_WHATSAPP';
     throw err;
   }
+
   const msg = await client.sendMessage(id._serialized, text);
   return msg.id._serialized;
 }

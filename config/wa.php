@@ -4,4 +4,5 @@ return [
     'token'          => env('WA_SERVICE_TOKEN'),
     'hanya_verified' => env('WA_HANYA_VERIFIED', false),
     'jendela_hari'   => (int) env('WA_JENDELA_HARI', 7),
+    'aktif' => env('WA_AKTIF', false),
 ];

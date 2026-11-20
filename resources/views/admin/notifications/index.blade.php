@@ -1,8 +1,107 @@
 @extends('admin.layouts.app')
 @section('title','Notifikasi WhatsApp')
 @section('content')
-<div class="page-heading"><div><p class="eyebrow">Portal Orang Tua</p><h1>Notifikasi WhatsApp</h1><p class="muted">Informasi konfigurasi dan kesiapan integrasi notifikasi.</p></div></div>
-<div class="notice-banner"><b>Informasi ketersediaan data</b><p>Skema database Nava saat ini belum memiliki tabel riwayat/pengiriman pesan WhatsApp. Karena itu, halaman ini belum menampilkan jumlah pesan gagal atau riwayat status terkirim agar tidak menyajikan angka yang tidak bersumber dari database.</p></div>
-<div class="stats-grid two-stats"><article class="stat-card"><span>Konfigurasi layanan WhatsApp</span><strong class="small-stat">{{ $waConfigured ? 'Terkonfigurasi' : 'Belum lengkap' }}</strong><small>Memeriksa WA_SERVICE_URL dan WA_SERVICE_TOKEN</small><b class="stat-icon">♧</b></article><article class="stat-card"><span>Riwayat notifikasi</span><strong class="small-stat">Belum tersedia</strong><small>Memerlukan tabel log notifikasi atau endpoint riwayat dari layanan WhatsApp.</small><b class="stat-icon red-icon">!</b></article></div>
-<section class="panel"><div class="panel-heading"><div><h2>Catatan Integrasi</h2><p class="muted">Ruang lingkup halaman administrator A4</p></div></div><ul class="note-list"><li>Pengiriman pesan tetap dijalankan oleh service WhatsApp milik tim integrasi.</li><li>Admin A4 tidak mengubah konfigurasi atau file service WhatsApp.</li><li>Untuk menampilkan pesan terkirim/gagal, tim perlu menyediakan endpoint riwayat atau menyimpan status callback ke tabel log.</li><li>Data notifikasi presensi dan nilai berasal dari modul kelompok terkait setelah integrasi selesai.</li></ul></section>
+<div class="page-heading">
+    <div>
+        <p class="eyebrow">Integrasi WhatsApp</p>
+        <h1>Notifikasi WhatsApp</h1>
+        <p class="muted">Riwayat pesan yang dikirim ke orang tua. Pesan dikirim otomatis oleh penjadwal.</p>
+    </div>
+    <div style="display:flex;gap:12px;">
+        <div class="summary-pill"><small>Diterima</small><b>{{ $diterima }}</b></div>
+        <div class="summary-pill"><small>Gagal</small><b>{{ $failed }}</b></div>
+    </div>
+</div>
+
+@if(session('wa_pesan'))
+    <p class="hint">{{ session('wa_pesan') }}</p>
+@endif
+@if(session('wa_error'))
+    <p class="hint"><span class="status-chip bad">● {{ session('wa_error') }}</span></p>
+@endif
+
+<div class="toolbar">
+    <form class="filter-form" method="GET">
+        <input name="q" value="{{ request('q') }}" placeholder="⌕ Cari nama siswa...">
+        <select name="status">
+            <option value="">Semua Status</option>
+            @foreach(['diterima' => 'Diterima', 'gagal' => 'Gagal', 'diproses' => 'Diproses'] as $val => $label)
+                <option value="{{ $val }}" @selected(request('status') === $val)>{{ $label }}</option>
+            @endforeach
+        </select>
+        <button class="btn btn-soft">Filter</button>
+    </form>
+
+    <div style="display:flex;gap:12px;align-items:center;">
+        <span class="status-chip {{ $statusService === 'READY' ? 'good' : ($statusService === null ? 'bad' : 'pending') }}">
+            ● WhatsApp:
+            {{ $statusService === null ? 'service tidak terjangkau' : $statusService }}
+        </span>
+        <span class="status-chip {{ $waAktif ? 'good' : 'pending' }}">
+            ● Pengiriman otomatis {{ $waAktif ? 'aktif' : 'nonaktif' }}
+        </span>
+        <form method="POST" action="{{ route('admin.notifications.send') }}">
+            @csrf
+            <button class="btn btn-primary" @disabled(!$waAktif || !$waConfigured)>Kirim sekarang</button>
+        </form>
+        <form method="POST" action="{{ route('admin.notifications.rekap') }}">
+            @csrf
+            <button class="btn btn-primary" @disabled(!$waAktif || !$waConfigured)>Kirim Rekap Mingguan</button>
+        </form>
+    </div>
+</div>
+
+<div class="table-panel">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>WAKTU</th>
+                    <th>SISWA</th>
+                    <th>PENERIMA</th>
+                    <th>JENIS</th>
+                    <th>STATUS</th>
+                    <th>KETERANGAN</th>
+                    <th>AKSI</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($logs as $log)
+                    <tr>
+                        <td>{{ \Carbon\Carbon::parse($log->created_at)->format('d/m/Y H:i') }}</td>
+                        <td>{{ $log->nama_siswa ?? '-' }}</td>
+                        <td>
+                            <b>{{ $log->hubungan ?? '-' }}</b>
+                            <small>{{ $log->nomor_samar }}</small>
+                        </td>
+                        <td><span class="class-chip">{{ ucfirst($log->template) }}</span></td>
+                        <td>
+                            <span class="status-chip {{ $log->status === 'diterima' ? 'good' : ($log->status === 'gagal' ? 'bad' : 'pending') }}">
+                                ● {{ ucfirst($log->status) }}
+                            </span>
+                        </td>
+                        <td>{{ $log->error ?: '-' }}</td>
+                        <td>
+                            @if($log->status === 'gagal' && str_starts_with($log->kunci, 'presensi-'))
+                                <form method="POST" action="{{ route('admin.notifications.retry', $log->id) }}">
+                                    @csrf
+                                    <button class="btn btn-soft">Kirim ulang</button>
+                                </form>
+                            @else
+                                -
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="7" class="empty-state">Belum ada riwayat pengiriman.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-row">
+        <span>{{ $logs->total() }} pesan ditemukan</span>
+        {{ $logs->links() }}
+    </div>
+</div>
 @endsection

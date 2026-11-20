@@ -15,63 +15,98 @@ class RelasiOrangTuaController extends Controller
         return (int) session('admin_id_user');
     }
 
-    public function index(Request $request)
-    {
-        $query = DB::table('orang_tua as ot')
-            ->join('siswa as s', 's.id_siswa', '=', 'ot.id_siswa')
-            ->leftJoin('riwayat_kelas as rk', 'rk.id_siswa', '=', 's.id_siswa')
-            ->leftJoin('semester as sem', 'sem.id_semester', '=', 'rk.id_semester')
-            ->leftJoin('kelas as k', 'k.id_kelas', '=', 'rk.id_kelas')
-            ->where(function ($q) {
-                $q->whereNull('sem.aktif')->orWhere('sem.aktif', 1);
-            })
-            ->select(
-                'ot.id_siswa',
-                'ot.hubungan',
-                'ot.nama as nama_orang_tua',
-                'ot.no_telepon',
-                'ot.status_verifikasi',
-                's.nama as nama_siswa',
-                's.nis',
-                'k.nama as nama_kelas'
-            );
+public function index(Request $request)
+{
+    $query = DB::table('orang_tua as ot')
+        ->join('siswa as s', 's.id_siswa', '=', 'ot.id_siswa')
+        ->leftJoin('user as u', 'u.id_user', '=', 'ot.id_user')
+        ->leftJoin('riwayat_kelas as rk', 'rk.id_siswa', '=', 's.id_siswa')
+        ->leftJoin('semester as sem', 'sem.id_semester', '=', 'rk.id_semester')
+        ->leftJoin('kelas as k', 'k.id_kelas', '=', 'rk.id_kelas')
+        ->where(function ($q) {
+            $q->whereNull('sem.aktif')
+              ->orWhere('sem.aktif', 1);
+        })
+        ->select(
+            'ot.id_siswa',
+            'ot.id_user',
+            'ot.hubungan',
+            'ot.nama as nama_orang_tua',
+            'ot.no_telepon',
+            'ot.status_verifikasi',
 
-        if ($request->filled('q')) {
-            $term = '%' . (string) $request->input('q') . '%';
-            $query->where(function ($q) use ($term) {
-                $q->where('ot.nama', 'like', $term)
-                    ->orWhere('s.nama', 'like', $term)
-                    ->orWhere('s.nis', 'like', $term);
-            });
-        }
+            'u.username as username_akun',
 
-        if ($request->filled('tingkat')) {
-            $query->where('k.tingkat', (string) $request->input('tingkat'));
-        }
+            's.nama as nama_siswa',
+            's.nis',
+            'k.nama as nama_kelas'
+        );
 
-        if ($request->filled('status')) {
-            $query->where('ot.status_verifikasi', (string) $request->input('status'));
-        }
+    // Pencarian nama orang tua, siswa, atau NIS
+    if ($request->filled('q')) {
+        $term = '%' . $request->input('q') . '%';
 
-        $verifiedCount = DB::table('orang_tua')
-            ->where('status_verifikasi', 'verified')
-            ->count();
-
-        $relations = $query
-            ->orderBy('ot.nama')
-            ->paginate(10)
-            ->withQueryString();
-
-        $students = DB::table('siswa')
-            ->orderBy('nama')
-            ->get(['id_siswa', 'nama', 'nis']);
-
-        return view('admin.relations.index', compact(
-            'relations',
-            'students',
-            'verifiedCount'
-        ));
+        $query->where(function ($q) use ($term) {
+            $q->where('ot.nama', 'like', $term)
+              ->orWhere('s.nama', 'like', $term)
+              ->orWhere('s.nis', 'like', $term)
+              ->orWhere('u.username', 'like', $term);
+        });
     }
+
+    // Filter tingkat kelas
+    if ($request->filled('tingkat')) {
+        $query->where('k.tingkat', $request->input('tingkat'));
+    }
+
+    // Filter status verifikasi
+    if ($request->filled('status')) {
+        $query->where(
+            'ot.status_verifikasi',
+            $request->input('status')
+        );
+    }
+
+    // Filter sumber relasi berdasarkan kepemilikan akun
+    if ($request->input('akun') === 'terhubung') {
+        $query->whereNotNull('ot.id_user');
+    } elseif ($request->input('akun') === 'belum') {
+        $query->whereNull('ot.id_user');
+    }
+
+    $verifiedCount = DB::table('orang_tua')
+        ->whereNotNull('id_user')
+        ->where('status_verifikasi', 'verified')
+        ->count();
+
+    $pendingCount = DB::table('orang_tua')
+        ->whereNotNull('id_user')
+        ->where('status_verifikasi', 'pending')
+        ->count();
+
+    $relations = $query
+        ->orderByRaw("
+            CASE
+                WHEN ot.id_user IS NOT NULL
+                AND ot.status_verifikasi = 'pending' THEN 0
+                ELSE 1
+            END
+        ")
+        ->orderBy('ot.nama')
+        ->paginate(10)
+        ->withQueryString();
+
+    $students = DB::table('siswa')
+        ->orderBy('nama')
+        ->get(['id_siswa', 'nama', 'nis']);
+
+    return view('admin.relations.index', compact(
+        'relations',
+        'students',
+        'verifiedCount',
+        'pendingCount'
+    ));
+}
 
     public function store(Request $request)
     {
@@ -105,45 +140,64 @@ class RelasiOrangTuaController extends Controller
         );
     }
 
-    public function verify(Request $request, int $idSiswa, string $hubungan)
-    {
-        $data = $request->validate([
-            'status' => ['required', Rule::in(['verified', 'rejected', 'pending'])],
-        ]);
 
-        DB::transaction(function () use ($idSiswa, $hubungan, $data) {
-            $before = DB::table('orang_tua')
-                ->where('id_siswa', $idSiswa)
-                ->where('hubungan', $hubungan)
-                ->first();
+public function verify(Request $request, int $idSiswa, string $hubungan)
+{
+    $data = $request->validate([
+        'status' => [
+            'required',
+            Rule::in(['verified', 'rejected']),
+        ],
+    ]);
 
-            if (! $before) {
-                abort(404, 'Relasi orang tua tidak ditemukan.');
-            }
+    DB::transaction(function () use ($idSiswa, $hubungan, $data) {
 
-            DB::table('orang_tua')
-                ->where('id_siswa', $idSiswa)
-                ->where('hubungan', $hubungan)
-                ->update([
-                    'status_verifikasi' => $data['status'],
-                    'diverifikasi_oleh' => $this->actorId(),
-                    'waktu_verifikasi' => now(),
-                ]);
+        $relation = DB::table('orang_tua')
+            ->where('id_siswa', $idSiswa)
+            ->where('hubungan', $hubungan)
+            ->lockForUpdate()
+            ->first();
 
-            $this->log(
-                'ubah_status_relasi',
-                'orang_tua',
-                $idSiswa,
-                [
-                    'hubungan' => $hubungan,
-                    'status_sebelum' => $before->status_verifikasi,
-                    'status_verifikasi' => $data['status'],
-                ]
+        if (!$relation) {
+            abort(404, 'Relasi orang tua tidak ditemukan.');
+        }
+
+        // Hanya relasi yang memiliki akun yang boleh diverifikasi
+        if (is_null($relation->id_user)) {
+            abort(
+                403,
+                'Relasi ini belum terhubung dengan akun Orang Tua.'
             );
-        });
+        }
 
-        return back()->with('success', 'Status verifikasi relasi diperbarui.');
-    }
+        DB::table('orang_tua')
+            ->where('id_siswa', $idSiswa)
+            ->where('hubungan', $hubungan)
+            ->update([
+                'status_verifikasi' => $data['status'],
+                'diverifikasi_oleh' => $this->actorId(),
+                'waktu_verifikasi' => now(),
+            ]);
+
+        $this->log(
+            'ubah_status_relasi',
+            'orang_tua',
+            $idSiswa,
+            [
+                'hubungan' => $hubungan,
+                'id_user' => $relation->id_user,
+                'nama_orang_tua' => $relation->nama,
+                'status_sebelum' => $relation->status_verifikasi,
+                'status_verifikasi' => $data['status'],
+            ]
+        );
+    });
+
+    return back()->with(
+        'success',
+        'Status verifikasi relasi orang tua berhasil diperbarui.'
+    );
+}
 
     public function destroy(int $idSiswa, string $hubungan)
     {

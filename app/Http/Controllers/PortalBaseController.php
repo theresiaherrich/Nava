@@ -12,16 +12,36 @@ abstract class PortalBaseController extends Controller
     protected const KKTP = 75;
     protected const NILAI_OPTIMAL = 85;
 
-    /** Pengganti sementara Auth sampai integrasi PIC Auth selesai. */
+
     protected function siswaId(): ?int
     {
-        $id = session('portal_siswa_id') ?: env('PORTAL_SISWA_ID');
-        if ($id) return (int) $id;
-        if (app()->environment(['local', 'testing'])) {
-            return DB::table('siswa')->value('id_siswa') ? (int) DB::table('siswa')->value('id_siswa') : null;
+        $ortuId = session('ortu_id_user');
+
+        if ($ortuId) {
+            $query = DB::table('orang_tua')
+                ->where('id_user', $ortuId)
+                ->where('status_verifikasi', 'verified');
+
+            $idSiswa = session('portal_siswa_id');
+
+            if ($idSiswa) {
+                $query->where('id_siswa', $idSiswa);
+            }
+
+            $result = $query->value('id_siswa');
+
+            return $result ? (int) $result : null;
         }
+
+        if (app()->environment(['local', 'testing'])) {
+            $id = session('portal_siswa_id') ?: env('PORTAL_SISWA_ID');
+
+            return $id ? (int) $id : null;
+        }
+
         return null;
     }
+
 
     protected function siswaRow(): ?object
     {
@@ -105,12 +125,52 @@ abstract class PortalBaseController extends Controller
         ];
     }
 
-    protected function dataOrtu(): object
-    {
-        $o = $this->siswaId() ? DB::table('orang_tua')->where('id_siswa', $this->siswaId())->orderByRaw("FIELD(hubungan,'Ibu','Ayah','Wali')")->first() : null;
-        $s = $this->dataSiswa();
-        return (object) ['nama' => $o->nama ?? 'Orang Tua', 'peran' => $o ? $o->hubungan.' · '.$s->nama : 'Wali Siswa', 'foto' => null, 'inisial' => $this->inisial($o->nama ?? 'Orang Tua')];
+
+protected function dataOrtu(): object
+{
+    $ortuId = session('ortu_id_user');
+    $idSiswa = $this->siswaId();
+
+    $o = null;
+
+    if ($ortuId) {
+        $query = DB::table('orang_tua')
+            ->where('id_user', $ortuId)
+            ->where('status_verifikasi', 'verified');
+
+        if ($idSiswa) {
+            $query->where('id_siswa', $idSiswa);
+        }
+
+        $o = $query->first();
     }
+
+    // Fallback hanya untuk lingkungan lokal/testing.
+    // Tidak digunakan untuk memilih akun pada production.
+    elseif ($idSiswa && app()->environment(['local', 'testing'])) {
+        $o = DB::table('orang_tua')
+            ->where('id_siswa', $idSiswa)
+            ->where('status_verifikasi', 'verified')
+            ->orderByRaw("FIELD(hubungan,'Ibu','Ayah','Wali')")
+            ->first();
+    }
+
+    // Selalu kembalikan object agar tidak menyebabkan TypeError.
+    return (object) [
+        'id_user' => $o->id_user ?? null,
+        'id_siswa' => $o->id_siswa ?? $idSiswa,
+        'nama' => $o->nama ?? 'Orang Tua',
+        'hubungan' => $o->hubungan ?? 'Orang Tua',
+        'no_telepon' => $o->no_telepon ?? null,
+        'alamat' => $o->alamat ?? null,
+        'jenis_kelamin' => $o->jenis_kelamin ?? null,
+        'foto' => null,
+        'inisial' => $this->inisial($o->nama ?? 'Orang Tua'),
+        'peran' => $o->hubungan ?? 'Orang Tua',
+        'tersedia' => (bool) $o,
+    ];
+}
+
 
     protected function dataWaliMurid(): array
     {

@@ -72,15 +72,27 @@
     </article>
 
     <article class="pt-card pt-stat">
-        <header><span class="pt-eyebrow">Profil Minat-Bakat</span><span class="pt-iconbox"><x-portal.icon name="bulb" :size="18" /></span></header>
-        <p class="pt-stat__title">{{ $riasec->judul }} ({{ $riasec->kode }})</p>
-        <div class="pt-tags">
-            @foreach ($riasec->tag as $t)
-                <span class="pt-chip pt-chip--soft pt-chip--sm">{{ $t }}</span>
-            @endforeach
-        </div>
-        <p class="pt-stat__note">Terakhir diperbarui: <b>{{ $riasec->diperbarui->locale('id')->translatedFormat('d M Y') }}</b> oleh {{ $riasec->oleh }}.</p>
-    </article>
+    <header>
+        <span class="pt-eyebrow">Profil Minat-Bakat</span>
+        <span class="pt-iconbox">
+            <x-portal.icon name="bulb" :size="18" />
+        </span>
+    </header>
+
+    @if ($riasec)
+        <p class="pt-stat__title">
+            {{ $riasec->judul }} ({{ $riasec->kode }})
+        </p>
+    @else
+        <p class="pt-stat__title">
+            Belum Ada Hasil Tes
+        </p>
+
+        <small class="muted">
+            Hasil tes minat dan bakat siswa belum tersedia.
+        </small>
+    @endif
+</article>
 </section>
 
 {{-- ===== Presensi + Akademik ===== --}}
@@ -143,13 +155,37 @@
             <span class="pt-chip pt-chip--soft pt-chip--sm">{{ $siswa->fase }} (Kelas XI)</span>
         </header>
 
-        <div class="pt-reco">
-            <div class="pt-reco__top"><small>Rekomendasi rumpun program studi</small><b>Kesesuaian {{ $prodiTop->cocok }}%</b></div>
-            <strong class="pt-reco__title">{{ $prodiTop->rumpun }}</strong>
-            <div class="pt-tags">
-                @foreach ($prodiTop->prodi as $p)<span class="pt-chip pt-chip--white pt-chip--sm">{{ $p }}</span>@endforeach
-            </div>
+<div class="pt-reco">
+
+    @if($prodiTop)
+        <div class="pt-reco__top">
+            <small>Rekomendasi rumpun program studi</small>
+            <b>Kesesuaian {{ $prodiTop->cocok }}%</b>
         </div>
+
+        <strong class="pt-reco__title">
+            {{ $prodiTop->rumpun }}
+        </strong>
+
+        {{-- Bagian rekomendasi lainnya --}}
+
+    @else
+        <div class="pt-reco__top">
+            <small>Rekomendasi rumpun program studi</small>
+            <span class="pt-chip pt-chip--soft">Belum tersedia</span>
+        </div>
+
+        <strong class="pt-reco__title">
+            Belum Ada Rekomendasi
+        </strong>
+
+        <p class="muted">
+            Rekomendasi program studi akan muncul setelah siswa
+            menyelesaikan tes minat dan bakat RIASEC.
+        </p>
+    @endif
+
+</div>
 
         <div class="pt-grid pt-grid--2 pt-grid--tight">
     <div class="pt-strip pt-strip--sm">

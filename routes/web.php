@@ -12,12 +12,15 @@ use App\Http\Controllers\ProfilSiswaController;
 use App\Http\Controllers\RekapPresensiController;
 use App\Http\Controllers\AkademikNilaiController;
 use App\Http\Controllers\MinatBakatController;
+use App\Http\Controllers\Auth\OrangTuaAuthController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ManajemenPenggunaController;
 use App\Http\Controllers\Admin\RelasiOrangTuaController;
 use App\Http\Controllers\Admin\NotifikasiController;
 use App\Http\Controllers\Admin\PengaturanAdminController;
+use App\Http\Middleware\EnsureOrangTua;
+use App\Http\Middleware\EnsureOrangTuaVerified;
 use App\Http\Middleware\EnsureAdmin;
 use Illuminate\Support\Facades\DB;
 
@@ -87,20 +90,101 @@ Route::view('/test-sidebar', 'test-sidebar');
 //         Route::get('/riwayat/{riwayat}/unduh', [CetakRaporController::class, 'unduhUlang'])->name('ulang');
 //     });
 
-// A4 - Portal Orang Tua (klik menu induk = Dashboard, dropdown = 4 halaman lain)
+// ==================================================
+// AUTH ORANG TUA
+// ==================================================
+
+Route::prefix('orang-tua')
+    ->name('ortu.')
+    ->group(function () {
+
+        // Halaman publik
+        Route::middleware('guest')->group(function () {
+            Route::get('/login', [
+                OrangTuaAuthController::class,
+                'showLogin'
+            ])->name('login');
+
+            Route::post('/login', [
+                OrangTuaAuthController::class,
+                'login'
+            ])->name('login.submit');
+
+            Route::get('/register', [
+                OrangTuaAuthController::class,
+                'showRegister'
+            ])->name('register');
+
+            Route::post('/register', [
+                OrangTuaAuthController::class,
+                'register'
+            ])->name('register.submit');
+        });
+
+        // Halaman yang memerlukan login
+        Route::middleware(EnsureOrangTua::class)->group(function () {
+
+            Route::get('/status-verifikasi', [
+                OrangTuaAuthController::class,
+                'status'
+            ])->name('status');
+
+            Route::post('/logout', [
+                OrangTuaAuthController::class,
+                'logout'
+            ])->name('logout');
+        });
+    });
+
+
+// ==================================================
+// PORTAL ORANG TUA - WAJIB LOGIN DAN VERIFIED
+// ==================================================
+
 Route::prefix('portal-orang-tua')
     ->name('portal.')
+    ->middleware([
+        EnsureOrangTua::class,
+        EnsureOrangTuaVerified::class,
+    ])
     ->group(function () {
-        Route::get('/', [PortalDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/profil-siswa', [ProfilSiswaController::class, 'index'])->name('profil');
-        Route::get('/rekap-presensi', [RekapPresensiController::class, 'index'])->name('presensi');
-        Route::get('/akademik-nilai', [AkademikNilaiController::class, 'index'])->name('akademik');
-        Route::get('/minat-bakat-karir', [MinatBakatController::class, 'index'])->name('minat-bakat');
 
-        // Placeholder, nanti diganti dengan generator PDF sungguhan
-        Route::get('/rapor/unduh', [AkademikNilaiController::class, 'unduh'])->name('rapor.unduh');
-        Route::get('/presensi/unduh', [RekapPresensiController::class, 'unduh'])->name('presensi.unduh');
+        Route::get('/', [
+            PortalDashboardController::class,
+            'index'
+        ])->name('dashboard');
+
+        Route::get('/profil-siswa', [
+            ProfilSiswaController::class,
+            'index'
+        ])->name('profil');
+
+        Route::get('/rekap-presensi', [
+            RekapPresensiController::class,
+            'index'
+        ])->name('presensi');
+
+        Route::get('/akademik-nilai', [
+            AkademikNilaiController::class,
+            'index'
+        ])->name('akademik');
+
+        Route::get('/minat-bakat-karir', [
+            MinatBakatController::class,
+            'index'
+        ])->name('minat-bakat');
+
+        Route::get('/rapor/unduh', [
+            AkademikNilaiController::class,
+            'unduh'
+        ])->name('rapor.unduh');
+
+        Route::get('/presensi/unduh', [
+            RekapPresensiController::class,
+            'unduh'
+        ])->name('presensi.unduh');
     });
+
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');

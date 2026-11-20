@@ -466,3 +466,15 @@ body:has(.pt--admin) .sb-footer > a.sb-logout { display:none; }
     object-position: center;
     margin: 0 auto;
 }
+
+/* Informasi akun orang tua */
+.pt--admin .table-panel td .status-chip {
+    margin-bottom: 4px;
+}
+
+.pt--admin .table-panel td small {
+    display: block;
+    margin-top: 4px;
+    color: var(--pt-muted);
+    font-size: 9.5px;
+}

@@ -38,13 +38,34 @@
 
         <span class="pt-topbar__spacer"></span>
 
-        <div class="pt-user">
+        <!-- <div class="pt-user">
             <x-portal.avatar :src="$ortu->foto" :initials="$ortu->inisial" class="pt-avatar--sm" />
             <div class="pt-user__txt">
                 <strong>{{ $ortu->nama }}</strong>
                 <span>{{ $ortu->peran }}</span>
             </div>
         </div>
+
+        {{-- Tombol Logout Orang Tua --}}
+        <form method="POST" action="{{ route('ortu.logout') }}">
+            @csrf
+            <button type="submit" class="pt-btn pt-btn--ghost pt-btn--sm">
+                <x-portal.icon name="logout" :size="15" />
+                Keluar
+            </button>
+        </form> -->
+        <div class="pt-user">
+    <x-portal.avatar
+        :src="$ortu->foto"
+        :initials="$ortu->inisial"
+        class="pt-avatar--sm"
+    />
+
+    <div class="pt-user__txt">
+        <strong>{{ $ortu->nama }}</strong>
+        <span>{{ $ortu->peran }}</span>
+    </div>
+</div>
     </header>
 
     <div class="pt-page">

@@ -39,10 +39,15 @@
 
     $menu = $menu ?? $defaultMenu;
 
-    // Portal Orang Tua tetap memakai route logout default; Admin dapat mengirim admin.logout.
-    $logoutRoute = $logoutRoute ?? (\Illuminate\Support\Facades\Route::has('logout')
-        ? 'logout'
-        : (\Illuminate\Support\Facades\Route::has('admin.logout') ? 'admin.logout' : null));
+if ($logoutRoute === null) {
+    if (request()->routeIs('portal.*')) {
+        $logoutRoute = 'ortu.logout';
+    } elseif (\Illuminate\Support\Facades\Route::has('admin.logout')) {
+        $logoutRoute = 'admin.logout';
+    } elseif (\Illuminate\Support\Facades\Route::has('logout')) {
+        $logoutRoute = 'logout';
+    }
+}
 
     $resolve  = fn (?string $route) => ($route && \Illuminate\Support\Facades\Route::has($route)) ? route($route) : '#';
     $isActive = fn (?string $pattern) => $pattern && request()->routeIs($pattern);

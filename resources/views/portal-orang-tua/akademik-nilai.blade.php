@@ -11,9 +11,17 @@
 @section('title', 'Akademik & Nilai - Portal Orang Tua')
 
 @section('portal')
+
 @php
     $ring = max(0, min(100, $stabilitas->persen));
-    $perlu = $nilai->filter(fn ($n) => $n->tp['kelas'] === 'perlu');
+
+    $perlu = $nilai->filter(
+        fn ($n) => data_get($n, 'tp.kelas') === 'perlu'
+    );
+
+    $nilaiTersedia = $nilai->filter(
+        fn ($n) => is_numeric($n->nilai ?? null)
+    );
 @endphp
 
 {{-- ===== Header ===== --}}
@@ -40,7 +48,13 @@
         <header><span class="pt-eyebrow">Rata-rata Nilai Rapor</span><span class="pt-iconbox"><x-portal.icon name="chart" :size="18" /></span></header>
         <p class="pt-stat__value">{{ number_format($rataRata, 2) }} <small>/ 100</small></p>
         <div class="pt-stat__row">
-            <span class="pt-chip pt-chip--soft pt-chip--sm"><x-portal.icon name="trending" :size="11" /> {{ $selisih >= 0 ? '+' : '' }}{{ number_format($selisih, 1) }} poin</span>
+            <span class="pt-chip pt-chip--soft pt-chip--sm"><x-portal.icon name="trending" :size="11" /> 
+            @if ($selisih !== null)
+                {{ $selisih >= 0 ? '+' : '' }}{{ number_format($selisih, 1) }} poin
+            @else
+                Belum ada perbandingan
+            @endif
+        </span>
             <small class="pt-muted">vs Semester Genap X</small>
         </div>
     </article>
@@ -108,18 +122,57 @@
             </div>
         </div>
 
+
         <div class="pt-grid pt-grid--2 pt-grid--tight">
+
+            {{-- Nilai tertinggi --}}
             <div class="pt-panel pt-extreme">
-                <div class="pt-panel__top"><span class="pt-chip pt-chip--white pt-chip--xs"><x-portal.icon name="star" :size="10" /> Nilai Tertinggi</span><b class="pt-pill">{{ $tertinggi->predikat }}</b></div>
-                <strong>{{ $tertinggi->mapel }}</strong>
-                <p class="pt-extreme__val">{{ $tertinggi->nilai }} <small>Skor STS</small></p>
+                <div class="pt-panel__top">
+                    <span class="pt-chip pt-chip--white pt-chip--xs">
+                        <x-portal.icon name="star" :size="10" />
+                        Nilai Tertinggi
+                    </span>
+
+                    <b class="pt-pill">
+                        {{ $tertinggi->predikat ?? '—' }}
+                    </b>
+                </div>
+
+                <strong>
+                    {{ $tertinggi->mapel ?? 'Belum tersedia' }}
+                </strong>
+
+                <p class="pt-extreme__val">
+                    {{ $tertinggi->nilai ?? '—' }}
+                    <small>Skor STS</small>
+                </p>
             </div>
+
+            {{-- Nilai terendah --}}
             <div class="pt-panel pt-extreme">
-                <div class="pt-panel__top"><span class="pt-chip pt-chip--white pt-chip--xs"><x-portal.icon name="target" :size="10" /> Titik Evaluasi</span><b class="pt-pill">{{ $terendah->predikat }}</b></div>
-                <strong>{{ $terendah->mapel }}</strong>
-                <p class="pt-extreme__val">{{ $terendah->nilai }} <small>Skor STS</small></p>
+                <div class="pt-panel__top">
+                    <span class="pt-chip pt-chip--white pt-chip--xs">
+                        <x-portal.icon name="target" :size="10" />
+                        Titik Evaluasi
+                    </span>
+
+                    <b class="pt-pill">
+                        {{ $terendah->predikat ?? '—' }}
+                    </b>
+                </div>
+
+                <strong>
+                    {{ $terendah->mapel ?? 'Belum tersedia' }}
+                </strong>
+
+                <p class="pt-extreme__val">
+                    {{ $terendah->nilai ?? '—' }}
+                    <small>Skor STS</small>
+                </p>
             </div>
+
         </div>
+
     </article>
 
     <article class="pt-card">
@@ -170,14 +223,20 @@
                 </thead>
                 <tbody>
                     @foreach ($nilai as $n)
-                        <tr data-pt-searchable class="{{ $n->kelompok_kelas === 'mipa' && $n->mapel === $tertinggi->mapel ? 'is-top' : '' }}">
+                        <tr data-pt-searchable class="{{ $tertinggi && $n->mapel === $tertinggi->mapel ? 'is-top' : '' }}">
                             <td class="is-c pt-muted">{{ $n->no }}</td>
                             <td><strong>{{ $n->mapel }}</strong></td>
                             <td><span class="pt-chip pt-chip--{{ $n->kelompok_kelas === 'mipa' ? 'dark' : 'gray' }} pt-chip--xs">{{ $n->kelompok }}</span></td>
                             <td class="is-c pt-score {{ $n->nilai < $kktp ? 'is-low' : '' }}">{{ $n->nilai }}</td>
                             <td class="is-c"><b class="pt-pill">{{ $n->predikat }}</b></td>
-                            <td class="is-c"><span class="pt-tp pt-tp--{{ $n->tp['kelas'] }}">{{ $n->tp['label'] }}</span></td>
-                            <td class="pt-table__desc">{{ $n->capaian }}</td>
+                            <td class="is-c">
+                                <span class="pt-tp pt-tp--{{ data_get($n, 'tp.kelas', 'perlu') }}">
+                                    {{ data_get($n, 'tp.label', 'Belum tersedia') }}
+                                </span>
+                            </td>
+                            <td class="pt-table__desc">
+                                {{ $n->capaian ?? 'Belum ada catatan capaian.' }}
+                            </td>
                         </tr>
                     @endforeach
                     <tr class="pt-empty" hidden><td colspan="7">Tidak ada mata pelajaran yang cocok dengan pencarian.</td></tr>
@@ -191,13 +250,15 @@
             <div class="pt-panel">
                 <span class="pt-eyebrow">Sangat Baik</span>
                 <ul class="pt-bullets">
-                    @foreach ($nilai->where('tp.kelas', 'sangat-baik') as $n)<li><b>{{ $n->mapel }}</b> — {{ $n->capaian }}</li>@endforeach
+                    @foreach ($nilai->filter(fn ($n) => data_get($n, 'tp.kelas') === 'sangat-baik') as $n)
+                    <li><b>{{ $n->mapel }}</b> — {{ $n->capaian }}</li>@endforeach
                 </ul>
             </div>
             <div class="pt-panel">
                 <span class="pt-eyebrow">Baik</span>
                 <ul class="pt-bullets">
-                    @foreach ($nilai->where('tp.kelas', 'baik') as $n)<li><b>{{ $n->mapel }}</b> — {{ $n->capaian }}</li>@endforeach
+                    @foreach ($nilai->filter(fn ($n) => data_get($n, 'tp.kelas') === 'baik') as $n)
+                    <li><b>{{ $n->mapel }}</b> — {{ $n->capaian }}</li>@endforeach
                 </ul>
                 @if ($perlu->isNotEmpty())
                     <span class="pt-eyebrow pt-eyebrow--mt">Perlu Penguatan</span>

@@ -440,3 +440,377 @@
 @media (prefers-reduced-motion: reduce) {
     .pt-btn, .pt-cal__cell, .pt-news__item, .pt-toast { transition: none; animation: none; }
 }
+
+
+/* ==========================================================
+   AUTHENTICATION PORTAL ORANG TUA
+   Design konsisten dengan Login Administrator
+========================================================== */
+
+.pt-auth {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 24px;
+    background: linear-gradient(
+        135deg,
+        #12a8dc 0%,
+        #1b6fd0 55%,
+        #1555a8 100%
+    );
+    font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+}
+
+/* Card Login dan Registrasi */
+.pt-auth-card {
+    width: min(430px, 100%);
+    padding: 34px;
+    border: 1px solid rgba(255,255,255,.5);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 20px 60px rgba(8,45,100,.2);
+}
+
+/* Logo SIAKAD */
+.pt-auth-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 18px;
+    padding: 0;
+    border-radius: 20px;
+    background: linear-gradient(
+        135deg,
+        #12a8dc 0%,
+        #1b6fd0 55%,
+        #1555a8 100%
+    );
+}
+
+.pt-auth-logo img {
+    display: block;
+    width: 115px;
+    height: 115px;
+    margin: 0 auto;
+    object-fit: contain;
+    object-position: center;
+}
+
+/* Identitas dan Judul */
+.pt-auth-card .eyebrow {
+    margin: 0 0 6px;
+    color: var(--pt-blue);
+    text-align: center;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .07em;
+}
+
+.pt-auth-card h1 {
+    margin: 4px 0 7px;
+    color: var(--pt-ink);
+    text-align: center;
+    font-size: 23px;
+    font-weight: 800;
+}
+
+.pt-auth-card .muted {
+    margin-bottom: 24px;
+    color: var(--pt-muted);
+    text-align: center;
+    font-size: 11.5px;
+    line-height: 1.65;
+}
+
+/* Form */
+.pt-auth-card label {
+    display: grid;
+    gap: 7px;
+    margin-bottom: 15px;
+    color: var(--pt-text);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.pt-auth-card input,
+.pt-auth-card select {
+    width: 100%;
+    min-height: 43px;
+    padding: 10px 13px;
+    border: 1px solid var(--pt-line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--pt-ink);
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+    transition: .2s ease;
+}
+
+.pt-auth-card input:focus,
+.pt-auth-card select:focus {
+    border-color: var(--pt-blue);
+    box-shadow: 0 0 0 3px rgba(11,111,168,.12);
+}
+
+/* Tombol Utama - Pink seperti Login Admin */
+.pt-auth-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 44px;
+    margin-top: 8px;
+    padding: 11px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(
+        90deg,
+        #e8147e,
+        #f0408f
+    );
+    color: #fff !important;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 6px 15px rgba(232,20,126,.22);
+    transition: .2s ease;
+}
+
+.pt-auth-button:hover {
+    background: linear-gradient(
+        90deg,
+        #ce106d,
+        #e52d80
+    );
+    box-shadow: 0 8px 20px rgba(232,20,126,.3);
+    transform: translateY(-1px);
+}
+
+.pt-auth-button:active {
+    transform: translateY(0);
+}
+
+/* Link Login dan Registrasi */
+.pt-auth-footer {
+    margin-top: 19px;
+    color: var(--pt-muted);
+    text-align: center;
+    font-size: 11px;
+}
+
+.pt-auth-footer a,
+.pt-auth-admin-link {
+    color: var(--pt-blue-strong);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.pt-auth-footer a:hover,
+.pt-auth-admin-link:hover {
+    text-decoration: underline;
+}
+
+.pt-auth-admin-link {
+    display: block;
+    margin-top: 16px;
+    text-align: center;
+    font-size: 11px;
+}
+
+/* Notifikasi */
+.pt-auth-error,
+.pt-auth-success {
+    margin-bottom: 15px;
+    padding: 11px 13px;
+    border-radius: 10px;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.pt-auth-error {
+    background: #fff0f0;
+    color: #c43d4b;
+}
+
+.pt-auth-success {
+    background: var(--pt-green-soft);
+    color: var(--pt-green);
+}
+
+/* Informasi Relasi Siswa */
+.pt-auth-relation {
+    margin-bottom: 12px;
+    padding: 14px;
+    border: 1px solid var(--pt-line);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.pt-auth-relation strong {
+    color: var(--pt-ink);
+    font-size: 13px;
+}
+
+.pt-auth-relation p {
+    margin: 5px 0;
+    color: var(--pt-muted);
+    font-size: 11px;
+}
+
+.pt-auth-status {
+    display: inline-flex;
+    margin-top: 8px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.pt-auth-status.verified {
+    background: var(--pt-green-soft);
+    color: var(--pt-green);
+}
+
+.pt-auth-status.pending {
+    background: var(--pt-gold-soft);
+    color: var(--pt-gold);
+}
+
+.pt-auth-status.rejected {
+    background: #fff0f0;
+    color: #c43d4b;
+}
+
+/* Tombol Sekunder */
+.pt-auth-secondary {
+    width: 100%;
+    min-height: 40px;
+    margin-top: 10px;
+    border: 1px solid var(--pt-line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--pt-muted);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.pt-auth-secondary:hover {
+    background: var(--pt-blue-tint);
+}
+
+/* Registrasi: tetap nyaman meskipun banyak input */
+.pt-auth-card:has(select[name="hubungan"]) {
+    max-height: calc(100dvh - 36px);
+    overflow-y: auto;
+}
+
+/* Status Verifikasi */
+.pt-auth-card:has(.pt-auth-relation) {
+    max-height: calc(100dvh - 36px);
+    overflow-y: auto;
+}
+
+/* Scrollbar */
+.pt-auth-card::-webkit-scrollbar {
+    width: 6px;
+}
+
+.pt-auth-card::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: #cbd9e8;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .pt-auth {
+        padding: 18px;
+    }
+
+    .pt-auth-card {
+        padding: 26px 22px;
+    }
+
+    .pt-auth-logo {
+        width: 100px;
+        height: 100px;
+    }
+
+    .pt-auth-logo img {
+        width: 95px;
+        height: 95px;
+    }
+
+    .pt-auth-card h1 {
+        font-size: 21px;
+    }
+}
+
+
+/* =========================================
+   LOGIN & REGISTRASI PORTAL ORANG TUA
+   Menyamakan input dengan Login Administrator
+========================================= */
+
+.pt-ortu-login input,
+.pt-ortu-register input,
+.pt-ortu-login select,
+.pt-ortu-register select,
+.pt-ortu-login textarea,
+.pt-ortu-register textarea {
+    display: block;
+    width: 100%;
+    min-height: 43px;
+    padding: 10px 13px;
+
+    border: 1px solid var(--pt-line, #dce6f2) !important;
+    border-radius: 10px;
+
+    background: #fff !important;
+    color: var(--pt-ink, #14213d) !important;
+
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px;
+
+    outline: none;
+    box-shadow: none;
+    box-sizing: border-box;
+
+    transition: .2s ease;
+}
+
+/* Efek ketika kolom diklik */
+.pt-ortu-login input:focus,
+.pt-ortu-register input:focus,
+.pt-ortu-login select:focus,
+.pt-ortu-register select:focus,
+.pt-ortu-login textarea:focus,
+.pt-ortu-register textarea:focus {
+    border-color: var(--pt-blue, #1b6fd0) !important;
+    box-shadow: 0 0 0 3px rgba(11,111,168,.12);
+}
+
+/* Label */
+.pt-ortu-login label,
+.pt-ortu-register label {
+    display: grid;
+    gap: 7px;
+    margin-bottom: 15px;
+
+    color: var(--pt-text, #26364d);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Placeholder */
+.pt-ortu-login input::placeholder,
+.pt-ortu-register input::placeholder {
+    color: #9aa8ba;
+    opacity: 1;
+}

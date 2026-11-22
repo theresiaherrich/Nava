@@ -322,3 +322,104 @@
 @media (max-width: 640px) {
     .gw-toolbar-filters { margin-left: 0; width: 100%; }
 }
+
+/* ==========================================================
+   FILTER DROPDOWN RIWAYAT PRESENSI
+   ========================================================== */
+
+.gw-filter-trigger {
+    margin-left: 4px;
+    padding: 2px 5px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--gw-blue);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.gw-filter-trigger:hover {
+    background: var(--chip-blue-bg);
+}
+
+.gw-filter-dropdown {
+    position: fixed;
+    z-index: 100;
+    width: 230px;
+    max-width: calc(100vw - 32px);
+    padding: 12px;
+    border: 1px solid var(--gw-line);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .14);
+}
+
+.gw-filter-dropdown[hidden] {
+    display: none !important;
+}
+
+.gw-filter-header,
+.gw-filter-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.gw-filter-header {
+    margin-bottom: 12px;
+    color: var(--gw-text);
+    font-size: 13px;
+}
+
+.gw-filter-header button,
+.gw-filter-footer button {
+    padding: 6px 10px;
+    border: 1px solid var(--gw-line);
+    border-radius: 6px;
+    background: #fff;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.gw-filter-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 4px;
+    color: var(--gw-text);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.gw-filter-option input {
+    accent-color: var(--gw-blue);
+}
+
+.gw-filter-date {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 11px;
+}
+
+.gw-filter-date input {
+    width: 100%;
+    padding: 7px;
+    border: 1px solid var(--gw-line);
+    border-radius: 6px;
+    font: inherit;
+}
+
+.gw-filter-footer {
+    justify-content: flex-end;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--gw-line);
+}
+
+.gw-filter-footer button:last-child {
+    border-color: var(--gw-blue);
+    background: var(--gw-blue);
+    color: #fff;
+}

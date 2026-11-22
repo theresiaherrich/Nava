@@ -30,7 +30,7 @@ if (root) {
     const manualForm = $('#paManualForm');
     const fileInput = $('#paFile');
     const fileName = $('#paFileName');
-    const headerSearch = $('#paHeaderSearch');
+    const headerSearch = $('[data-tb-search-input]');
 
     const nameInput = $('#paStudentName');
     const classInput = $('#paClass');
@@ -139,11 +139,21 @@ if (root) {
             const result = await apiRequest(API.siswa);
 
             students = Array.isArray(result.data)
-                ? result.data.map((student) => ({
-                    id_siswa: student.id_siswa,
-                    nisn: student.nisn,
-                    nama: student.nama,
-                })).filter((student) => student.id_siswa)
+                ? result.data.map((student) => {
+                    const riwayatKelas = Array.isArray(student.riwayat_kelas)
+                        ? student.riwayat_kelas
+                        : [];
+
+                    const kelasAktif = riwayatKelas[0] || null;
+
+                    return {
+                        id_siswa: student.id_siswa,
+                        nisn: student.nisn,
+                        nama: student.nama,
+                        id_kelas: kelasAktif?.id_kelas || null,
+                        nama_kelas: kelasAktif?.kelas?.nama || '',
+                    };
+                }).filter((student) => student.id_siswa)
                 : [];
 
             if (students.length === 0) {
@@ -151,7 +161,34 @@ if (root) {
                 return;
             }
 
+            // Ambil kelas dari riwayat kelas semester aktif.
+            const daftarKelas = [
+                ...new Map(
+                    students
+                        .filter((student) => student.id_kelas && student.nama_kelas)
+                        .map((student) => [
+                            student.id_kelas,
+                            {
+                                id: student.id_kelas,
+                                nama: student.nama_kelas,
+                            },
+                        ])
+                ).values(),
+            ].sort((a, b) => a.nama.localeCompare(b.nama));
+
+            if (classInput) {
+                classInput.innerHTML = '<option value="">Pilih kelas</option>';
+
+                daftarKelas.forEach((kelas) => {
+                    const option = document.createElement('option');
+                    option.value = kelas.id;
+                    option.textContent = kelas.nama;
+                    classInput.appendChild(option);
+                });
+            }
+
             console.log(`Berhasil memuat ${students.length} data siswa.`);
+            console.log(`Berhasil memuat ${daftarKelas.length} kelas aktif.`);
         } catch (error) {
             console.error('Gagal mengambil data siswa:', error);
             notify(error.message || 'Gagal mengambil data siswa.');
@@ -184,28 +221,55 @@ if (root) {
             nisnInput.value = student.nisn || '';
         }
 
-        // API daftar siswa belum menyediakan data kelas.
-        // Jangan mengisi kelas dengan data buatan.
         if (classInput) {
-            classInput.value = '';
-            classInput.placeholder = 'Data kelas belum tersedia dari API';
-            classInput.required = false;
-            classInput.readOnly = true;
+            classInput.value = student.id_kelas
+                ? String(student.id_kelas)
+                : '';
+
+            classInput.disabled = Boolean(student.id_kelas);
         }
 
-        notify(`Data ${student.nama} berhasil dipilih.`);
+        notify(
+            student.id_kelas
+                ? `Data ${student.nama} (${student.nama_kelas}) berhasil dipilih.`
+                : `${student.nama} belum memiliki kelas aktif.`
+        );
     }
 
     function pastikanSiswaTerpilih() {
+        const nama = norm(nameInput?.value);
+        const idKelas = classInput?.value;
+
+        if (!nama) {
+            throw new Error('Nama siswa wajib diisi.');
+        }
+
+        if (!idKelas) {
+            throw new Error('Pilih kelas terlebih dahulu.');
+        }
+
+        // Jika siswa dipilih melalui pencarian database.
         if (
             selectedStudent &&
-            norm(selectedStudent.nama) === norm(nameInput?.value)
+            norm(selectedStudent.nama) === nama
         ) {
+            if (!selectedStudent.id_kelas) {
+                throw new Error(
+                    'Siswa belum memiliki kelas aktif. Presensi manual tidak dapat dilakukan.'
+                );
+            }
+
+            if (String(selectedStudent.id_kelas) !== String(idKelas)) {
+                throw new Error('Kelas tidak sesuai dengan data siswa.');
+            }
+
             return selectedStudent;
         }
 
-        const hasil = students.filter(
-            (student) => norm(student.nama) === norm(nameInput?.value)
+        // Jika nama dan kelas diisi secara manual.
+        const hasil = students.filter((student) =>
+            norm(student.nama) === nama &&
+            String(student.id_kelas) === String(idKelas)
         );
 
         if (hasil.length === 1) {
@@ -214,12 +278,22 @@ if (root) {
 
         if (hasil.length > 1) {
             throw new Error(
-                'Ada beberapa siswa dengan nama sama. Cari menggunakan NISN melalui kolom pencarian atas.'
+                'Terdapat beberapa siswa dengan nama dan kelas yang sama. Gunakan pencarian NISN.'
+            );
+        }
+
+        const siswaDitemukan = students.some(
+            (student) => norm(student.nama) === nama
+        );
+
+        if (siswaDitemukan) {
+            throw new Error(
+                'Kelas yang dipilih tidak sesuai dengan kelas aktif siswa tersebut.'
             );
         }
 
         throw new Error(
-            'Siswa tidak ditemukan. Cari siswa melalui kolom pencarian atas terlebih dahulu.'
+            'Nama siswa tidak ditemukan dalam data siswa aktif.'
         );
     }
 
@@ -254,7 +328,14 @@ if (root) {
             ) {
                 selectedStudent = null;
 
-                if (nisnInput) nisnInput.value = '';
+                if (nisnInput) {
+                    nisnInput.value = '';
+                }
+
+                if (classInput) {
+                    classInput.disabled = false;
+                    classInput.value = '';
+                }
             }
         });
     }
@@ -330,8 +411,9 @@ if (root) {
                 }
 
                 const formData = new FormData();
-
+        
                 formData.append('id_siswa', student.id_siswa);
+                formData.append('id_kelas', student.id_kelas);
                 formData.append('status', status);
                 formData.append('waktu_presensi', getCurrentTime());
 
@@ -358,8 +440,8 @@ if (root) {
                 if (fileName) fileName.textContent = '';
 
                 if (classInput) {
-                    classInput.placeholder = 'Kelas';
-                    classInput.readOnly = false;
+                    classInput.disabled = false;
+                    classInput.value = '';
                 }
             } catch (error) {
                 console.error('Presensi manual gagal:', error);
@@ -602,78 +684,6 @@ if (root) {
             scanner.stop().catch((error) => console.warn(error));
         }
     });
-
-
-/* ================= DROPDOWN PROFIL ================= */
-
-const profileButton = $('#paProfileButton');
-const profileDropdown = $('#paProfileDropdown');
-
-if (profileButton && profileDropdown) {
-
-    // Identitas khusus halaman Admin Presensi
-    const profileName = profileButton.querySelector(
-        '.pa-profile-info strong'
-    );
-
-    const profileRole = profileButton.querySelector(
-        '.pa-profile-info small'
-    );
-
-    const avatar = profileButton.querySelector(
-        '.pa-profile-avatar'
-    );
-
-    // Paksa identitas Admin, tidak mengambil username localStorage
-    if (profileName) {
-        profileName.textContent = 'Admin';
-    }
-
-    if (profileRole) {
-        profileRole.textContent = 'Admin • SMAN 1 Malang';
-    }
-
-    if (avatar) {
-        avatar.textContent = 'A';
-    }
-
-    // Dropdown profil
-    const closeDropdown = () => {
-        profileDropdown.classList.remove('show');
-        profileButton.classList.remove('active');
-        profileButton.setAttribute('aria-expanded', 'false');
-    };
-
-    profileButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-
-        const opened = profileDropdown.classList.toggle('show');
-
-        profileButton.classList.toggle('active', opened);
-
-        profileButton.setAttribute(
-            'aria-expanded',
-            String(opened)
-        );
-    });
-
-    // Tutup dropdown ketika klik di luar
-    document.addEventListener('click', (event) => {
-        if (
-            !profileButton.contains(event.target) &&
-            !profileDropdown.contains(event.target)
-        ) {
-            closeDropdown();
-        }
-    });
-
-    // Tutup dropdown dengan tombol Escape
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-            closeDropdown();
-        }
-    });
-}
 
 
     /* ================= INISIALISASI ================= */

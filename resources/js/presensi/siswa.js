@@ -41,32 +41,7 @@ const SISWA = {
  * TODO API:
  * Ganti dengan data riwayat presensi dari backend.
  */
-let riwayat = [
-    {
-        tanggal: '2026-10-14',
-        items: [
-            { status: 'hadir', jam: '06.45', metode: 'QR Code' }
-        ]
-    },
-    {
-        tanggal: '2026-10-13',
-        items: [
-            { status: 'terlambat', jam: '07.15', metode: 'QR Code' }
-        ]
-    },
-    {
-        tanggal: '2026-10-12',
-        items: [
-            { status: 'hadir', jam: '06.45', metode: 'QR Code' }
-        ]
-    },
-    {
-        tanggal: '2026-10-11',
-        items: [
-            { status: 'izin', jam: '-', metode: 'Surat Izin' }
-        ]
-    }
-];
+let riwayat = [];
 
 /* ============ HELPER ============ */
 
@@ -233,6 +208,7 @@ document.querySelectorAll('.ps-tab').forEach((tab) => {
 
 /* ============ QR CODE ============ */
 
+
 async function buatQR() {
     const gambarKecil = $('psQrImage');
     const gambarBesar = $('psQrLarge');
@@ -241,66 +217,53 @@ async function buatQR() {
     if (!gambarKecil || !gambarBesar || !loading) return;
 
     try {
-        // Tampilkan status loading
         loading.hidden = false;
         loading.textContent = 'Menyiapkan QR Code...';
 
         gambarKecil.hidden = true;
 
-        /*
-         * FRONTEND DEMO:
-         * QR dibuat otomatis agar tampilan frontend
-         * tetap bisa diuji tanpa menunggu backend.
-         *
-         * Jika backend menyediakan token, token tersebut
-         * akan digunakan secara otomatis.
-         *
-         * Jangan gunakan ID atau NISN mentah sebagai QR.
-         */
+        // Ambil QR Code dari backend menggunakan session login.
+        const response = await fetch('/presensi/siswa/qr', {
+            method: 'GET',
+            headers: {
+                Accept: 'image/svg+xml'
+            },
+            credentials: 'same-origin'
+        });
 
-        const tokenQR =
-            window.SIAKAD_PRESENSI_QR_TOKEN ||
-            'DEMO-PRESENSI-SISWA';
+        if (!response.ok) {
+            throw new Error(
+                response.status === 401
+                    ? 'Sesi login berakhir. Silakan login kembali.'
+                    : response.status === 403
+                        ? 'Akun ini tidak memiliki akses QR siswa.'
+                        : 'QR Code gagal diambil dari server.'
+            );
+        }
 
-        // Membuat QR Code
-        const urlQR = await QRCode.toDataURL(
-            String(tokenQR),
-            {
-                width: 400,
-                margin: 2,
-                errorCorrectionLevel: 'H',
-                color: {
-                    dark: '#000000',
-                    light: '#FFFFFF'
-                }
-            }
-        );
+        const gambarQr = await response.blob();
+        const urlQR = URL.createObjectURL(gambarQr);
 
-        // QR ukuran normal
         gambarKecil.src = urlQR;
         gambarKecil.alt = 'QR Code Presensi Siswa';
         gambarKecil.hidden = false;
 
-        // QR ukuran besar untuk modal
         gambarBesar.src = urlQR;
         gambarBesar.alt = 'QR Code Presensi Siswa';
 
-        // Sembunyikan loading
         loading.hidden = true;
 
-        console.info('[Presensi Siswa] QR Code berhasil dibuat.');
+        console.info('[Presensi Siswa] QR Code berhasil dimuat dari backend.');
 
     } catch (error) {
         gambarKecil.hidden = true;
         loading.hidden = false;
-        loading.textContent = 'QR gagal dibuat';
+        loading.textContent = error.message || 'QR gagal dibuat';
 
-        console.error(
-            '[Presensi Siswa] Gagal membuat QR Code:',
-            error
-        );
+        console.error('[Presensi Siswa] Gagal mengambil QR:', error);
     }
 }
+
 
 /* ============ LOKASI GPS ============ */
 
@@ -519,6 +482,46 @@ function tentukanStatus(jam) {
 
 /* ============ RIWAYAT ============ */
 
+async function ambilRiwayat() {
+    const box = $('psHistory');
+
+    if (!box) return;
+
+    box.innerHTML = '<p class="ps-empty">Memuat riwayat presensi...</p>';
+
+    try {
+        const response = await fetch('/presensi/siswa/riwayat', {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            throw new Error('Gagal mengambil riwayat presensi.');
+        }
+
+        const hasil = await response.json();
+
+        riwayat = (hasil.data.riwayat || []).map((item) => ({
+            tanggal: String(item.tanggal).slice(0, 10),
+            items: [{
+                status: String(item.status || '').toLowerCase(),
+                jam: item.waktu_presensi
+                    ? String(item.waktu_presensi).slice(0, 5).replace(':', '.')
+                    : '-',
+                metode: item.metode || ''
+            }]
+        }));
+
+        renderRiwayat();
+    } catch (error) {
+        console.error(error);
+        box.innerHTML = '<p class="ps-empty">Riwayat presensi gagal dimuat.</p>';
+    }
+}
+
 function barisHTML(item, terbaru) {
     const status = String(item.status || '').toLowerCase();
     const label = labelStatus[status] || esc(status);
@@ -532,11 +535,9 @@ function barisHTML(item, terbaru) {
         bagian.push(`<span>${esc(item.metode)}</span>`);
     }
 
-    return `
-        <div class="ps-row${terbaru ? ' is-latest' : ''}">
-            ${bagian.join('<i class="ps-dot"></i>')}
-        </div>
-    `;
+    return `<div class="ps-row${terbaru ? ' is-latest' : ''}">
+        ${bagian.join('<i class="ps-dot"></i>')}
+    </div>`;
 }
 
 function renderRiwayat(tanggal = '') {
@@ -718,8 +719,8 @@ buatQR();
 // Jalankan pemeriksaan GPS
 mulaiLokasi();
 
-// Tampilkan riwayat presensi
-renderRiwayat();
+// Ambil riwayat presensi dari database
+ambilRiwayat();
 
 // Aturan otomatis muncul saat halaman Presensi dibuka
 if (ATURAN_OTOMATIS) {

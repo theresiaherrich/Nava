@@ -1,6 +1,6 @@
 @props([
-    'name' => 'Pengguna',
-    'role' => '',
+    'name' => auth()->user()?->nama ?? 'Pengguna',
+    'role' => auth()->user()?->role ?? '',
     'initials' => null,
     'academicYear' => '2026/2027 · Ganjil',
     'academicYears' => null,            // daftar pilihan tahun ajaran; null = hanya tahun aktif

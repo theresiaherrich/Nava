@@ -22,41 +22,6 @@
     data-profile-label="{{ $labelProfil }}"
     data-profile-detail="{{ $detailProfil }}">
 
-    {{-- Header: pencarian + profil --}}
-    <header class="gw-header">
-        <label class="gw-search">
-            <input type="search" id="gwSearch"
-                placeholder="Ketik nama, NISN, atau kelas siswa"
-                aria-label="Cari siswa" autocomplete="off">
-
-            <svg viewBox="0 0 24 24" width="15" height="15"
-                fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"/>
-                <path d="m20 20-3.5-3.5"/>
-            </svg>
-        </label>
-
-        <div class="gw-profile">
-            <div class="gw-avatar" id="gwGuruAvatar">
-                {{ strtoupper(substr($namaProfil, 0, 1)) }}
-            </div>
-
-            <div class="gw-profile-text">
-                <strong id="gwGuruNama">{{ $namaProfil }}</strong>
-                <span id="gwGuruKelas">{{ $labelProfil }}</span>
-            </div>
-
-            <svg class="gw-chevron" viewBox="0 0 24 24"
-                width="16" height="16" fill="none"
-                stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round"
-                aria-hidden="true">
-                <path d="m6 9 6 6 6-6"/>
-            </svg>
-        </div>
-    </header>
-
     <main class="gw-container">
 
         {{-- Ringkasan --}}
@@ -203,16 +168,6 @@
                 <span class="gw-date-chip" id="gwChip"></span>
 
                 <div class="gw-toolbar-filters" id="gwFilterPresensi">
-                    <select id="gwStatusFilter"
-                        class="gw-pill-select" aria-label="Filter status">
-                        <option value="">Semua</option>
-                        <option value="Hadir">Hadir</option>
-                        <option value="Terlambat">Terlambat</option>
-                        <option value="Izin">Izin</option>
-                        <option value="Sakit">Sakit</option>
-                        <option value="Alpa">Alpa</option>
-                    </select>
-
                     <select id="gwUrut" class="gw-pill-select"
                         aria-label="Urutkan">
                         <option value="terbaru">Terbaru</option>
@@ -236,13 +191,44 @@
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th class="gw-col-tgl">Tanggal</th>
+
+                            <th class="gw-col-tgl">
+                                Tanggal
+                                <button type="button" class="gw-filter-trigger"
+                                    data-filter="tanggal" aria-label="Filter tanggal">
+                                    <span>▽</span>
+                                </button>
+                            </th>
+
                             <th>Nama</th>
                             <th>NISN</th>
-                            <th>Kelas</th>
-                            <th>Status</th>
+
+                            <th>
+                                Kelas
+                                <button type="button" class="gw-filter-trigger"
+                                    data-filter="kelas" aria-label="Filter kelas">
+                                    <span>▽</span>
+                                </button>
+                            </th>
+
+                            <th>
+                                Status
+                                <button type="button" class="gw-filter-trigger"
+                                    data-filter="status" aria-label="Filter status">
+                                    <span>▽</span>
+                                </button>
+                            </th>
+
                             <th>Jam</th>
-                            <th>Metode</th>
+
+                            <th>
+                                Metode
+                                <button type="button" class="gw-filter-trigger"
+                                    data-filter="metode" aria-label="Filter metode">
+                                    <span>▽</span>
+                                </button>
+                            </th>
+
                             <th><span class="gw-sr">Aksi</span></th>
                         </tr>
                     </thead>
@@ -250,6 +236,28 @@
                 </table>
             </div>
 
+                        {{-- Dropdown Filter Riwayat Presensi --}}
+            <div class="gw-filter-dropdown" id="gwFilterDropdown" hidden>
+                <div class="gw-filter-header">
+                    <strong id="gwFilterTitle">Filter</strong>
+                    <button type="button" id="gwFilterClose"
+                        aria-label="Tutup filter">
+                        &times;
+                    </button>
+                </div>
+
+                <div id="gwFilterOptions"></div>
+
+                <div class="gw-filter-footer">
+                    <button type="button" id="gwFilterReset">
+                        Reset
+                    </button>
+                    <button type="button" id="gwFilterApply">
+                        Terapkan
+                    </button>
+                </div>
+            </div>
+            
             {{-- Tabel Rekap --}}
             <div class="gw-table-wrap" id="gwViewRekap" hidden>
                 <table class="gw-table gw-rekap">
@@ -471,3 +479,4 @@
 
 @vite('resources/js/presensi/guru.js')
 @endsection
+

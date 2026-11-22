@@ -11,12 +11,15 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/css/sidebar.css',
+                'resources/css/topbar.css',
+                'resources/js/topbar.js',
 
                 // Presensi Siswa
                 'resources/css/presensi/siswa.css',
                 'resources/js/presensi/siswa.js',
 
                 // Presensi Guru / Wali Kelas
+                
                 'resources/css/presensi/guru.css',
                 'resources/js/presensi/guru.js',
 

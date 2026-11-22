@@ -95,7 +95,7 @@ const SEMESTER = 'Ganjil';
    Data tambahan hanya untuk kebutuhan tampilan.
    ========================================================== */
 
-const SISWA = [
+let SISWA = [
     ['Andini Putri', '245150600', 'Perempuan'],
     ['Bintang Mutiara', '245150601', 'Laki-laki'],
     ['Mutiara Lautan', '245150602', 'Perempuan'],
@@ -291,7 +291,13 @@ const state = {
     view: 'presensi',
 
     q: '',
-    status: '',
+    filters: {
+        kelas: [],
+        status: [],
+        metode: [],
+        tanggalAwal: '',
+        tanggalAkhir: ''
+    },
     urut: 'terbaru',
     rekap: '',
 
@@ -304,12 +310,14 @@ let uiRentang = false;
    6. PENCARIAN DATA
    ========================================================== */
 
-const cariSiswa = (nisn) =>
-    SISWA.find((s) => s.nisn === nisn);
+const cariSiswa = (idSiswa) =>
+    SISWA.find(
+        (s) => String(s.id_siswa) === String(idSiswa)
+    );
 
-const cariPresensi = (nisn, tanggal) =>
+const cariPresensi = (idPresensi) =>
     PRESENSI.find(
-        (p) => p.nisn === nisn && p.tanggal === tanggal
+        (p) => String(p.id_presensi) === String(idPresensi)
     );
 
 const dalamPeriode = (p) => {
@@ -387,11 +395,34 @@ function renderTabel() {
         .filter(dalamPeriode)
         .map((p) => ({
             p,
-            s: cariSiswa(p.nisn)
+            s: cariSiswa(p.id_siswa)
         }))
+
         .filter(({ p, s }) => {
-            return s &&
-                (!state.status || p.status === state.status) &&
+            if (!s) return false;
+
+            const f = state.filters;
+
+            const cocokKelas =
+                f.kelas.length === 0 ||
+                f.kelas.includes(s.kelas);
+
+            const cocokStatus =
+                f.status.length === 0 ||
+                f.status.includes(p.status);
+
+            const cocokMetode =
+                f.metode.length === 0 ||
+                f.metode.includes(p.metode);
+
+            const cocokTanggal =
+                (!f.tanggalAwal || p.tanggal >= f.tanggalAwal) &&
+                (!f.tanggalAkhir || p.tanggal <= f.tanggalAkhir);
+
+            return cocokKelas &&
+                cocokStatus &&
+                cocokMetode &&
+                cocokTanggal &&
                 cocokCari(s);
         })
         .sort((a, b) => {
@@ -438,8 +469,7 @@ function renderTabel() {
                 <td>
                     <button type="button"
                         class="gw-edit"
-                        data-nisn="${esc(s.nisn)}"
-                        data-tanggal="${esc(p.tanggal)}"
+                        data-id-presensi="${esc(p.id_presensi)}"
                         aria-label="Edit presensi ${esc(s.nama)}">
                         ${ikonEdit}
                     </button>
@@ -451,35 +481,120 @@ function renderTabel() {
     return data.length;
 }
 
+function renderTabelDenganFilter() {
+    const jumlah = renderTabel();
+
+    if (state.view === 'presensi') {
+        $('gwEmpty').hidden = jumlah > 0;
+    }
+}
+
+function renderOpsiFilter(jenis) {
+    const sumber = {
+        kelas: [...new Set(
+            SISWA.map((s) => s.kelas).filter((v) => v && v !== '-')
+        )],
+        status: [...new Set(
+            PRESENSI.map((p) => p.status).filter(Boolean)
+        )],
+        metode: [...new Set(
+            PRESENSI.map((p) => p.metode).filter((v) => v && v !== '-')
+        )]
+    };
+
+    if (jenis === 'tanggal') {
+        return `
+            <div class="gw-filter-date">
+                <label for="gwFilterTanggalAwal">Dari tanggal</label>
+                <input type="date" id="gwFilterTanggalAwal"
+                    value="${esc(state.filters.tanggalAwal)}">
+
+                <label for="gwFilterTanggalAkhir">Sampai tanggal</label>
+                <input type="date" id="gwFilterTanggalAkhir"
+                    value="${esc(state.filters.tanggalAkhir)}">
+            </div>
+        `;
+    }
+
+    const terpilih = state.filters[jenis];
+
+    return sumber[jenis].map((nilai) => `
+        <label class="gw-filter-option">
+            <input type="checkbox"
+                value="${esc(nilai)}"
+                ${terpilih.includes(nilai) ? 'checked' : ''}>
+            <span>${esc(nilai)}</span>
+        </label>
+    `).join('');
+}
+
 /* ==========================================================
    9. TABEL REKAP
    ========================================================== */
+
 
 function renderRekap() {
     const baris = SISWA
         .filter(cocokCari)
         .map((s) => {
             const riwayat = PRESENSI.filter(
-                (p) => p.nisn === s.nisn && dalamPeriode(p)
+                (p) =>
+                    String(p.id_siswa) === String(s.id_siswa) &&
+                    dalamPeriode(p)
             );
 
-            const hadir = riwayat.filter(
-                (p) => ['Hadir', 'Terlambat'].includes(p.status)
+            // Kelompokkan catatan berdasarkan tanggal.
+            const kelompokHarian = new Map();
+
+            riwayat.forEach((p) => {
+                if (!kelompokHarian.has(p.tanggal)) {
+                    kelompokHarian.set(p.tanggal, []);
+                }
+
+                kelompokHarian.get(p.tanggal).push(p);
+            });
+
+            // Tentukan satu status untuk setiap hari.
+            const rekapHarian = Array.from(
+                kelompokHarian.values()
+            ).map((catatan) => {
+                // Jika ada Hadir atau Terlambat, hari dihitung Hadir.
+                const adaHadir = catatan.some(
+                    (p) => ['Hadir', 'Terlambat'].includes(p.status)
+                );
+
+                if (adaHadir) {
+                    return 'Hadir';
+                }
+
+                // Jika tidak ada Hadir, gunakan catatan
+                // dengan waktu kejadian paling akhir.
+                const terakhir = [...catatan].sort((a, b) =>
+                    String(b.waktu_presensi || '').localeCompare(
+                        String(a.waktu_presensi || '')
+                    )
+                )[0];
+
+                return terakhir.status;
+            });
+
+            const hadir = rekapHarian.filter(
+                (status) => ['Hadir', 'Terlambat'].includes(status)
             ).length;
 
-            const izin = riwayat.filter(
-                (p) => p.status === 'Izin'
+            const izin = rekapHarian.filter(
+                (status) => status === 'Izin'
             ).length;
 
-            const sakit = riwayat.filter(
-                (p) => p.status === 'Sakit'
+            const sakit = rekapHarian.filter(
+                (status) => status === 'Sakit'
             ).length;
 
-            const alpa = riwayat.filter(
-                (p) => p.status === 'Alpa'
+            const alpa = rekapHarian.filter(
+                (status) => status === 'Alpa'
             ).length;
 
-            const total = hadir + izin + sakit + alpa;
+            const total = rekapHarian.length;
 
             return {
                 s,
@@ -521,6 +636,7 @@ function renderRekap() {
     return baris.length;
 }
 
+
 /* ==========================================================
    10. STATISTIK KEHADIRAN
    ========================================================== */
@@ -536,7 +652,7 @@ function renderStatistik() {
         new Set(
             data
                 .filter((p) => status.includes(p.status))
-                .map((p) => p.nisn)
+                .map((p) => p.id_siswa)
         ).size;
 
     const persen = (nilai, total) =>
@@ -645,13 +761,10 @@ function renderSemua() {
    12. PENCARIAN DAN FILTER
    ========================================================== */
 
-$('gwSearch').addEventListener('input', (e) => {
-    state.q = e.target.value;
-    renderSemua();
-});
+const headerSearch = document.querySelector('[data-tb-search-input]');
 
-$('gwStatusFilter').addEventListener('change', (e) => {
-    state.status = e.target.value;
+headerSearch?.addEventListener('input', (e) => {
+    state.q = e.target.value;
     renderSemua();
 });
 
@@ -663,6 +776,96 @@ $('gwUrut').addEventListener('change', (e) => {
 $('gwRekapFilter').addEventListener('change', (e) => {
     state.rekap = e.target.value;
     renderSemua();
+});
+
+/* ==========================================================
+   FILTER DROPDOWN RIWAYAT PRESENSI
+   ========================================================== */
+
+const filterDropdown = $('gwFilterDropdown');
+
+document.querySelectorAll('.gw-filter-trigger').forEach((tombol) => {
+    tombol.addEventListener('click', () => {
+        const jenis = tombol.dataset.filter;
+
+        const judul = {
+            kelas: 'Filter Kelas',
+            status: 'Filter Status',
+            metode: 'Filter Metode',
+            tanggal: 'Filter Tanggal'
+        };
+
+        $('gwFilterTitle').textContent = judul[jenis];
+        $('gwFilterOptions').innerHTML = renderOpsiFilter(jenis);
+
+        filterDropdown.hidden = false;
+        filterDropdown.dataset.jenis = jenis;
+
+        const posisi = tombol.getBoundingClientRect();
+
+        const kiri = Math.max(
+            12,
+            Math.min(
+                posisi.left,
+                window.innerWidth - filterDropdown.offsetWidth - 12
+            )
+        );
+
+        const atas = Math.max(
+            12,
+            Math.min(
+                posisi.bottom + 6,
+                window.innerHeight - filterDropdown.offsetHeight - 12
+            )
+        );
+
+        filterDropdown.style.left = `${kiri}px`;
+        filterDropdown.style.top = `${atas}px`;
+    });
+});
+
+$('gwFilterClose').addEventListener('click', () => {
+    filterDropdown.hidden = true;
+});
+
+$('gwFilterApply').addEventListener('click', () => {
+    const jenis = filterDropdown.dataset.jenis;
+
+    if (jenis === 'tanggal') {
+        const awal = $('gwFilterTanggalAwal').value;
+        const akhir = $('gwFilterTanggalAkhir').value;
+
+        if (awal && akhir && akhir < awal) {
+            pesan('Tanggal akhir tidak boleh lebih awal dari tanggal awal.', true);
+            return;
+        }
+
+        state.filters.tanggalAwal = awal;
+        state.filters.tanggalAkhir = akhir;
+    } else {
+        state.filters[jenis] = [
+            ...$('gwFilterOptions').querySelectorAll(
+                'input[type="checkbox"]:checked'
+            )
+        ].map((input) => input.value);
+    }
+
+    filterDropdown.hidden = true;
+    renderTabelDenganFilter();
+});
+
+$('gwFilterReset').addEventListener('click', () => {
+    const jenis = filterDropdown.dataset.jenis;
+
+    if (jenis === 'tanggal') {
+        state.filters.tanggalAwal = '';
+        state.filters.tanggalAkhir = '';
+    } else {
+        state.filters[jenis] = [];
+    }
+
+    $('gwFilterOptions').innerHTML = renderOpsiFilter(jenis);
+    renderTabelDenganFilter();
 });
 
 document.querySelectorAll('.gw-subtab').forEach((button) => {
@@ -821,12 +1024,16 @@ modal.querySelectorAll('.gw-tab').forEach((tab) => {
 function isiModal() {
     if (!state.aktif) return;
 
-    const { nisn, tanggal } = state.aktif;
+    const { idPresensi } = state.aktif;
 
-    const siswa = cariSiswa(nisn);
-    const presensi = cariPresensi(nisn, tanggal);
+    const presensi = cariPresensi(idPresensi);
+    if (!presensi) return;
 
-    if (!siswa || !presensi) return;
+    const siswa = SISWA.find(
+        (s) => String(s.id_siswa) === String(presensi.id_siswa)
+    );
+
+    if (!siswa) return;
 
     $('gwFoto').textContent =
         siswa.nama.charAt(0).toUpperCase();
@@ -888,9 +1095,14 @@ function siapkanEdit(tombolId, idField, simpan) {
         label.textContent = 'Edit';
     };
 
-    tombol.addEventListener('click', () => {
-        if (!mengedit) {
-            mengedit = true;
+        tombol.addEventListener('click', async () => {
+            if (!mengedit) {
+                if (ROLE_AKTIF !== 'guru') {
+                    pesan('Kamu tidak memiliki akses untuk mengedit data presensi.', true);
+                    return;
+                }
+
+                mengedit = true;
 
             elemen().forEach((el) => {
                 if (el.tagName === 'SELECT') {
@@ -907,7 +1119,7 @@ function siapkanEdit(tombolId, idField, simpan) {
             return;
         }
 
-        const galat = simpan();
+        const galat = await simpan();
 
         if (galat) {
             pesan(galat, true);
@@ -936,17 +1148,17 @@ const STATUS_VALID = [
 // mengizinkan ADMIN, sehingga tidak dipanggil dari
 // halaman bersama Guru, Kurikulum, dan Budaya Positif.
 
+
 const editRiwayat = siapkanEdit(
     'gwEditHistory',
     ['gwHStatus', 'gwHAlasan'],
-    () => {
+    async () => {
         if (!state.aktif) {
             return 'Data presensi tidak ditemukan.';
         }
 
-        const { nisn, tanggal } = state.aktif;
-
-        const presensi = cariPresensi(nisn, tanggal);
+        const { idPresensi } = state.aktif;
+        const presensi = cariPresensi(idPresensi);
 
         if (!presensi) {
             return 'Data presensi tidak ditemukan.';
@@ -967,41 +1179,77 @@ const editRiwayat = siapkanEdit(
             return 'Alasan perubahan wajib diisi (minimal 5 karakter).';
         }
 
-        if (!presensi.riwayatPerubahan) {
-            presensi.riwayatPerubahan = [];
+        // Mengambil token CSRF dari cookie Laravel.
+        const cookieXSRF = document.cookie
+            .split('; ')
+            .find((cookie) => cookie.startsWith('XSRF-TOKEN='));
+
+        if (!cookieXSRF) {
+            return 'Token keamanan tidak ditemukan. Muat ulang halaman.';
         }
 
-        presensi.riwayatPerubahan.push({
-            dari: presensi.status,
-            ke: statusBaru,
-            alasan,
-            oleh: PROFIL.nama,
-            waktu: new Date().toISOString()
-        });
-
-        presensi.status = statusBaru;
-
-        $('gwHAlasan').value = '';
-
-        renderSemua();
-        isiModal();
-
-        pesan(
-            `Status diubah menjadi ${statusBaru} (data sementara).`
+        const tokenXSRF = decodeURIComponent(
+            cookieXSRF.substring('XSRF-TOKEN='.length)
         );
 
-        return null;
+        try {
+            const response = await fetch(
+                `/api/presensi/${encodeURIComponent(idPresensi)}`,
+                {
+                    method: 'PATCH',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-XSRF-TOKEN': tokenXSRF
+                    },
+                    body: JSON.stringify({
+                        status: statusBaru,
+                        alasan_perubahan: alasan,
+                        keterangan: presensi.keterangan === '-'
+                            ? null
+                            : presensi.keterangan
+                    })
+                }
+            );
+
+            const hasil = await response.json();
+
+            if (!response.ok) {
+                return hasil.message || 'Gagal menyimpan perubahan presensi.';
+            }
+
+            // Perbarui tampilan hanya setelah server berhasil.
+            presensi.status = hasil.data?.status || statusBaru;
+
+            $('gwHAlasan').value = '';
+
+            renderSemua();
+            isiModal();
+
+            pesan(
+                `Status berhasil diperbarui menjadi ${presensi.status}.`
+            );
+
+            return null;
+
+        } catch (error) {
+            console.error('Gagal memperbarui presensi:', error);
+
+            return 'Terjadi kesalahan saat menghubungi server.';
+        }
     }
 );
+
 
 /* ==========================================================
    17. BUKA DAN TUTUP MODAL
    ========================================================== */
 
-function bukaModal(nisn, tanggal) {
+function bukaModal(idPresensi) {
     state.aktif = {
-        nisn,
-        tanggal
+        idPresensi
     };
 
     isiModal();
@@ -1029,10 +1277,7 @@ $('gwBody').addEventListener('click', (e) => {
 
     if (!tombol) return;
 
-    bukaModal(
-        tombol.dataset.nisn,
-        tombol.dataset.tanggal
-    );
+    bukaModal(tombol.dataset.idPresensi);
 });
 
 modal.addEventListener('click', (e) => {
@@ -1053,8 +1298,108 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+
+async function muatDataAPI() {
+    try {
+        const opsi = {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        };
+
+        // Mengambil data siswa dan halaman pertama presensi.
+        const [resSiswa, resPresensi] = await Promise.all([
+            fetch('/api/siswa', opsi),
+            fetch('/api/presensi?per_page=100&page=1', opsi)
+        ]);
+
+        if (!resSiswa.ok || !resPresensi.ok) {
+            throw new Error('Gagal mengambil data siswa atau presensi.');
+        }
+
+        const jsonSiswa = await resSiswa.json();
+        const jsonPresensi = await resPresensi.json();
+
+        // Mengambil seluruh halaman presensi.
+        const lastPage = jsonPresensi.meta?.last_page || 1;
+
+        const halamanLanjutan = await Promise.all(
+            Array.from({ length: lastPage - 1 }, (_, i) =>
+                fetch(`/api/presensi?per_page=100&page=${i + 2}`, opsi)
+                    .then((res) => {
+                        if (!res.ok) {
+                            throw new Error('Gagal mengambil halaman presensi.');
+                        }
+
+                        return res.json();
+                    })
+            )
+        );
+
+        const semuaPresensi = [
+            ...(jsonPresensi.data || []),
+            ...halamanLanjutan.flatMap((halaman) => halaman.data || [])
+        ];
+
+        // Memetakan data siswa dari database.
+        SISWA = (jsonSiswa.data || []).map((s) => {
+            const riwayatKelas = s.riwayat_kelas || [];
+            const kelasAktif = riwayatKelas.find((r) => r.kelas)?.kelas;
+
+            return {
+                id_siswa: s.id_siswa,
+                nis: s.nis,
+                nisn: s.nisn,
+                nama: s.nama,
+                jenis_kelamin: s.jenis_kelamin,
+                gender: s.jenis_kelamin === 'L'
+                    ? 'Laki-laki'
+                    : s.jenis_kelamin === 'P'
+                        ? 'Perempuan'
+                        : '-',
+                kelas: kelasAktif?.nama || '-',
+                ttl: '-',
+                alamat: s.alamat || '-',
+                hp: '-',
+                ayah: '-',
+                ibu: '-',
+                hpOrtu: '-'
+            };
+        });
+
+        // Memetakan seluruh catatan presensi.
+        PRESENSI = semuaPresensi.map((p) => ({
+            id_presensi: p.id_presensi,
+            id_siswa: p.id_siswa,
+            nisn: p.siswa?.nisn || '',
+            tanggal: String(p.tanggal).slice(0, 10),
+            status: p.status,
+            waktu_presensi: p.waktu_presensi,
+            jam: p.waktu_presensi
+                ? `${String(p.waktu_presensi).slice(0, 5).replace(':', '.')} WIB`
+                : '-',
+            metode_api: p.metode,
+            metode: p.metode === 'QR'
+                ? 'QR Code'
+                : p.metode || '-',
+            file_bukti: p.file_bukti,
+            berkas: p.file_bukti || '-',
+            keterangan: p.keterangan || '-'
+        }));
+
+        renderSemua();
+
+    } catch (error) {
+        console.error('Gagal memuat data presensi:', error);
+        pesan('Data dari server gagal dimuat. Silakan periksa koneksi dan login.');
+    }
+}
+
 /* ==========================================================
    18. MULAI HALAMAN
    ========================================================== */
 
-renderSemua();
+muatDataAPI();

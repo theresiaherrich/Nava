@@ -25,12 +25,7 @@
     padding:12px;
     color:#222;
 }
-.top-bar {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:10px;
-}
+
 .btn-aturan {
     background:#e60083;
     color:white;
@@ -223,11 +218,9 @@
 @section('content')
 <div class="presensi-page">
 
-    <div class="top-bar">
         <button class="btn-aturan" onclick="bukaAturan()">
             Lihat Aturan
         </button>
-    </div>
 
     <div class="presensi-grid">
 

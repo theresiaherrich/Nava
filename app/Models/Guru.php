@@ -9,12 +9,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Guru extends Model
 {
     protected $table = 'guru';
+
     protected $primaryKey = 'id_guru';
+
     public $timestamps = false;
 
     protected $fillable = [
         'id_user',
         'nip',
+        'status_kepegawaian',
+        'nama',
+        'agama',
+        'jenis_kelamin',
+        'alamat',
+        'email',
+        'no_telepon',
     ];
 
     public function user(): BelongsTo
@@ -22,8 +31,8 @@ class Guru extends Model
         return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
 
-    public function kelasWali(): HasMany
+    public function waliKelas(): HasMany
     {
-        return $this->hasMany(Kelas::class, 'id_guru', 'id_guru');
+        return $this->hasMany(WaliKelas::class, 'id_guru', 'id_guru');
     }
 }

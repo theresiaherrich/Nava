@@ -33,41 +33,6 @@
 
 <div class="bp-container" data-halaman="admin">
 
-    {{-- HEADER --}}
-    <header class="bp-topbar">
-        <label class="bp-search">
-            <svg viewBox="0 0 24 24" width="13" height="13"
-                fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"/>
-                <path d="m20 20-3.5-3.5"/>
-            </svg>
-
-            <input type="search" id="bpSearch"
-                placeholder="Ketik nama, nisn, atau kelas siswa"
-                aria-label="Cari siswa" autocomplete="off">
-        </label>
-
-        <div class="bp-profile">
-            <div class="bp-avatar" aria-hidden="true">
-                {{ strtoupper(substr($peran, 0, 1)) }}
-            </div>
-
-            <div>
-                <strong>{{ $peran }}</strong>
-                <small>SMAN 1 Malang</small>
-            </div>
-
-            <svg class="bp-chevron" viewBox="0 0 24 24"
-                width="14" height="14" fill="none"
-                stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round"
-                aria-hidden="true">
-                <path d="m6 9 6 6 6-6"/>
-            </svg>
-        </div>
-    </header>
-
     {{-- ADMIN PRESENSI --}}
     <section class="bp-view active" id="bp-admin">
 
@@ -128,23 +93,29 @@
 
                     <label for="bpName">Nama</label>
                     <input id="bpName" type="text"
-                        placeholder="Nama"
+                        placeholder="Ketik atau cari nama siswa"
                         autocomplete="off" required>
 
                     <label for="bpClass">Kelas</label>
-                    <input id="bpClass" type="text"
-                        placeholder="Kelas"
-                        autocomplete="off" required>
+                    <select id="bpClass" required>
+                        <option value="">Pilih kelas</option>
+                    </select>
 
                     <label for="bpManualStatus">Status</label>
                     <select id="bpManualStatus" required>
                         <option value="">Status</option>
                         <option value="Hadir">Hadir</option>
-                        <option value="Telat">Telat</option>
                         <option value="Izin">Izin</option>
                         <option value="Sakit">Sakit</option>
-                        <option value="Alpa">Alpa</option>
                     </select>
+
+                    <label for="bpEvidence">Bukti Izin/Sakit</label>
+                    <input id="bpEvidence" type="file"
+                        accept=".jpg,.jpeg,.png,.pdf">
+
+                    <label for="bpNote">Keterangan</label>
+                    <textarea id="bpNote"
+                        placeholder="Keterangan (opsional)"></textarea>
 
                     <small class="bp-validation"
                         id="bpFormMsg"

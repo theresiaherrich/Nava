@@ -37,14 +37,16 @@ class PresensiController extends Controller
         return view('presensi.kelola.index', compact('role', 'siswa'));
     }
 
+    
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         $validated = $request->validate([
             'tanggal' => ['nullable', 'date_format:Y-m-d'],
             'id_siswa' => ['nullable', 'integer', 'exists:siswa,id_siswa'],
-            'status' => ['nullable', Rule::in([
-                'Hadir', 'Alpa', 'Sakit', 'Izin', 'Terlambat'
-            ])],
+            'id_kelas' => ['nullable', 'integer', 'exists:kelas,id_kelas'],
+            'status' => ['nullable', 'string', 'max:30'],
             'tanggal_mulai' => ['nullable', 'date_format:Y-m-d'],
             'tanggal_akhir' => [
                 'nullable',
@@ -56,7 +58,47 @@ class PresensiController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $query = Presensi::with(['siswa', 'izin', 'sakit']);
+        $query = Presensi::with([
+            'siswa',
+            'siswa.riwayatKelas.kelas',
+            'izin',
+            'sakit',
+        ]);
+
+        // Pembatasan data untuk Guru Wali Kelas.
+        if ($user->role === 'GURU') {
+            $guru = $user->guru;
+
+            if (!$guru) {
+                return response()->json([
+                    'message' => 'Akun guru belum terhubung dengan data guru.',
+                ], 403);
+            }
+
+            $semesterAktif = Semester::where('aktif', true)
+                ->whereHas('tahunAjaran', function ($query) {
+                    $query->where('aktif', true);
+                })
+                ->first();
+
+            if (!$semesterAktif) {
+                return response()->json([
+                    'message' => 'Semester dan tahun ajaran aktif belum dikonfigurasi.',
+                ], 409);
+            }
+
+            $idKelasWali = \App\Models\WaliKelas::where('id_guru', $guru->id_guru)
+                ->where('id_semester', $semesterAktif->id_semester)
+                ->pluck('id_kelas');
+
+            $query->whereHas('siswa.riwayatKelas', function ($query) use (
+                $semesterAktif,
+                $idKelasWali
+            ) {
+                $query->where('id_semester', $semesterAktif->id_semester)
+                    ->whereIn('id_kelas', $idKelasWali);
+            });
+        }
 
         if (!empty($validated['id_siswa'])) {
             $query->where('id_siswa', $validated['id_siswa']);
@@ -104,6 +146,7 @@ class PresensiController extends Controller
         ]);
     }
 
+
     public function riwayatSiswa(Request $request, int $id_siswa): JsonResponse
     {
         $user = $request->user();
@@ -143,12 +186,9 @@ class PresensiController extends Controller
 
             // Memastikan siswa berada di kelas yang diampu guru
             // pada semester dan tahun ajaran aktif.
-            $memilikiAkses = $guru->kelasWali()
-                ->where(
-                    'id_tahun_ajaran',
-                    $semesterAktif->id_tahun_ajaran
-                )
-                ->whereHas('riwayatKelas', function ($query) use (
+            $memilikiAkses = \App\Models\WaliKelas::where('id_guru', $guru->id_guru)
+                ->where('id_semester', $semesterAktif->id_semester)
+                ->whereHas('kelas.riwayatKelas', function ($query) use (
                     $id_siswa,
                     $semesterAktif
                 ) {
@@ -277,7 +317,7 @@ class PresensiController extends Controller
             ], 422);
         }
 
-        if ($jam >= '07:30') {
+        if ($jam >= '17:30') {
             return response()->json([
                 'message' => 'Batas waktu presensi telah berakhir. Siswa yang belum melakukan presensi akan tercatat Alpa secara otomatis.',
             ], 422);
@@ -345,15 +385,118 @@ class PresensiController extends Controller
                 ];
             }
 
-            $catatanHariIni = Presensi::where('id_siswa', $siswa->id_siswa)
-                ->whereDate('tanggal', $tanggal)
-                ->lockForUpdate()
-                ->get();
+            $semesterAktif = \App\Models\Semester::where('aktif', true)
+                ->whereHas('tahunAjaran', function ($query) {
+                    $query->where('aktif', true);
+                })
+                ->first();
 
-            if ($catatanHariIni->isNotEmpty()) {
+            if (!$semesterAktif) {
                 return [
                     'error' => true,
-                    'message' => 'Kamu sudah memiliki catatan presensi hari ini.',
+                    'message' => 'Semester dan tahun ajaran aktif belum dikonfigurasi.',
+                    'status_code' => 409,
+                ];
+            }
+
+            $kelasSiswa = \App\Models\RiwayatKelas::where(
+                'id_siswa',
+                $siswa->id_siswa
+            )
+                ->where('id_semester', $semesterAktif->id_semester)
+                ->where('id_kelas', $validated['id_kelas'])
+                ->exists();
+
+            if (!$kelasSiswa) {
+                return [
+                    'error' => true,
+                    'message' => 'Kelas yang dipilih tidak sesuai dengan kelas aktif siswa.',
+                    'status_code' => 422,
+                ];
+            }
+
+            $presensiTerakhir = Presensi::where('id_siswa', $siswa->id_siswa)
+                ->whereDate('tanggal', $tanggal)
+                ->orderByDesc('waktu_presensi')
+                ->orderByDesc('id_presensi')
+                ->lockForUpdate()
+                ->first();
+
+            if (
+                $presensiTerakhir &&
+                $presensiTerakhir->status === $validated['status']
+            ) {
+                return [
+                    'error' => true,
+                    'message' => 'Presensi dengan status tersebut sudah tercatat sebagai status terakhir siswa hari ini.',
+                    'status_code' => 409,
+                ];
+            }
+
+            $semesterAktif = \App\Models\Semester::where('aktif', true)
+                ->whereHas('tahunAjaran', function ($query) {
+                    $query->where('aktif', true);
+                })
+                ->first();
+
+            if (!$semesterAktif) {
+                return [
+                    'error' => true,
+                    'message' => 'Semester dan tahun ajaran aktif belum dikonfigurasi.',
+                    'status_code' => 409,
+                ];
+            }
+
+            $kelasSiswa = \App\Models\RiwayatKelas::where(
+                'id_siswa',
+                $siswa->id_siswa
+            )
+                ->where('id_semester', $semesterAktif->id_semester)
+                ->where('id_kelas', $validated['id_kelas'])
+                ->exists();
+
+            if (!$kelasSiswa) {
+                return [
+                    'error' => true,
+                    'message' => 'Kelas yang dipilih tidak sesuai dengan kelas aktif siswa.',
+                    'status_code' => 422,
+                ];
+            }
+
+            $presensiTerakhir = Presensi::where('id_siswa', $siswa->id_siswa)
+                ->whereDate('tanggal', $tanggal)
+                ->orderByDesc('waktu_presensi')
+                ->orderByDesc('id_presensi')
+                ->first();
+
+            if (
+                $presensiTerakhir &&
+                $presensiTerakhir->status === $validated['status']
+            ) {
+                return [
+                    'error' => true,
+                    'message' => 'Presensi dengan status tersebut sudah tercatat sebagai status terakhir siswa hari ini.',
+                    'status_code' => 422,
+                ];
+            }
+
+            $presensiTerakhir = Presensi::where(
+                'id_siswa',
+                $siswa->id_siswa
+            )
+                ->whereDate('tanggal', $tanggal)
+                ->orderByDesc('waktu_presensi')
+                ->orderByDesc('id_presensi')
+                ->lockForUpdate()
+                ->first();
+
+            if (
+                $presensiTerakhir &&
+                strtolower($presensiTerakhir->status) === strtolower($status)
+            ) {
+                return [
+                    'error' => true,
+                    'message' => 'Kamu sudah presensi dengan status ' . $status . ' hari ini.',
                     'status_code' => 409,
                 ];
             }
@@ -397,6 +540,7 @@ class PresensiController extends Controller
 
         $validated = $request->validate([
             'id_siswa' => ['required', 'integer', 'exists:siswa,id_siswa'],
+            'id_kelas' => ['required', 'integer', 'exists:kelas,id_kelas'],
             'status' => ['required', Rule::in(['Hadir', 'Izin', 'Sakit'])],
             'waktu_presensi' => ['required', 'date_format:H:i'],
             'file_bukti' => [
@@ -437,64 +581,63 @@ class PresensiController extends Controller
                     ];
                 }
 
-                $presensi = Presensi::where('id_siswa', $siswa->id_siswa)
-                    ->whereDate('tanggal', $tanggal)
-                    ->lockForUpdate()
+                $semesterAktif = \App\Models\Semester::where('aktif', true)
+                    ->whereHas('tahunAjaran', function ($query) {
+                        $query->where('aktif', true);
+                    })
                     ->first();
 
-                if ($presensi && !(
-                    $presensi->status === 'Alpa'
-                    && in_array($validated['status'], ['Izin', 'Sakit'], true)
-                )) {
+                if (!$semesterAktif) {
                     return [
                         'error' => true,
-                        'message' => 'Siswa sudah memiliki catatan presensi hari ini.',
+                        'message' => 'Semester dan tahun ajaran aktif belum dikonfigurasi.',
                         'status_code' => 409,
                     ];
                 }
 
-                if ($request->hasFile('file_bukti')) {
-                    $fileBukti = $request->file('file_bukti')
-                        ->store('presensi/bukti', 'public');
+                $kelasSiswa = \App\Models\RiwayatKelas::where('id_siswa', $siswa->id_siswa)
+                    ->where('id_semester', $semesterAktif->id_semester)
+                    ->where('id_kelas', $validated['id_kelas'])
+                    ->exists();
+
+                if (!$kelasSiswa) {
+                    return [
+                        'error' => true,
+                        'message' => 'Kelas yang dipilih tidak sesuai dengan kelas aktif siswa.',
+                        'status_code' => 422,
+                    ];
                 }
 
-                if ($presensi) {
-                    RiwayatPerubahanPresensi::create([
-                        'id_presensi' => $presensi->id_presensi,
-                        'id_user' => $user->id_user,
-                        'status_sebelumnya' => $presensi->status,
-                        'status_baru' => $validated['status'],
-                        'alasan_perubahan' => $validated['keterangan']
-                            ?? 'Perubahan status oleh petugas presensi.',
-                        'waktu_perubahan' => $waktuSekarang,
-                    ]);
+                $presensiTerakhir = Presensi::where('id_siswa', $siswa->id_siswa)
+                    ->whereDate('tanggal', $tanggal)
+                    ->orderByDesc('waktu_presensi')
+                    ->orderByDesc('id_presensi')
+                    ->lockForUpdate()
+                    ->first();
 
-                    $presensi->update([
-                        'metode' => 'Manual',
-                        'status' => $validated['status'],
-                        'waktu_presensi' => $validated['waktu_presensi'] . ':00',
-                        'file_bukti' => $fileBukti,
-                        'keterangan' => $validated['keterangan'] ?? null,
-                    ]);
-
-                    $pesan = 'Status presensi Alpa berhasil diperbarui menjadi '
-                        . $validated['status'] . '.';
-
-                    $statusCode = 200;
-                } else {
-                    $presensi = Presensi::create([
-                        'id_siswa' => $siswa->id_siswa,
-                        'metode' => 'Manual',
-                        'status' => $validated['status'],
-                        'tanggal' => $tanggal,
-                        'waktu_presensi' => $validated['waktu_presensi'] . ':00',
-                        'file_bukti' => $fileBukti,
-                        'keterangan' => $validated['keterangan'] ?? null,
-                    ]);
-
-                    $pesan = 'Catatan presensi berhasil ditambahkan.';
-                    $statusCode = 201;
+                if (
+                    $presensiTerakhir &&
+                    $presensiTerakhir->status === $validated['status']
+                ) {
+                    return [
+                        'error' => true,
+                        'message' => 'Presensi dengan status tersebut sudah tercatat sebagai status terakhir siswa hari ini.',
+                        'status_code' => 409,
+                    ];
                 }
+
+                $presensi = Presensi::create([
+                    'id_siswa' => $siswa->id_siswa,
+                    'metode' => 'Manual',
+                    'status' => $validated['status'],
+                    'tanggal' => $tanggal,
+                    'waktu_presensi' => $validated['waktu_presensi'] . ':00',
+                    'file_bukti' => $fileBukti,
+                    'keterangan' => $validated['keterangan'] ?? null,
+                ]);
+
+                $pesan = 'Catatan presensi berhasil ditambahkan.';
+                $statusCode = 201;
 
                 if ($validated['status'] === 'Izin') {
                     $presensi->izin()->firstOrCreate(
@@ -546,9 +689,9 @@ class PresensiController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || $user->role !== 'ADMIN') {
+        if (!$user || !in_array($user->role, ['ADMIN', 'GURU'], true)) {
             return response()->json([
-                'message' => 'Hanya Admin yang dapat mengoreksi data presensi.',
+                'message' => 'Kamu tidak memiliki akses untuk mengoreksi data presensi.',
             ], 403);
         }
 
@@ -563,6 +706,57 @@ class PresensiController extends Controller
             'alasan_perubahan' => ['required', 'string'],
             'keterangan' => ['nullable', 'string'],
         ]);
+
+        // Pembatasan edit untuk Guru Wali Kelas.
+        if ($user->role === 'GURU') {
+            $guru = $user->guru;
+
+            if (!$guru) {
+                return response()->json([
+                    'message' => 'Akun guru belum terhubung dengan data guru.',
+                ], 403);
+            }
+
+            $semesterAktif = Semester::where('aktif', true)
+                ->whereHas('tahunAjaran', function ($query) {
+                    $query->where('aktif', true);
+                })
+                ->first();
+
+            if (!$semesterAktif) {
+                return response()->json([
+                    'message' => 'Semester dan tahun ajaran aktif belum dikonfigurasi.',
+                ], 409);
+            }
+
+            $presensiTarget = Presensi::find($id_presensi);
+
+            if (!$presensiTarget) {
+                return response()->json([
+                    'message' => 'Data presensi tidak ditemukan.',
+                ], 404);
+            }
+
+            $memilikiAkses = \App\Models\WaliKelas::where(
+                'id_guru',
+                $guru->id_guru
+            )
+                ->where('id_semester', $semesterAktif->id_semester)
+                ->whereHas('kelas.riwayatKelas', function ($query) use (
+                    $presensiTarget,
+                    $semesterAktif
+                ) {
+                    $query->where('id_siswa', $presensiTarget->id_siswa)
+                        ->where('id_semester', $semesterAktif->id_semester);
+                })
+                ->exists();
+
+            if (!$memilikiAkses) {
+                return response()->json([
+                    'message' => 'Kamu hanya dapat mengedit presensi siswa di kelas yang menjadi tanggung jawabmu.',
+                ], 403);
+            }
+        }
 
         $waktuSekarang = now('Asia/Jakarta');
 
@@ -677,22 +871,14 @@ class PresensiController extends Controller
 
             // Memastikan siswa berada di kelas yang diampu guru
             // pada semester dan tahun ajaran aktif.
-            $memilikiAkses = $guru->kelasWali()
-                ->where(
-                    'id_tahun_ajaran',
-                    $semesterAktif->id_tahun_ajaran
-                )
-                ->whereHas('riwayatKelas', function ($query) use (
+            $memilikiAkses = \App\Models\WaliKelas::where('id_guru', $guru->id_guru)
+                ->where('id_semester', $semesterAktif->id_semester)
+                ->whereHas('kelas.riwayatKelas', function ($query) use (
                     $presensi,
                     $semesterAktif
                 ) {
-                    $query->where(
-                        'id_siswa',
-                        $presensi->id_siswa
-                    )->where(
-                        'id_semester',
-                        $semesterAktif->id_semester
-                    );
+                    $query->where('id_siswa', $presensi->id_siswa)
+                        ->where('id_semester', $semesterAktif->id_semester);
                 })
                 ->exists();
 

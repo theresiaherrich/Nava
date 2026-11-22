@@ -10,10 +10,12 @@ return new class extends Migration
     public function up(): void
     {
         if (! $this->hasUniqueIndex('sakit', 'uq_sakit_id_presensi')) {
+            
             Schema::table('sakit', function (Blueprint $table) {
                 $table->unique(
                     'id_presensi',
                     'uq_sakit_id_presensi'
+
                 );
             });
         }

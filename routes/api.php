@@ -68,7 +68,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/presensi/aturan', [PresensiController::class, 'aturan']);
 
         Route::patch('/presensi/{id_presensi}', [PresensiController::class, 'update'])
-            ->middleware('role:ADMIN');
+            ->middleware('role:ADMIN,GURU');
 
         Route::get('/presensi/{id_presensi}/riwayat-perubahan', [
             PresensiController::class,

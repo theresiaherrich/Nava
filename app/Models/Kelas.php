@@ -19,7 +19,6 @@ class Kelas extends Model
         'tingkat',
         'fase',
         'id_tahun_ajaran',
-        'id_guru',
     ];
 
     public function riwayatKelas(): HasMany
@@ -40,12 +39,12 @@ class Kelas extends Model
         );
     }
 
-    public function waliKelas(): BelongsTo
+    public function waliKelas(): HasMany
     {
-        return $this->belongsTo(
-            Guru::class,
-            'id_guru',
-            'id_guru'
+        return $this->hasMany(
+            WaliKelas::class,
+            'id_kelas',
+            'id_kelas'
         );
     }
 }

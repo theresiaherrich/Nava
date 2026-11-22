@@ -13,22 +13,14 @@
     $presensiMenus = [
         'siswa' => [
             [
-            
+
                 'label' => 'Presensi',
                 'icon' => 'calendar',
                 'href' => route('presensi.siswa'),
                 'pattern' => 'presensi.siswa',
             ],
         ],
-        
-        'kurikulum' => [
-            [
-                'label' => 'Presensi',
-                'icon' => 'calendar',
-                'href' => route('presensi.siswa'),
-                'pattern' => 'presensi.siswa',
-            ],
-        ],
+
         
         'admin' => [
             [

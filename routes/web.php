@@ -10,6 +10,7 @@ use App\Http\Controllers\PelengkapRaporController;
 use App\Http\Controllers\CetakRaporController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\QrSiswaController;
 
 // ==========================================
 // PEMBAGIAN MODUL PROYEK NAVA
@@ -35,13 +36,16 @@ Route::view('/login', 'auth.login')->name('login');
 
 Route::post('/login', [AuthController::class, 'loginWeb'])
     ->name('login.submit');
-    
+
 Route::view('/register', 'auth.register')->name('register');
 
 Route::view('/ganti-password', 'auth.ganti-password')
     ->name('password.change');
 
-Route::prefix('presensi')->name('presensi.')->group(function () {
+Route::prefix('presensi')
+    ->name('presensi.')
+    ->middleware('auth')
+    ->group(function () {
 
     Route::view('/qr-code', 'presensi.qr-code.index')
         ->name('qr-code');
@@ -60,6 +64,23 @@ Route::prefix('presensi')->name('presensi.')->group(function () {
 
     Route::view('/edit', 'presensi.edit.index')
         ->name('edit');
+    
+    Route::get('/siswa/qr', [QrSiswaController::class, 'showWeb'])
+        ->middleware('auth')
+        ->name('siswa.qr');
+
+        Route::get('/siswa/riwayat', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+
+        if (!$user || $user->role !== 'SISWA' || !$user->siswa) {
+            abort(403);
+        }
+
+        return app(PresensiController::class)->riwayatSiswa(
+            $request,
+            (int) $user->siswa->id_siswa
+        );
+    })->middleware('auth')->name('siswa.riwayat');
 
     // ROLE SISWA
     Route::view('/siswa', 'presensi.siswa.index')
@@ -94,9 +115,10 @@ Route::prefix('presensi')->name('presensi.')->group(function () {
         'namaProfil' => 'Budaya Positif',
         'labelProfil' => 'Budaya Positif',
         'detailProfil' => 'SMAN 1 Malang',
-    ])->name('budaya-positif');
+    ])->middleware('role:BUDAYA_POSITIF')->name('budaya-positif');
 
     Route::view('/budaya-positif/admin-presensi', 'presensi.admin.index')
+        ->middleware('role:BUDAYA_POSITIF,ADMIN')
         ->name('budaya-positif.admin-presensi');
 
 });

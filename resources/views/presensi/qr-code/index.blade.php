@@ -6,25 +6,13 @@
 @section('content')
 
 <div class="presensi-wrapper">
-
-    <!-- HEADER -->
-    <div class="presensi-topbar">
+    
+    <!-- KONTEN UTAMA -->
+    <div class="presensi-content">
+        
         <button class="aturan-button" onclick="openAturan()">
             Lihat Aturan
         </button>
-
-        <div class="student-profile">
-            <div class="profile-avatar">S</div>
-            <div>
-                <strong>Siswa</strong>
-                <small>Presensi Siswa</small>
-            </div>
-        </div>
-    </div>
-
-    <!-- KONTEN UTAMA -->
-    <div class="presensi-content">
-
         <div class="presensi-grid">
 
             <!-- QR CODE -->
@@ -235,55 +223,6 @@
     font-family: 'Poppins', sans-serif;
     color: #333b46;
     padding: 0 25px 30px;
-}
-
-.presensi-topbar {
-    min-height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-}
-
-.aturan-button {
-    border: 0;
-    background: #d41480;
-    color: white;
-    padding: 10px 25px;
-    border-radius: 5px;
-    font-family: inherit;
-    font-size: 12px;
-    cursor: pointer;
-    box-shadow: 0 2px 5px #00000018;
-}
-
-.aturan-button:hover,
-.submit-button:hover {
-    background: #b90e6d;
-}
-
-.student-profile {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 11px;
-}
-
-.student-profile small {
-    display: block;
-    color: #7d8793;
-    font-size: 9px;
-}
-
-.profile-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: #2876c8;
-    color: white;
-    display: grid;
-    place-items: center;
-    font-weight: 600;
 }
 
 .presensi-content {

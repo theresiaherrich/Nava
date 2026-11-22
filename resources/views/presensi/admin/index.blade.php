@@ -10,71 +10,6 @@
 @section('content')
 <div class="pa-page" id="presensiAdmin">
 
-    {{-- HEADER PENCARIAN DAN PROFIL ADMIN --}}
-    <div class="pa-topbar">
-
-        <label class="pa-search">
-            <input
-                type="search"
-                id="paHeaderSearch"
-                placeholder="Ketik nama, NISN, atau kelas siswa"
-                autocomplete="off"
-                aria-label="Cari siswa"
-                title="Tekan Enter untuk mengisi form presensi manual"
-            >
-
-            <svg class="pa-search-icon" width="20" height="20"
-                 viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"/>
-                <path d="m20 20-4-4"/>
-            </svg>
-        </label>
-
-        {{-- PROFIL ADMIN --}}
-        <div class="pa-profile">
-
-            <button
-                type="button"
-                class="pa-profile-button"
-                id="paProfileButton"
-                aria-expanded="false"
-                aria-haspopup="true"
-            >
-                <span class="pa-profile-avatar" aria-hidden="true">A</span>
-
-                <span class="pa-profile-info">
-                    <strong>Admin</strong>
-                    <small>Admin • SMAN 1 Malang</small>
-                </span>
-
-                <svg class="pa-profile-chevron"
-                     width="20" height="20"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     aria-hidden="true">
-                    <path d="m6 9 6 6 6-6"/>
-                </svg>
-            </button>
-
-            <div class="pa-profile-dropdown" id="paProfileDropdown">
-                <div class="pa-dropdown-user">
-                    <span class="pa-dropdown-avatar">A</span>
-                    <div>
-                        <strong>Admin</strong>
-                        <small>Administrator</small>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
     {{-- KONTEN --}}
     <div class="pa-content">
 
@@ -139,12 +74,9 @@
 
                     <div class="pa-field">
                         <label for="paClass">Kelas</label>
-                        <input id="paClass"
-                               name="kelas"
-                               type="text"
-                               placeholder="Kelas"
-                               autocomplete="off"
-                               required>
+                        <select id="paClass" name="kelas" required>
+                            <option value="">Pilih kelas</option>
+                        </select>
                     </div>
 
                     <div class="pa-field">

@@ -6,6 +6,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 
 /* ============ HELPER & DATA DUMMY ============ */
 const $ = (id) => document.getElementById(id);
+const bpSearch = document.querySelector('[data-tb-search-input]');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const norm = (s) => String(s ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
 
@@ -118,7 +119,7 @@ function renderStatistik() {
 function renderSemua() { renderTabel(); renderStatistik(); }
 
 if (adaDashboard) {
-    $('bpSearch').addEventListener('input', (e) => { state.q = e.target.value; renderTabel(); });
+    bpSearch.addEventListener('input', (e) => { state.q = e.target.value; renderTabel(); });
     $('bpStatusFilter').addEventListener('change', (e) => { state.status = e.target.value; renderTabel(); });
     $('bpSort').addEventListener('change', (e) => { state.urut = e.target.value; renderTabel(); });
 
@@ -144,31 +145,243 @@ if (adaAdmin) {
         el.style.color = jenis === 'ok' ? '#157a46' : '#e20a7a';
     };
 
-    $('bpManualForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const nama = $('bpName').value, kelas = $('bpClass').value, status = $('bpManualStatus').value;
+        // Data khusus untuk presensi manual dari database
+        let siswaManualDB = [];
+        let siswaTerpilihManual = null;
 
-        if (!nama.trim() || !kelas.trim() || !status) return pesanForm('Lengkapi nama, kelas, dan status.', 'err');
+        async function muatSiswaManual() {
+            try {
+                const response = await fetch('/api/siswa', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
 
-        const siswa = SISWA.find((s) => norm(s.nama) === norm(nama) && norm(s.kelas) === norm(kelas));
-        if (!siswa) return pesanForm('Siswa tidak ditemukan. Pastikan nama dan kelas sudah benar.', 'err');
+                const result = await response.json();
 
-        const hasil = catat(siswa, status, 'Manual');
-        pesanForm(hasil.pesan, hasil.ok ? 'ok' : 'err');
-        if (hasil.ok) e.target.reset();
+                if (!response.ok) {
+                    throw new Error(
+                        result.message || `Gagal memuat siswa (${response.status}).`
+                    );
+                }
+
+                siswaManualDB = (result.data || []).flatMap((siswa) => {
+                    const riwayat = siswa.riwayat_kelas || [];
+                    const kelasAktif = riwayat.find((r) => r.kelas);
+
+                    if (!kelasAktif) return [];
+
+                    return [{
+                        id_siswa: siswa.id_siswa,
+                        nisn: siswa.nisn,
+                        nama: siswa.nama,
+                        id_kelas: kelasAktif.id_kelas,
+                        kelas: kelasAktif.kelas.nama,
+                    }];
+                });
+
+                const dropdownKelas = $('bpClass');
+                const daftarKelas = [
+                    ...new Map(
+                        siswaManualDB.map((s) => [
+                            s.id_kelas,
+                            { id_kelas: s.id_kelas, nama: s.kelas }
+                        ])
+                    ).values()
+                ];
+
+                dropdownKelas.innerHTML = '<option value="">Pilih kelas</option>';
+
+                daftarKelas.forEach((kelas) => {
+                    const option = document.createElement('option');
+                    option.value = kelas.id_kelas;
+                    option.textContent = kelas.nama;
+                    dropdownKelas.appendChild(option);
+                });
+
+                console.log(
+                    `Data siswa manual berhasil dimuat: ${siswaManualDB.length}`
+                );
+
+            } catch (error) {
+                console.error('Gagal memuat siswa manual:', error);
+                pesanForm(error.message, 'err');
+            }
+        }
+
+        muatSiswaManual();
+
+        $('bpName').addEventListener('input', () => {
+            siswaTerpilihManual = null;
+        });
+
+        $('bpClass').addEventListener('change', () => {
+            siswaTerpilihManual = null;
+        });
+
+    
+        $('bpManualForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            let siswa = siswaTerpilihManual;
+
+            const nama = norm($('bpName').value);
+            const idKelas = $('bpClass').value;
+
+            const status = $('bpManualStatus').value;
+            const file = $('bpEvidence').files[0];
+            const keterangan = $('bpNote').value.trim();
+
+            // Jika belum memilih hasil pencarian, cocokkan input manual dengan database.
+            if (!siswa) {
+                if (!nama || !idKelas) {
+                    return pesanForm('Isi nama dan pilih kelas siswa terlebih dahulu.', 'err');
+                }
+
+                const hasilManual = siswaManualDB.filter((s) =>
+                    norm(s.nama) === nama && String(s.id_kelas) === String(idKelas)
+                );
+
+                if (hasilManual.length === 0) {
+                    return pesanForm(
+                        'Nama atau kelas tidak sesuai dengan data siswa aktif.',
+                        'err'
+                    );
+                }
+
+                if (hasilManual.length > 1) {
+                    return pesanForm(
+                        'Data siswa tidak unik. Silakan cari menggunakan NISN.',
+                        'err'
+                    );
+                }
+
+                siswa = hasilManual[0];
+            }
+
+            if (!status) {
+                return pesanForm('Pilih status presensi.', 'err');
+            }
+
+            if (['Izin', 'Sakit'].includes(status) && !file) {
+                return pesanForm('Unggah bukti surat untuk status Izin atau Sakit.', 'err');
+            }
+
+            const sekarang = new Date();
+            const waktu = `${String(sekarang.getHours()).padStart(2, '0')}:${String(sekarang.getMinutes()).padStart(2, '0')}`;
+
+            const formData = new FormData();
+            formData.append('id_siswa', siswa.id_siswa);
+            formData.append('id_kelas', siswa.id_kelas);
+            formData.append('status', status);
+            formData.append('waktu_presensi', waktu);
+
+            if (file) formData.append('file_bukti', file);
+            if (keterangan) formData.append('keterangan', keterangan);
+
+            const tombolSubmit = e.target.querySelector('button[type="submit"]');
+            if (tombolSubmit) tombolSubmit.disabled = true;
+
+            try {
+                const response = await fetch('/api/presensi/manual', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    },
+                    body: formData,
+                });
+
+                const teks = await response.text();
+                let result = {};
+
+                try {
+                    result = teks ? JSON.parse(teks) : {};
+                } catch {
+                    throw new Error(`Respons server tidak valid (${response.status}).`);
+                }
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Sesi login berakhir. Silakan login kembali.');
+                    }
+
+                    if (response.status === 419) {
+                        throw new Error('Sesi atau token CSRF berakhir. Muat ulang halaman.');
+                    }
+
+                    const detailValidasi = result.errors
+                        ? Object.values(result.errors).flat().join(' ')
+                        : '';
+
+                    throw new Error(
+                        detailValidasi || result.message || `Presensi gagal disimpan (${response.status}).`
+                    );
+                }
+
+                pesanForm(result.message || 'Presensi berhasil disimpan.', 'ok');
+
+                e.target.reset();
+                bpSearch.value = '';
+                siswaTerpilihManual = null;
+
+            } catch (error) {
+                console.error('Gagal menyimpan presensi manual:', error);
+                pesanForm(error.message || 'Terjadi kesalahan saat menyimpan presensi.', 'err');
+            } finally {
+                if (tombolSubmit) tombolSubmit.disabled = false;
+            }
+        });
+
+
+    // Kolom cari: gunakan data siswa dari database
+    bpSearch.title = 'Tekan Enter untuk mencari siswa dari database';
+
+    bpSearch.addEventListener('input', () => {
+        siswaTerpilihManual = null;
+        $('bpName').value = '';
+        $('bpClass').value = '';
     });
 
-    // Kolom cari di atas: tekan Enter untuk mengisi form manual dengan siswa yang cocok
-    $('bpSearch').title = 'Tekan Enter untuk mengisi form presensi manual';
-    $('bpSearch').addEventListener('keydown', (e) => {
+    bpSearch.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter') return;
+
         e.preventDefault();
-        const q = norm($('bpSearch').value);
-        const s = q && SISWA.find((x) => [x.nama, x.nisn, x.kelas].some((v) => norm(v).includes(q)));
-        if (!s) return pesanForm('Siswa tidak ditemukan.', 'err');
-        $('bpName').value = s.nama;
-        $('bpClass').value = s.kelas;
-        pesanForm('Data siswa terisi. Pilih status lalu Submit.', 'ok');
+
+        const q = norm(bpSearch.value);
+
+        if (!q) {
+            return pesanForm('Masukkan nama atau NISN siswa.', 'err');
+        }
+
+        if (siswaManualDB.length === 0) {
+            return pesanForm('Data siswa belum tersedia. Periksa koneksi ke server.', 'err');
+        }
+
+        const hasilCari = siswaManualDB.filter((s) =>
+            [s.nama, s.nisn, s.kelas].some((v) => norm(v).includes(q))
+        );
+
+        if (hasilCari.length === 0) {
+            return pesanForm('Siswa tidak ditemukan dalam database.', 'err');
+        }
+
+        if (hasilCari.length > 1) {
+            return pesanForm('Hasil lebih dari satu. Masukkan nama atau NISN yang lebih lengkap.', 'err');
+        }
+
+        const siswa = hasilCari[0];
+
+        siswaTerpilihManual = siswa;
+        $('bpName').value = siswa.nama;
+        $('bpClass').value = String(siswa.id_kelas);
+
+        pesanForm('Data siswa ditemukan. Pilih status lalu Submit.', 'ok');
     });
 
     /* ---- Scan QR (kamera menyala terus, siswa berikutnya langsung bisa dipindai) ---- */

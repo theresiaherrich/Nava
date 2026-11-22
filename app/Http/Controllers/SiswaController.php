@@ -44,7 +44,25 @@ class SiswaController extends Controller
             'BUDAYA_POSITIF',
             'KURIKULUM',
         ], true)) {
-            $siswa = Siswa::with('user')
+            $semesterAktif = \App\Models\Semester::where('aktif', true)
+                ->whereHas('tahunAjaran', function ($query) {
+                    $query->where('aktif', true);
+                })
+                ->first();
+
+            if (!$semesterAktif) {
+                return response()->json([
+                    'message' => 'Semester dan tahun ajaran aktif belum dikonfigurasi.',
+                ], 409);
+            }
+
+            $siswa = Siswa::with([
+                'user',
+                'riwayatKelas' => function ($query) use ($semesterAktif) {
+                    $query->where('id_semester', $semesterAktif->id_semester)
+                        ->with('kelas');
+                },
+            ])
                 ->orderBy('nama')
                 ->get();
 
@@ -54,10 +72,50 @@ class SiswaController extends Controller
             ]);
         }
 
-        if ($user->role === 'GURU') {
+       if ($user->role === 'GURU') {
+            $guru = $user->guru;
+
+            if (!$guru) {
+                return response()->json([
+                    'message' => 'Data guru tidak ditemukan.',
+                ], 404);
+            }
+
+            $semesterAktif = \App\Models\Semester::where('aktif', true)
+                ->whereHas('tahunAjaran', function ($query) {
+                    $query->where('aktif', true);
+                })
+                ->first();
+
+            if (!$semesterAktif) {
+                return response()->json([
+                    'message' => 'Semester dan tahun ajaran aktif belum dikonfigurasi.',
+                ], 409);
+            }
+
+            $idKelasWali = \App\Models\WaliKelas::where('id_guru', $guru->id_guru)
+                ->where('id_semester', $semesterAktif->id_semester)
+                ->pluck('id_kelas');
+
+            $siswa = Siswa::with([
+                'user',
+                'riwayatKelas' => function ($query) use ($semesterAktif, $idKelasWali) {
+                    $query->where('id_semester', $semesterAktif->id_semester)
+                        ->whereIn('id_kelas', $idKelasWali)
+                        ->with('kelas');
+                },
+            ])
+                ->whereHas('riwayatKelas', function ($query) use ($semesterAktif, $idKelasWali) {
+                    $query->where('id_semester', $semesterAktif->id_semester)
+                        ->whereIn('id_kelas', $idKelasWali);
+                })
+                ->orderBy('nama')
+                ->get();
+
             return response()->json([
-                'message' => 'Akses data siswa berdasarkan penugasan wali kelas belum tersedia karena tabel integrasi kelas belum diterapkan.',
-            ], 409);
+                'message' => 'Data siswa berhasil diambil.',
+                'data' => $siswa,
+            ]);
         }
 
         return response()->json([

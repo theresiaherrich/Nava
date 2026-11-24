@@ -118,16 +118,6 @@
         >
     </form>
 
-    {{-- Notifikasi --}}
-    <a
-        href="{{ route('admin.notifications.index') }}"
-        class="pt-btn pt-btn--ghost pt-btn--sm"
-        aria-label="Notifikasi WhatsApp"
-    >
-        <x-portal.icon name="message" :size="18" />
-        <span>Notifikasi</span>
-    </a>
-
     <span class="pt-topbar__spacer"></span>
 
     {{-- Identitas Admin --}}

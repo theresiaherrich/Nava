@@ -1,6 +1,6 @@
 <x-layouts.admin title="Pengajuan BK - SIAKAD SMAN 1 Malang">
 
-    <div class="max-w-6xl mx-auto py-3">
+    <div class="w-full py-3">
 
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
@@ -138,6 +138,6 @@
         @endif
     </div>
 
-    </div>{{-- /max-w-6xl --}}
+    </div>{{-- /w-full --}}
 
 </x-layouts.admin>

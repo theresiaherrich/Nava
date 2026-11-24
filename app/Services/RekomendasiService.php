@@ -118,17 +118,25 @@ class RekomendasiService
             ->where('id_sesi_tes', $idSesiTes)
             ->orderBy('peringkat')
             ->get()
-            ->map(fn ($r) => (object) [
-                'peringkat'   => $r->peringkat,
-                'skor'        => $r->skor,
-                'id_mapel'    => $r->id_mapel,
-                'nama'        => $r->mapel->nama ?? '-',
-                'kode'        => $r->mapel->kode ?? '-',
-                'rumpun'      => $r->mapel->rumpun ?? '-',
-                'kode_riasec' => $r->mapel->kode_riasec ?? '-',
-                'deskripsi'   => $r->mapel->deskripsi ?? '',
-                'alasan'      => $r->alasan,
-            ]);
+            ->map(function ($r) {
+                $deskripsi = MapelDetailHelper::getDeskripsi(
+                    $r->mapel->nama ?? '',
+                    $r->mapel->deskripsi ?? null,
+                    $r->mapel->rumpun ?? null
+                );
+
+                return (object) [
+                    'peringkat'   => $r->peringkat,
+                    'skor'        => $r->skor,
+                    'id_mapel'    => $r->id_mapel,
+                    'nama'        => $r->mapel->nama ?? '-',
+                    'kode'        => $r->mapel->kode ?? '-',
+                    'rumpun'      => $r->mapel->rumpun ?? '-',
+                    'kode_riasec' => $r->mapel->kode_riasec ?? '-',
+                    'deskripsi'   => $deskripsi,
+                    'alasan'      => $r->alasan,
+                ];
+            });
     }
 
     /**

@@ -309,20 +309,20 @@ class GuruBkController extends Controller
             'tanggal_tes'      => $sesi?->waktu_mulai ? Carbon::parse($sesi->waktu_mulai)->format('d M Y') : '-',
         ], $skorMap);
 
+        $rekomendasiList = collect();
         $hasilMinat = null;
         if ($sesi) {
             if (in_array($rk->kelas->tingkat, ['X', 'XI'])) {
-                $mapel = $this->rekomService->rekomendasiMapel($sesi->id_sesi_tes);
-                $hasilMinat = (object) $mapel->pluck('nama', 'peringkat')->mapWithKeys(fn ($v, $k) => ['rekomendasi_' . $k => $v])->toArray();
+                $rekomendasiList = $this->rekomService->rekomendasiMapel($sesi->id_sesi_tes);
             } else {
-                $prodi = $this->rekomService->rekomendasiProdi($sesi->id_sesi_tes);
-                $hasilMinat = (object) $prodi->pluck('nama', 'peringkat')->mapWithKeys(fn ($v, $k) => ['rekomendasi_' . $k => $v])->toArray();
+                $rekomendasiList = $this->rekomService->rekomendasiProdi($sesi->id_sesi_tes);
             }
+            $hasilMinat = (object) $rekomendasiList->pluck('nama', 'peringkat')->mapWithKeys(fn ($v, $k) => ['rekomendasi_' . $k => $v])->toArray();
         }
 
         $dimensi = DimensiRiasec::all()->keyBy('kode');
 
-        return view('bk.guru.detail-tes', array_merge($ctx, compact('rekap', 'hasilMinat', 'dimensi', 'sesi')));
+        return view('bk.guru.detail-tes', array_merge($ctx, compact('rekap', 'hasilMinat', 'dimensi', 'sesi', 'rekomendasiList')));
     }
 
     /**

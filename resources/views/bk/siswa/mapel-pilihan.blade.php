@@ -53,29 +53,40 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             @forelse($rekomendasiMapel as $mapel)
-                <div class="p-4 rounded-xl border flex items-start justify-between gap-3 hover:shadow-xs transition"
+                @php
+                    $deskripsiMapel = $mapel->deskripsi ?? \App\Services\MapelDetailHelper::getDeskripsi($mapel->nama, null, $mapel->rumpun ?? null);
+                @endphp
+                <div class="p-4 rounded-xl border flex flex-col justify-between hover:shadow-xs transition"
                      style="background-color: #f8fafc; border-color: #e2e8f0;">
-                    <div class="flex items-start gap-3 min-w-0">
-                        <div class="w-9 h-9 rounded-xl text-white flex items-center justify-center text-xs font-black flex-none mt-0.5 shadow-2xs"
-                             style="background-color: #0284c7;">
-                            {{ $mapel->peringkat ?? $loop->iteration }}
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-xl text-white flex items-center justify-center text-xs font-black flex-none mt-0.5 shadow-2xs"
+                                 style="background-color: #0284c7;">
+                                {{ $mapel->peringkat ?? $loop->iteration }}
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-slate-800">{{ $mapel->nama }}</p>
+                                <p class="text-[10px] text-gray-500">{{ $mapel->rumpun ?? 'Mapel Pilihan' }}</p>
+                                @if(!empty($mapel->kode_riasec))
+                                    <span class="inline-block mt-1 px-2 py-0.5 text-[9px] font-bold font-mono rounded"
+                                          style="background-color: #e0f2fe; color: #0369a1;">
+                                        RIASEC: {{ $mapel->kode_riasec }}
+                                    </span>
+                                @endif
+                            </div>
                         </div>
-                        <div class="min-w-0">
-                            <p class="text-xs font-bold text-slate-800 truncate">{{ $mapel->nama }}</p>
-                            <p class="text-[10px] text-gray-500">{{ $mapel->rumpun ?? 'Mapel Pilihan' }}</p>
-                            @if(!empty($mapel->kode_riasec))
-                                <span class="inline-block mt-1.5 px-2 py-0.5 text-[9px] font-bold font-mono rounded"
-                                      style="background-color: #e0f2fe; color: #0369a1;">
-                                    RIASEC: {{ $mapel->kode_riasec }}
-                                </span>
-                            @endif
-                        </div>
+                        @if(isset($mapel->skor))
+                            <span class="px-2 py-1 text-[10px] font-bold rounded-lg flex-none border shadow-2xs"
+                                  style="background-color: #ecfdf5; color: #047857; border-color: #a7f3d0;">
+                                {{ round($mapel->skor, 1) }}% Match
+                            </span>
+                        @endif
                     </div>
-                    @if(isset($mapel->skor))
-                        <span class="px-2 py-1 text-[10px] font-bold rounded-lg flex-none border shadow-2xs"
-                              style="background-color: #ecfdf5; color: #047857; border-color: #a7f3d0;">
-                            {{ round($mapel->skor, 1) }}% Match
-                        </span>
+
+                    @if(!empty($deskripsiMapel))
+                        <p class="text-[11px] text-slate-600 leading-relaxed mt-2.5 pt-2 border-t border-slate-200/70">
+                            {{ $deskripsiMapel }}
+                        </p>
                     @endif
                 </div>
             @empty

@@ -39,20 +39,9 @@
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
         <x-page-label />
-        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-1">
-            <div>
-                <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Detail Hasil Tes</h1>
-                <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Profil RIASEC dan rekomendasi minat siswa.</p>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap flex-none">
-                <a href="#"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-[#089BD5] text-white text-xs font-bold font-['Plus_Jakarta_Sans'] rounded-xl hover:bg-[#078ec4] transition shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    Unduh Laporan
-                </a>
-            </div>
+        <div class="mt-1">
+            <h1 class="text-slate-900 text-3xl sm:text-4xl font-black font-['Plus_Jakarta_Sans'] leading-tight tracking-tight">Detail Hasil Tes</h1>
+            <p class="text-slate-500 text-xs font-normal font-['Plus_Jakarta_Sans'] mt-1.5">Profil RIASEC dan rekomendasi minat siswa.</p>
         </div>
     </div>
 
@@ -147,33 +136,92 @@
                 </div>
             </div>
 
-            {{-- Rekomendasi dari v_hasil_minat_siswa --}}
+            {{-- Rekomendasi Minat Siswa --}}
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h3 class="text-sm font-bold text-slate-900 mb-1">Rekomendasi Minat</h3>
-                <p class="text-xs text-gray-400 mb-4">Bidang studi atau karier yang sesuai dengan profil RIASEC siswa</p>
+                <p class="text-xs text-gray-400 mb-4">
+                    {{ ($rekap->tingkat ?? '') === 'XII' ? 'Program studi dan karier yang sesuai dengan profil RIASEC siswa' : 'Mata pelajaran pilihan yang sesuai dengan profil RIASEC siswa' }}
+                </p>
 
-                @if($hasilMinat)
+                @if((isset($rekomendasiList) && $rekomendasiList->isNotEmpty()))
                     <div class="space-y-3">
-                        {{-- Tampilkan bidang rekomendasi dari view v_hasil_minat_siswa --}}
+                        @foreach($rekomendasiList as $item)
+                            @php
+                                $deskripsiItem = $item->deskripsi ?? null;
+                                if (empty($deskripsiItem) || trim($deskripsiItem) === '') {
+                                    $deskripsiItem = \App\Services\MapelDetailHelper::getDeskripsi($item->nama, null, $item->rumpun ?? null);
+                                }
+                            @endphp
+                            <div class="p-4 bg-blue-50/50 border border-blue-100 rounded-xl flex items-start justify-between gap-3">
+                                <div class="flex items-start gap-3 min-w-0">
+                                    <div class="w-8 h-8 rounded-xl bg-[#009bf2] text-white flex items-center justify-center flex-none mt-0.5 shadow-2xs">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <p class="text-xs font-bold text-slate-800">{{ $item->nama }}</p>
+                                            @if(!empty($item->rumpun))
+                                                <span class="px-2 py-0.5 text-[9px] font-semibold rounded bg-sky-100/70 text-sky-700">
+                                                    {{ $item->rumpun }}
+                                                </span>
+                                            @endif
+                                            @if(!empty($item->kode_riasec))
+                                                <span class="px-1.5 py-0.5 text-[9px] font-mono font-bold rounded bg-slate-100 text-slate-600">
+                                                    {{ $item->kode_riasec }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        @if(!empty($deskripsiItem))
+                                            <p class="text-[11px] text-slate-600 leading-relaxed mt-1">
+                                                {{ $deskripsiItem }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                @if(isset($item->skor))
+                                    <span class="px-2 py-1 text-[10px] font-extrabold rounded-lg flex-none border shadow-2xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                                        {{ round($item->skor, 1) }}% Match
+                                    </span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @elseif($hasilMinat)
+                    <div class="space-y-3">
                         @foreach(array_filter((array) $hasilMinat, fn($v, $k) => str_starts_with($k, 'rekomendasi') && !empty($v), ARRAY_FILTER_USE_BOTH) as $key => $nilai)
+                            @php
+                                $deskripsiNilai = \App\Services\MapelDetailHelper::getDeskripsi($nilai);
+                            @endphp
                             <div class="p-4 bg-blue-50/50 border border-blue-100 rounded-xl flex items-start gap-3">
-                                <div class="w-8 h-8 rounded-xl bg-[#009bf2] text-white flex items-center justify-center flex-none mt-0.5">
+                                <div class="w-8 h-8 rounded-xl bg-[#009bf2] text-white flex items-center justify-center flex-none mt-0.5 shadow-2xs">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                 </div>
-                                <div>
+                                <div class="min-w-0">
                                     <p class="text-xs font-bold text-slate-800">{{ $nilai }}</p>
+                                    @if(!empty($deskripsiNilai))
+                                        <p class="text-[11px] text-slate-600 leading-relaxed mt-1">
+                                            {{ $deskripsiNilai }}
+                                        </p>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach
 
                         {{-- Fallback: tampilkan semua field yang tersedia dari $hasilMinat --}}
                         @if(!array_filter((array) $hasilMinat, fn($v, $k) => str_starts_with($k, 'rekomendasi') && !empty($v), ARRAY_FILTER_USE_BOTH))
+                            @php
+                                $namaTampil = $hasilMinat->nama_prodi ?? $hasilMinat->nama_profesi ?? $hasilMinat->rekomendasi ?? 'Lihat detail rekomendasi';
+                                $deskripsiTampil = $hasilMinat->deskripsi ?? \App\Services\MapelDetailHelper::getDeskripsi($namaTampil);
+                            @endphp
                             <div class="p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
-                                <p class="text-xs font-semibold text-slate-800">{{ $hasilMinat->nama_prodi ?? $hasilMinat->nama_profesi ?? $hasilMinat->rekomendasi ?? 'Lihat detail rekomendasi' }}</p>
-                                @if(!empty($hasilMinat->deskripsi))
-                                    <p class="text-[11px] text-gray-500 mt-1">{{ $hasilMinat->deskripsi }}</p>
+                                <p class="text-xs font-semibold text-slate-800">{{ $namaTampil }}</p>
+                                @if(!empty($deskripsiTampil))
+                                    <p class="text-[11px] text-slate-600 leading-relaxed mt-1">{{ $deskripsiTampil }}</p>
                                 @endif
                             </div>
                         @endif

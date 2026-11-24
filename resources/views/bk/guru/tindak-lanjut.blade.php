@@ -33,7 +33,7 @@
         $balasanValue = old('balasan', $pengajuan->balasan ?? '');
     @endphp
 
-    <div class="max-w-6xl mx-auto py-3">
+    <div class="w-full py-3">
 
     {{-- Breadcrumb & Header --}}
     <div class="mb-6">
@@ -186,7 +186,7 @@
         </div>
     </div>
 
-    </div>{{-- /max-w-6xl --}}
+    </div>{{-- /w-full --}}
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

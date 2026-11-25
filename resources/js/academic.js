@@ -66,6 +66,26 @@ Alpine.data('penilaianAkademik', mode => page({
     get jadwalValid() {
         return cekWaktu(this.openAt) === '' && cekWaktu(this.closeAt) === '' && this.closeAt >= this.openAt;
     },
+    /** Jadwal yang tersimpan di server, untuk mendeteksi perubahan input. */
+    saved: { openAt: '', closeAt: '', levels: '' },
+    get jadwalBerubah() {
+        return this.openAt !== this.saved.openAt || this.closeAt !== this.saved.closeAt
+            || [...this.levels].sort().join() !== this.saved.levels;
+    },
+    /** Periode sudah ditutup/dikunci: jadwal tidak bisa diubah lagi dari halaman ini. */
+    get periodeSelesai() { return ['ditutup', 'dikunci'].includes(this.period?.status_efektif); },
+    get sudahDijadwalkan() { return !!this.period && this.period.status_efektif !== 'belum_diatur'; },
+    get tampilSimpan() { return !this.periodeSelesai && (!this.sudahDijadwalkan || this.jadwalBerubah); },
+    get tampilTutup() { return !this.periodeSelesai && this.sudahDijadwalkan && !this.jadwalBerubah; },
+    async tutupPeriode() {
+        const ok = await this.$store.confirm.ask({
+            title: `Tutup periode ${this.period?.jenis ?? ''}?`,
+            message: 'Guru tidak dapat lagi mengisi atau mengubah nilai pada periode ini. Jadwal tidak dapat diubah setelah periode ditutup.',
+            confirmLabel: 'Tutup periode',
+            tone: 'warning',
+        });
+        if (ok) this.mutate(this.path + '/tutup');
+    },
     simpanJadwal() {
         this.touched = { openAt: true, closeAt: true };
         if (!this.jadwalValid) return;
@@ -93,6 +113,7 @@ Alpine.data('penilaianAkademik', mode => page({
             this.closeAt = localDate(data.periode.tgl_tutup);
             this.levels = [...data.periode.tingkat];
             this.touched = { openAt: false, closeAt: false };
+            this.saved = { openAt: this.openAt, closeAt: this.closeAt, levels: [...this.levels].sort().join() };
         } else {
             this.rows = await read('/wali/paket' + query({ id_periode: this.periodId }));
         }

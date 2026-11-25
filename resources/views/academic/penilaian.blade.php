@@ -19,7 +19,7 @@
                     <div>
                         <label for="{{ $id }}" class="text-sm">{{ $label }}</label>
                         <input id="{{ $id }}" type="datetime-local" required min="2000-01-01T00:00" max="2099-12-31T23:59"
-                               x-model="{{ $model }}" x-on:input="tandai('{{ $model }}')" x-on:blur="tandai('{{ $model }}')" :disabled="busy"
+                               x-model="{{ $model }}" x-on:input="tandai('{{ $model }}')" x-on:blur="tandai('{{ $model }}')" :disabled="busy || periodeSelesai"
                                :aria-invalid="errors.{{ $model }} ? 'true' : 'false'" aria-describedby="{{ $id }}-error"
                                class="block rounded-control border p-2" :class="errors.{{ $model }} ? 'border-danger' : 'border-line'">
                         <p id="{{ $id }}-error" x-show="errors.{{ $model }}" x-cloak class="mt-1.5 flex items-center gap-1 text-xs font-medium text-danger" role="alert">
@@ -28,16 +28,24 @@
                         </p>
                     </div>
                 @endforeach
-                <fieldset class="text-sm" :disabled="busy"><legend>Tingkat</legend>
+                <fieldset class="text-sm" :disabled="busy || periodeSelesai"><legend>Tingkat</legend>
                     @foreach (['X', 'XI', 'XII'] as $tingkat)
                         <label class="mr-2"><input type="checkbox" value="{{ $tingkat }}" x-model="levels"> {{ $tingkat }}</label>
                     @endforeach
                 </fieldset>
-                <div class="flex gap-3 pt-5">
-                    <x-ui.button type="submit" x-bind:disabled="busy || !jadwalValid || period?.status_efektif === 'dikunci'">Simpan jadwal</x-ui.button>
-                    <x-ui.button variant="secondary" x-show="period?.status_efektif === 'dibuka'" x-bind:disabled="busy" x-on:click="mutate(path + '/tutup')">Tutup periode</x-ui.button>
+                <div class="flex flex-col gap-1.5 pt-5" x-show="tampilSimpan || tampilTutup">
+                    {{-- Belum dijadwalkan / jadwal diubah: simpan. Sudah tersimpan: aksi utama tutup periode. --}}
+                    <x-ui.button type="submit" x-show="tampilSimpan" x-bind:disabled="busy || !jadwalValid">Simpan jadwal</x-ui.button>
+                    <x-ui.button x-show="tampilTutup" x-bind:disabled="busy || period?.status_efektif !== 'dibuka'" x-on:click="tutupPeriode()">Tutup periode</x-ui.button>
+                    <p x-show="tampilTutup && period?.status_efektif === 'belum_dibuka'" class="text-xs text-muted">Periode bisa ditutup setelah waktu mulai.</p>
                 </div>
             </form>
+            <x-ui.alert x-show="period?.status_efektif === 'ditutup'" x-cloak tone="info" icon="clock" title="Periode ditutup" class="mt-4">
+                Input nilai sudah ditutup. Kunci nilai per kelas di bawah setelah semua paket siap.
+            </x-ui.alert>
+            <x-ui.alert x-show="period?.status_efektif === 'dikunci'" x-cloak tone="amber" title="Periode dikunci" class="mt-4">
+                Nilai periode ini sudah dikunci dan tidak dapat diubah.
+            </x-ui.alert>
         @endif
     </x-ui.card>
     <p x-show="!busy && !rows.length && !error" class="text-muted">Belum ada paket nilai untuk periode ini.</p>

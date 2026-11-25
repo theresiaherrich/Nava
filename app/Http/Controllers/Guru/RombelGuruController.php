@@ -23,7 +23,7 @@ class RombelGuruController extends Controller
     {
         $semester = AcademicAccess::semesterAktif();
         $periode = $periodeService->pastikanAda($semester)->first(fn (PeriodeNilai $p) => $p->status_efektif === 'dibuka')
-            ?? PeriodeNilai::where('id_semester', $semester->id_semester)->orderBy('jenis', 'desc')->get()->last(fn ($p) => $p->status !== 'belum_diatur');
+            ?? PeriodeNilai::where('id_semester', $semester->id_semester)->urutJenis()->get()->last(fn ($p) => $p->status !== 'belum_diatur');
 
         $rombel = $this->rombelSaya($semester->id_semester);
         $paket = $periode ? PaketNilai::where('id_periode', $periode->id_periode)->whereIn('id_rombel', $rombel->pluck('id_rombel'))->get()->groupBy('id_rombel') : collect();

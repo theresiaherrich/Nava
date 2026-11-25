@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,7 +10,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /** periode_penilaian (ERD). Satu STS dan satu SAS per semester. */
 class PeriodeNilai extends Model
 {
+    /** Urutan tetap: STS dulu, baru SAS (dipakai semua daftar/dropdown periode). */
     public const JENIS = ['STS', 'SAS'];
+
+    /** ORDER BY jenis sesuai JENIS. orderBy('jenis') tidak bisa dipakai: MySQL mengurutkan enum per indeks, SQLite per teks. */
+    public static function sqlUrutJenis(string $kolom = 'jenis'): string
+    {
+        return "CASE {$kolom} WHEN 'STS' THEN 1 WHEN 'SAS' THEN 2 ELSE 3 END";
+    }
 
     protected $table = 'periode_nilai';
 
@@ -26,6 +34,11 @@ class PeriodeNilai extends Model
     protected function casts(): array
     {
         return ['tgl_buka' => 'datetime', 'tgl_tutup' => 'datetime'];
+    }
+
+    public function scopeUrutJenis(Builder $query): Builder
+    {
+        return $query->orderByRaw(self::sqlUrutJenis($query->qualifyColumn('jenis')));
     }
 
     public function semester(): BelongsTo

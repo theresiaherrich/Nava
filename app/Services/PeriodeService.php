@@ -44,7 +44,7 @@ class PeriodeService
             }
         }
 
-        return PeriodeNilai::where('id_semester', $semester->id_semester)->orderBy('jenis', 'desc')->get();
+        return PeriodeNilai::where('id_semester', $semester->id_semester)->urutJenis()->get();
     }
 
     /** @param list<string>|null $tingkat */

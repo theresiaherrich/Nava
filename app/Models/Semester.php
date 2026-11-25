@@ -31,7 +31,7 @@ class Semester extends Model
 
     public function periode(): HasMany
     {
-        return $this->hasMany(PeriodeNilai::class, 'id_semester', 'id_semester');
+        return $this->hasMany(PeriodeNilai::class, 'id_semester', 'id_semester')->urutJenis();
     }
 
     /** Dipakai modul A1 (Presensi). */

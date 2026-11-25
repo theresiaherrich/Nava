@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Rapor;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Rapor\TemplateRaporRequest;
+use App\Models\PeriodeNilai;
 use App\Models\TemplateRapor;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +17,7 @@ class TemplateRaporController extends Controller
 
     public function index(): JsonResponse
     {
-        return $this->ok(['template' => TemplateRapor::orderBy('jenis')->orderByDesc('id_template')->get(), 'view_tersedia' => config('siakad.rapor_views')]);
+        return $this->ok(['template' => TemplateRapor::orderByRaw(PeriodeNilai::sqlUrutJenis())->orderByDesc('id_template')->get(), 'view_tersedia' => config('siakad.rapor_views')]);
     }
 
     public function store(TemplateRaporRequest $request): JsonResponse

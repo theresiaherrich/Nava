@@ -14,16 +14,29 @@
         </label>
         <span class="ml-3 text-sm text-muted" x-text="period?.status_efektif.replaceAll('_', ' ')"></span>
         @if ($mode === 'periode')
-            <form x-show="period" class="mt-4 flex flex-wrap items-end gap-3" x-on:submit.prevent="mutate(path, 'PUT', { tgl_buka: openAt + '+07:00', tgl_tutup: closeAt + '+07:00', tingkat: levels })">
-                <label class="text-sm">Mulai (WIB)<input type="datetime-local" required x-model="openAt" :disabled="busy" class="block rounded-control border border-line p-2"></label>
-                <label class="text-sm">Selesai (WIB)<input type="datetime-local" required x-model="closeAt" :disabled="busy" class="block rounded-control border border-line p-2"></label>
+            <form x-show="period" class="mt-4 flex flex-wrap items-start gap-3" novalidate x-on:submit.prevent="simpanJadwal()">
+                @foreach (['openAt' => ['periode-mulai', 'Mulai (WIB)'], 'closeAt' => ['periode-selesai', 'Selesai (WIB)']] as $model => [$id, $label])
+                    <div>
+                        <label for="{{ $id }}" class="text-sm">{{ $label }}</label>
+                        <input id="{{ $id }}" type="datetime-local" required min="2000-01-01T00:00" max="2099-12-31T23:59"
+                               x-model="{{ $model }}" x-on:input="tandai('{{ $model }}')" x-on:blur="tandai('{{ $model }}')" :disabled="busy"
+                               :aria-invalid="errors.{{ $model }} ? 'true' : 'false'" aria-describedby="{{ $id }}-error"
+                               class="block rounded-control border p-2" :class="errors.{{ $model }} ? 'border-danger' : 'border-line'">
+                        <p id="{{ $id }}-error" x-show="errors.{{ $model }}" x-cloak class="mt-1.5 flex items-center gap-1 text-xs font-medium text-danger" role="alert">
+                            <x-ui.icon name="alert-circle" :size="13" />
+                            <span x-text="errors.{{ $model }}"></span>
+                        </p>
+                    </div>
+                @endforeach
                 <fieldset class="text-sm" :disabled="busy"><legend>Tingkat</legend>
                     @foreach (['X', 'XI', 'XII'] as $tingkat)
                         <label class="mr-2"><input type="checkbox" value="{{ $tingkat }}" x-model="levels"> {{ $tingkat }}</label>
                     @endforeach
                 </fieldset>
-                <x-ui.button type="submit" x-bind:disabled="busy || period?.status_efektif === 'dikunci'">Simpan jadwal</x-ui.button>
-                <x-ui.button variant="secondary" x-show="period?.status_efektif === 'dibuka'" x-bind:disabled="busy" x-on:click="mutate(path + '/tutup')">Tutup periode</x-ui.button>
+                <div class="flex gap-3 pt-5">
+                    <x-ui.button type="submit" x-bind:disabled="busy || !jadwalValid || period?.status_efektif === 'dikunci'">Simpan jadwal</x-ui.button>
+                    <x-ui.button variant="secondary" x-show="period?.status_efektif === 'dibuka'" x-bind:disabled="busy" x-on:click="mutate(path + '/tutup')">Tutup periode</x-ui.button>
+                </div>
             </form>
         @endif
     </x-ui.card>

@@ -5,6 +5,17 @@ const read = async path => (await api(path)).data;
 const query = params => '?' + new URLSearchParams(params);
 const localDate = value => value ? new Date(value).toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).slice(0, 16).replace(' ', 'T') : '';
 
+// Nilai <input type="datetime-local">: tahun tepat 4 digit, 2000–2099 (sama dengan validasi server).
+const FORMAT_WAKTU = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
+const cekWaktu = value => {
+    if (!value) return 'Wajib diisi lengkap (tanggal, jam, dan tahun 4 digit).';
+    const cocok = FORMAT_WAKTU.exec(value);
+    if (!cocok) return 'Tahun harus 4 digit.';
+    const tahun = Number(cocok[1]);
+    if (tahun < 2000 || tahun > 2099) return 'Tahun harus antara 2000 dan 2099.';
+    return '';
+};
+
 function page(data) {
     return Object.defineProperties({
         error: '',
@@ -39,6 +50,27 @@ Alpine.data('penilaianAkademik', mode => page({
     openAt: '',
     closeAt: '',
     levels: [],
+    touched: { openAt: false, closeAt: false },
+    tandai(field) { this.touched[field] = true; },
+    /** Pesan error per field jadwal; string kosong = valid. Field kosong baru ditandai setelah disentuh. */
+    get errors() {
+        const errors = { openAt: cekWaktu(this.openAt), closeAt: cekWaktu(this.closeAt) };
+        if (!errors.openAt && !errors.closeAt && this.closeAt < this.openAt) {
+            errors.closeAt = 'Waktu selesai tidak boleh sebelum waktu mulai.';
+        }
+        for (const field of ['openAt', 'closeAt']) {
+            if (!this[field] && !this.touched[field]) errors[field] = '';
+        }
+        return errors;
+    },
+    get jadwalValid() {
+        return cekWaktu(this.openAt) === '' && cekWaktu(this.closeAt) === '' && this.closeAt >= this.openAt;
+    },
+    simpanJadwal() {
+        this.touched = { openAt: true, closeAt: true };
+        if (!this.jadwalValid) return;
+        this.mutate(this.path, 'PUT', { tgl_buka: this.openAt + '+07:00', tgl_tutup: this.closeAt + '+07:00', tingkat: this.levels });
+    },
     init() {
         this.run(async () => {
             this.periods = await read(this.mode === 'periode' ? '/kurikulum/periode' : '/wali/periode');
@@ -60,6 +92,7 @@ Alpine.data('penilaianAkademik', mode => page({
             this.openAt = localDate(data.periode.tgl_buka);
             this.closeAt = localDate(data.periode.tgl_tutup);
             this.levels = [...data.periode.tingkat];
+            this.touched = { openAt: false, closeAt: false };
         } else {
             this.rows = await read('/wali/paket' + query({ id_periode: this.periodId }));
         }

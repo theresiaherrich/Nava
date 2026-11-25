@@ -6,9 +6,12 @@ import tailwindcss from '@tailwindcss/vite';
 
 // Setiap file CSS/JS halaman di resources/{css,js} otomatis menjadi entry Vite,
 // jadi daftar input tidak bisa lagi menyebut file yang tidak ada (atau lupa didaftarkan).
+// Subfolder resources/{css,js}/presensi/ milik modul A1 (Presensi).
 const input = [
     ...globSync('resources/css/*.css'),
     ...globSync('resources/js/*.js'),
+    ...globSync('resources/css/presensi/*.css'),
+    ...globSync('resources/js/presensi/*.js'),
 ].map((file) => file.replaceAll('\\', '/')).sort();
 
 export default defineConfig({

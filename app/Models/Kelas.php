@@ -35,4 +35,16 @@ class Kelas extends Model
     {
         return $this->hasMany(WaliKelas::class, 'id_kelas', 'id_kelas');
     }
+
+    /** Nama relasi versi modul A1 (Presensi); sama dengan anggota(). */
+    public function riwayatKelas(): HasMany
+    {
+        return $this->anggota();
+    }
+
+    /** Nama relasi versi modul A1 (Presensi); sama dengan wali(). */
+    public function waliKelas(): HasMany
+    {
+        return $this->wali();
+    }
 }

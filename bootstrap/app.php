@@ -1,10 +1,12 @@
 <?php
 
 use App\Exceptions\AturanBisnisException;
+use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureAccountActive;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\JsonApi;
+use App\Http\Middleware\MustChangePassword;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -22,6 +24,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -30,11 +33,17 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureRole::class,
             'account.active' => EnsureAccountActive::class,
             'password.changed' => EnsurePasswordChanged::class,
+            // Modul A1 (Presensi): cek kolom user.role (lihat App\Models\User::role()).
+            'role.a1' => CheckRole::class,
+            'must_change_password' => MustChangePassword::class,
         ]);
 
         $middleware->prepend(JsonApi::class);
 
         $middleware->preventRequestForgery();
+
+        // Sanctum SPA untuk API modul A1 (routes/api.php, auth:sanctum).
+        $middleware->statefulApi();
 
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : route('login'));
     })

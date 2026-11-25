@@ -332,6 +332,13 @@ class AuthController extends Controller
                 ->exists();
         }
 
+        // Identitas (NISN/NIP) wajib cocok sebelum token reset dibuat.
+        if (! $identitasCocok) {
+            return response()->json([
+                'message' => 'Data akun tidak cocok. Periksa kembali informasi yang dimasukkan.',
+            ], 422);
+        }
+
         // Buat token reset password.
         $token = bin2hex(random_bytes(32));
 

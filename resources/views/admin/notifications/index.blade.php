@@ -1,52 +1,71 @@
 @extends('admin.layouts.app')
 @section('title','Notifikasi WhatsApp')
 @section('content')
-<div class="page-heading">
+<div class="page-heading notif-page-heading">
     <div>
-        <p class="eyebrow">Integrasi WhatsApp</p>
-        <h1>Notifikasi WhatsApp</h1>
-        <p class="muted">Riwayat pesan yang dikirim ke orang tua. Pesan dikirim otomatis oleh penjadwal.</p>
+        <p class="eyebrow notif-eyebrow">INTEGRASI WHATSAPP</p>
+        <h1 class="notif-title">Notifikasi WhatsApp</h1>
+        <p class="muted notif-subtitle">Riwayat pesan yang dikirim ke orang tua. Pesan dikirim otomatis oleh penjadwal.</p>
+
+        <div class="notif-status-chips" style="margin-top: 16px;">
+            <span class="status-chip {{ $statusService === 'READY' ? 'good' : ($statusService === null ? 'bad' : 'pending') }}">
+                ● WhatsApp: {{ $statusService === null ? 'service tidak terjangkau' : $statusService }}
+            </span>
+            <span class="status-chip {{ $waAktif ? 'good' : 'pending' }}">
+                ● Pengiriman otomatis {{ $waAktif ? 'aktif' : 'nonaktif' }}
+            </span>
+        </div>
     </div>
-    <div style="display:flex;gap:12px;">
-        <div class="summary-pill"><small>Diterima</small><b>{{ $diterima }}</b></div>
-        <div class="summary-pill"><small>Gagal</small><b>{{ $failed }}</b></div>
+
+    <div class="notif-summary-cards">
+        <div class="notif-summary-card">
+            <span class="notif-summary-card__label">Diterima</span>
+            <strong class="notif-summary-card__value notif-summary-card__value--blue">{{ $diterima }}</strong>
+        </div>
+        <div class="notif-summary-card">
+            <span class="notif-summary-card__label">Gagal</span>
+            <strong class="notif-summary-card__value">{{ $failed }}</strong>
+        </div>
     </div>
 </div>
 
 @if(session('wa_pesan'))
-    <p class="hint">{{ session('wa_pesan') }}</p>
+    <p class="hint" style="margin-bottom: 12px;">{{ session('wa_pesan') }}</p>
 @endif
 @if(session('wa_error'))
-    <p class="hint"><span class="status-chip bad">● {{ session('wa_error') }}</span></p>
+    <p class="hint" style="margin-bottom: 12px;"><span class="status-chip bad">● {{ session('wa_error') }}</span></p>
 @endif
 
-<div class="toolbar">
-    <form class="filter-form" method="GET">
-        <input name="q" value="{{ request('q') }}" placeholder="⌕ Cari nama siswa...">
-        <select name="status">
-            <option value="">Semua Status</option>
-            @foreach(['diterima' => 'Diterima', 'gagal' => 'Gagal', 'diproses' => 'Diproses'] as $val => $label)
-                <option value="{{ $val }}" @selected(request('status') === $val)>{{ $label }}</option>
-            @endforeach
-        </select>
-        <button class="btn btn-soft">Filter</button>
+<div class="notif-toolbar">
+    <form class="notif-filter-form" method="GET">
+        <div class="notif-search-input">
+            <svg class="notif-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input name="q" value="{{ request('q') }}" placeholder="Cari nama siswa..." autocomplete="off">
+        </div>
+
+        <div class="notif-select-wrap">
+            <select name="status">
+                <option value="">Semua Status</option>
+                @foreach(['diterima' => 'Diterima', 'gagal' => 'Gagal', 'diproses' => 'Diproses'] as $val => $label)
+                    <option value="{{ $val }}" @selected(request('status') === $val)>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <button type="submit" class="notif-btn notif-btn-filter">Filter</button>
     </form>
 
-    <div style="display:flex;gap:12px;align-items:center;">
-        <span class="status-chip {{ $statusService === 'READY' ? 'good' : ($statusService === null ? 'bad' : 'pending') }}">
-            ● WhatsApp:
-            {{ $statusService === null ? 'service tidak terjangkau' : $statusService }}
-        </span>
-        <span class="status-chip {{ $waAktif ? 'good' : 'pending' }}">
-            ● Pengiriman otomatis {{ $waAktif ? 'aktif' : 'nonaktif' }}
-        </span>
-        <form method="POST" action="{{ route('admin.notifications.send') }}">
-            @csrf
-            <button class="btn btn-primary" @disabled(!$waAktif || !$waConfigured)>Kirim sekarang</button>
-        </form>
+    <div class="notif-actions">
         <form method="POST" action="{{ route('admin.notifications.rekap') }}">
             @csrf
-            <button class="btn btn-primary" @disabled(!$waAktif || !$waConfigured)>Kirim Rekap Mingguan</button>
+            <button class="notif-btn notif-btn-outline" @disabled(!$waAktif || !$waConfigured)>Kirim Rekap Mingguan</button>
+        </form>
+        <form method="POST" action="{{ route('admin.notifications.send') }}">
+            @csrf
+            <button class="notif-btn notif-btn-solid" @disabled(!$waAktif || !$waConfigured)>Kirim sekarang</button>
         </form>
     </div>
 </div>

@@ -2,24 +2,20 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Data referensi: aman untuk semua lingkungan.
+        $this->call([RoleSeeder::class, AgamaSeeder::class]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Data contoh: hanya local/testing dan bila SEED_DEFAULT_PASSWORD diisi.
+        if (app()->environment(['local', 'testing']) && filled(config('siakad.seed_default_password'))) {
+            $this->call(DevSeeder::class);
+        } elseif (app()->environment('local')) {
+            $this->command?->warn('Data contoh dilewati: isi SEED_DEFAULT_PASSWORD di .env untuk membuat akun contoh.');
+        }
     }
 }

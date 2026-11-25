@@ -8,43 +8,43 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Kelas extends Model
 {
+    public const TINGKAT = ['X', 'XI', 'XII'];
+
     protected $table = 'kelas';
 
     protected $primaryKey = 'id_kelas';
 
-    public $timestamps = false;
+    protected $fillable = ['id_tahun_ajaran', 'nama', 'tingkat', 'fase'];
 
-    protected $fillable = [
-        'nama',
-        'tingkat',
-        'fase',
-        'id_tahun_ajaran',
-    ];
-
-    public function riwayatKelas(): HasMany
+    public static function faseUntuk(string $tingkat): string
     {
-        return $this->hasMany(
-            RiwayatKelas::class,
-            'id_kelas',
-            'id_kelas'
-        );
+        return $tingkat === 'X' ? 'E' : 'F';
     }
 
     public function tahunAjaran(): BelongsTo
     {
-        return $this->belongsTo(
-            TahunAjaran::class,
-            'id_tahun_ajaran',
-            'id_tahun_ajaran'
-        );
+        return $this->belongsTo(TahunAjaran::class, 'id_tahun_ajaran', 'id_tahun_ajaran');
     }
 
+    public function anggota(): HasMany
+    {
+        return $this->hasMany(RiwayatKelas::class, 'id_kelas', 'id_kelas');
+    }
+
+    public function wali(): HasMany
+    {
+        return $this->hasMany(WaliKelas::class, 'id_kelas', 'id_kelas');
+    }
+
+    /** Nama relasi versi modul A1 (Presensi); sama dengan anggota(). */
+    public function riwayatKelas(): HasMany
+    {
+        return $this->anggota();
+    }
+
+    /** Nama relasi versi modul A1 (Presensi); sama dengan wali(). */
     public function waliKelas(): HasMany
     {
-        return $this->hasMany(
-            WaliKelas::class,
-            'id_kelas',
-            'id_kelas'
-        );
+        return $this->wali();
     }
 }

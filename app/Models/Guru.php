@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Guru extends Model
@@ -12,23 +13,21 @@ class Guru extends Model
 
     protected $primaryKey = 'id_guru';
 
-    public $timestamps = false;
+    protected $fillable = ['nip', 'status_kepegawaian', 'nama', 'jenis_kelamin', 'id_agama', 'no_telepon', 'aktif'];
 
-    protected $fillable = [
-        'id_user',
-        'nip',
-        'status_kepegawaian',
-        'nama',
-        'agama',
-        'jenis_kelamin',
-        'alamat',
-        'email',
-        'no_telepon',
-    ];
+    protected function casts(): array
+    {
+        return ['aktif' => 'boolean'];
+    }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    public function rombel(): BelongsToMany
+    {
+        return $this->belongsToMany(Rombel::class, 'guru_rombel', 'id_guru', 'id_rombel')->withTimestamps();
     }
 
     public function waliKelas(): HasMany

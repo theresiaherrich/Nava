@@ -35,54 +35,54 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Pengelolaan data siswa
         Route::get('/siswa', [SiswaController::class, 'index'])
-            ->middleware('role:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU,SISWA');
+            ->middleware('role.a1:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU,SISWA');
 
         Route::post('/siswa', [SiswaController::class, 'store'])
-            ->middleware('role:ADMIN');
+            ->middleware('role.a1:ADMIN');
 
         // Template dan import Excel siswa
         Route::get('/siswa/template', [SiswaController::class, 'downloadTemplate'])
-            ->middleware('role:ADMIN');
+            ->middleware('role.a1:ADMIN');
 
         Route::post('/siswa/import', [SiswaController::class, 'importExcel'])
-            ->middleware('role:ADMIN');
+            ->middleware('role.a1:ADMIN');
 
         // QR Code siswa
         Route::get('/siswa/{id_siswa}/qr', [
             QrSiswaController::class,
             'show',
-        ])->middleware('role:SISWA');
+        ])->middleware('role.a1:SISWA');
 
         // Presensi
         Route::get('/presensi/statistik', [PresensiController::class, 'statistik'])
-            ->middleware('role:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU');
+            ->middleware('role.a1:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU');
 
         Route::get('/presensi', [PresensiController::class, 'index'])
-            ->middleware('role:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU');
+            ->middleware('role.a1:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU');
 
         Route::get('/presensi/siswa/{id_siswa}', [
             PresensiController::class,
             'riwayatSiswa',
-        ])->middleware('role:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU,SISWA');
+        ])->middleware('role.a1:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU,SISWA');
 
         Route::post('/presensi', [PresensiController::class, 'store']);
 
         Route::post('/presensi/manual', [
             PresensiController::class,
             'tambahPresensiManual',
-        ])->middleware('role:ADMIN,BUDAYA_POSITIF');
+        ])->middleware('role.a1:ADMIN,BUDAYA_POSITIF');
 
         Route::get('/presensi/rekap', [PresensiController::class, 'rekap'])
-            ->middleware('role:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU');
+            ->middleware('role.a1:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU');
 
         Route::get('/presensi/aturan', [PresensiController::class, 'aturan']);
 
         Route::patch('/presensi/{id_presensi}', [PresensiController::class, 'update'])
-            ->middleware('role:ADMIN,GURU');
+            ->middleware('role.a1:ADMIN,GURU');
 
         Route::get('/presensi/{id_presensi}/riwayat-perubahan', [
             PresensiController::class,
             'riwayatPerubahan',
-        ])->middleware('role:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU,SISWA');
+        ])->middleware('role.a1:ADMIN,BUDAYA_POSITIF,KURIKULUM,GURU,SISWA');
     });
 });

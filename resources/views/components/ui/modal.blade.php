@@ -3,6 +3,7 @@
     'title' => null,
     'subtitle' => null,
     'width' => 'max-w-[480px]',
+    'labelledby' => null,   // id judul kustom bila tidak memakai prop title
 ])
 
 {{--
@@ -15,7 +16,7 @@
      x-on:keydown.escape.window="open = false"
      x-show="open" x-cloak
      class="fixed inset-0 z-50 flex items-center justify-center p-4"
-     role="dialog" aria-modal="true" @if ($title) aria-labelledby="modal-{{ $name }}-title" @endif>
+     role="dialog" aria-modal="true" @if ($title || $labelledby) aria-labelledby="{{ $labelledby ?? "modal-$name-title" }}" @endif>
     <div class="absolute inset-0 bg-slate-900/45" x-on:click="open = false" x-show="open" x-transition.opacity></div>
 
     <div x-show="open" x-transition x-trap.noscroll="open"

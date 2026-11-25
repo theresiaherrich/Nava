@@ -11,26 +11,20 @@ class TahunAjaran extends Model
 
     protected $primaryKey = 'id_tahun_ajaran';
 
-    protected $fillable = [
-        'nama',
-        'aktif',
-    ];
+    protected $fillable = ['nama', 'aktif'];
 
-    public function kelas(): HasMany
+    protected function casts(): array
     {
-        return $this->hasMany(
-            Kelas::class,
-            'id_tahun_ajaran',
-            'id_tahun_ajaran'
-        );
+        return ['aktif' => 'boolean'];
     }
 
     public function semester(): HasMany
     {
-        return $this->hasMany(
-            Semester::class,
-            'id_tahun_ajaran',
-            'id_tahun_ajaran'
-        );
+        return $this->hasMany(Semester::class, 'id_tahun_ajaran', 'id_tahun_ajaran')->orderBy('nama');
+    }
+
+    public function kelas(): HasMany
+    {
+        return $this->hasMany(Kelas::class, 'id_tahun_ajaran', 'id_tahun_ajaran');
     }
 }

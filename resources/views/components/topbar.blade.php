@@ -8,7 +8,6 @@
     'searchPlaceholder' => 'Cari siswa (nama / NISN)...',
     'searchAction' => '#',              // TODO (backend): arahkan ke route pencarian siswa
     'profileUrl' => '#',                // TODO (backend): route profil
-    'switchRoleUrl' => '#',             // TODO (backend): route ganti peran
 ])
 
 @php
@@ -27,7 +26,6 @@
         'chev'   => '<path d="m6 9 6 6 6-6"/>',
         'menu'   => '<path d="M4 6h16M4 12h16M4 18h16"/>',
         'user'   => '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
-        'swap'   => '<path d="M7 4 3 8l4 4"/><path d="M3 8h14"/><path d="m17 20 4-4-4-4"/><path d="M21 16H7"/>',
         'logout' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
         'check'  => '<path d="M20 6 9 17l-5-5"/>',
     ];
@@ -93,7 +91,6 @@
                     <p class="tb-profile__role">{{ $role }}</p>
                 </div>
                 <a href="{{ $profileUrl }}" class="tb-menu-item" role="menuitem">{!! $svg('user') !!} Profil</a>
-                <a href="{{ $switchRoleUrl }}" class="tb-menu-item" role="menuitem">{!! $svg('swap') !!} Ganti peran</a>
                 <hr class="tb-sep">
                 @if (\Illuminate\Support\Facades\Route::has('logout'))
                     <form method="POST" action="{{ route('logout') }}">

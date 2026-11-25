@@ -71,6 +71,30 @@
 
     $presensiItems = $presensiMenus[$role] ?? [];
 
+    // Menu Akademik (A2) mengikuti peran aktif pengguna (App\Support\WebNavigation).
+    $peranAktif = auth()->check() ? \App\Support\AcademicAccess::peranAktif() : null;
+    $ikonAkademik = fn (string $label) => match (true) {
+        str_contains($label, 'Dashboard'), str_contains($label, 'Beranda') => 'grid',
+        str_contains($label, 'Verifikasi') => 'check',
+        str_contains($label, 'Input'), str_contains($label, 'TP') => 'pencil',
+        str_contains($label, 'Rekap'), str_contains($label, 'Nilai') => 'table',
+        str_contains($label, 'Cetak'), str_contains($label, 'Rapor') => 'printer',
+        default => 'file',
+    };
+    $akademikItems = (auth()->check() && ! auth()->user()->must_change_password)
+        ? collect(\App\Support\WebNavigation::links())
+            ->map(fn ($label, $url) => ['label' => $label, 'icon' => $ikonAkademik($label), 'href' => url($url), 'path' => ltrim($url, '/')])
+            ->values()->all()
+        : [];
+
+    // Peran A2 lain milik pengguna (mis. Guru Mapel + Wali Kelas): pindah peran aktif lewat
+    // POST /api/auth/switch-role (ditangani resources/js/siakad-api.js, form[data-auth]).
+    $peranLain = $akademikItems
+        ? collect(auth()->user()->kodeRoles())
+            ->filter(fn ($k) => $k !== $peranAktif && array_key_exists($k, config('siakad.roles')))
+            ->mapWithKeys(fn ($k) => [$k => config('siakad.roles')[$k]])->all()
+        : [];
+
     // Menu default (Wali Kelas). Backend bisa mengirim $menu sendiri lewat <x-sidebar :menu="$menu" />
     $defaultMenu = [
 
@@ -78,8 +102,9 @@
             'label' => 'Presensi', 'icon' => 'calendar', 'sub_title' => 'Presensi', 'items' => $presensiItems,
         ],
         [
-            'label' => 'Akademik', 'icon' => 'file', 'sub_title' => 'Wali Kelas',
-            'items' => [
+            'label' => 'Akademik', 'icon' => 'file',
+            'sub_title' => $akademikItems ? (config('siakad.roles')[$peranAktif] ?? 'Akademik') : 'Wali Kelas',
+            'items' => $akademikItems ?: [
                 ['label' => 'Dashboard Kelas', 'icon' => 'grid', 'route' => 'dashboard-kelas.index', 'pattern' => 'dashboard-kelas.*'],
                 ['label' => 'Verifikasi Nilai',  'icon' => 'check',   'route' => 'verifikasi-nilai.index', 'pattern' => 'verifikasi-nilai.*'],
                 ['label' => 'Pelengkap Rapor',   'icon' => 'pencil',  'route' => null],
@@ -102,6 +127,10 @@
 
     $resolve  = fn (?string $route) => ($route && \Illuminate\Support\Facades\Route::has($route)) ? route($route) : '#';
     $isActive = fn (?string $pattern) => $pattern && request()->routeIs($pattern);
+    // Item boleh memakai 'route' (nama route) atau 'href' + 'path' (URL, mis. menu A2).
+    $itemHref   = fn (array $i) => $i['href'] ?? $resolve($i['route'] ?? null);
+    $itemActive = fn (array $i) => $isActive($i['pattern'] ?? $i['route'] ?? null)
+        || (! empty($i['path']) && request()->is($i['path'], $i['path'].'/*'));
 
     $icons = [
         'calendar' => '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
@@ -141,7 +170,7 @@
             @foreach ($menu as $m)
                 @php
                     $items       = $m['items'] ?? [];
-                    $groupActive = collect($items)->contains(fn ($i) => $isActive($i['pattern'] ?? $i['route'] ?? null));
+                    $groupActive = collect($items)->contains(fn ($i) => $itemActive($i));
                 @endphp
 
                 <div class="sb-group {{ $groupActive ? 'is-open' : '' }}">
@@ -161,14 +190,28 @@
 
                             <nav class="sb-nav" aria-label="{{ $m['label'] }}">
                                 @foreach ($items as $item)
-                                    @php $active = $isActive($item['pattern'] ?? $item['route'] ?? null); @endphp
-                                    <a href="{{ $resolve($item['route'] ?? null) }}"
+                                    @php $active = $itemActive($item); @endphp
+                                    <a href="{{ $itemHref($item) }}"
                                        class="sb-sub {{ $active ? 'is-active' : '' }}"
                                        @if ($active) aria-current="page" @endif>
                                         {!! $svg($item['icon']) !!}
                                         <span class="sb-item__text">{{ $item['label'] }}</span>
                                     </a>
                                 @endforeach
+
+                                @if ($m['label'] === 'Akademik')
+                                    @foreach ($peranLain as $kode => $labelPeran)
+                                        <form method="POST" action="/api/auth/switch-role" data-auth="switch-role">
+                                            @csrf
+                                            <input type="hidden" name="peran" value="{{ $kode }}">
+                                            <button type="submit" class="sb-sub">
+                                                {!! $svg('history') !!}
+                                                <span class="sb-item__text">Masuk sebagai {{ $labelPeran }}</span>
+                                            </button>
+                                            <span data-error role="alert" class="sb-label"></span>
+                                        </form>
+                                    @endforeach
+                                @endif
                             </nav>
                         </div>
                     @else

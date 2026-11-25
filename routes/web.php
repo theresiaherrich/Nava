@@ -1,16 +1,9 @@
-
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\InputNilaiController;
-use App\Http\Controllers\VerifikasiNilaiController;
-use App\Http\Controllers\RekapNilaiController;
-use App\Http\Controllers\PeriodePenguncianController;
-use App\Http\Controllers\PelengkapRaporController;
-use App\Http\Controllers\CetakRaporController;
-use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\QrSiswaController;
+use Illuminate\Support\Facades\Route;
 
 // ==========================================
 // PEMBAGIAN MODUL PROYEK NAVA
@@ -21,19 +14,23 @@ use App\Http\Controllers\QrSiswaController;
 // A4 - PORTAL ORANG TUA
 // ==========================================
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+// ==========================================
+// A2 - AKADEMIK
+// Halaman web (termasuk "/" dan GET /login) ada di routes/frontend.php.
+// Seluruh API A2 memakai middleware "web" (sesi cookie + CSRF), prefix /api.
+// ==========================================
+require __DIR__.'/frontend.php';
+
+Route::prefix('api')->group(base_path('routes/siakad.php'));
 
 Route::view('/test-sidebar', 'test-sidebar');
 
 // ==========================================
 // A1 - PRESENSI
+// Middleware "role.a1" = App\Http\Middleware\CheckRole (kolom user.role).
 // ==========================================
 
-// FE - Halaman Login & Register
-Route::view('/login', 'auth.login')->name('login');
-
+// FE - Halaman Login & Register (GET /login ada di routes/frontend.php)
 Route::post('/login', [AuthController::class, 'loginWeb'])
     ->name('login.submit');
 
@@ -51,7 +48,7 @@ Route::view('/register', 'auth.register')->name('register');
 
 Route::view('/ganti-password', 'auth.ganti-password')
     ->middleware('auth')
-    ->name('password.change');
+    ->name('password.change.a1');
 
 Route::prefix('presensi')
     ->name('presensi.')
@@ -147,7 +144,7 @@ Route::prefix('presensi')
         'namaProfil' => 'Admin',
         'labelProfil' => 'Administrator',
         'detailProfil' => 'SMAN 1 Malang',
-    ])->middleware('role:ADMIN')->name('admin.riwayat');
+    ])->middleware('role.a1:ADMIN')->name('admin.riwayat');
     
     Route::view('/admin', 'presensi.admin.index')
         ->name('admin');
@@ -160,71 +157,13 @@ Route::prefix('presensi')
         'namaProfil' => 'Budaya Positif',
         'labelProfil' => 'Budaya Positif',
         'detailProfil' => 'SMAN 1 Malang',
-    ])->middleware('role:BUDAYA_POSITIF')->name('budaya-positif');
+    ])->middleware('role.a1:BUDAYA_POSITIF')->name('budaya-positif');
 
     Route::view('/budaya-positif/admin-presensi', 'presensi.admin.index')
-        ->middleware('role:BUDAYA_POSITIF,ADMIN')
+        ->middleware('role.a1:BUDAYA_POSITIF,ADMIN')
         ->name('budaya-positif.admin-presensi');
 
 });
-
-// ==========================================
-// A2 - AKADEMIK
-// ==========================================
-
-// Input Nilai
-Route::get('/input-nilai', [InputNilaiController::class, 'index'])
-    ->name('input-nilai.index');
-
-// Verifikasi Nilai
-Route::prefix('verifikasi-nilai')
-    ->name('verifikasi-nilai.')
-    ->group(function () {
-        Route::get('/', [VerifikasiNilaiController::class, 'index'])->name('index');
-        Route::get('/{mapel}', [VerifikasiNilaiController::class, 'show'])->name('show');
-        Route::post('/{mapel}/revisi', [VerifikasiNilaiController::class, 'requestRevision'])->name('revisi');
-        Route::post('/{mapel}/setujui', [VerifikasiNilaiController::class, 'approve'])->name('setujui');
-    });
-
-// Rekap Nilai
-Route::get('/rekap-nilai', [RekapNilaiController::class, 'index'])
-    ->name('rekap-nilai.index');
-
-// Periode dan Penguncian
-Route::get('/periode-penguncian', [PeriodePenguncianController::class, 'index'])
-    ->name('periode-penguncian.index');
-
-// Pelengkap Rapor
-Route::prefix('pelengkap-rapor')
-    ->name('pelengkap-rapor.')
-    ->group(function () {
-        Route::get('/', [PelengkapRaporController::class, 'index'])->name('index');
-        Route::post('/simpan', [PelengkapRaporController::class, 'simpan'])->name('simpan');
-        Route::post('/siswa/{siswa}/catatan', [PelengkapRaporController::class, 'simpanCatatan'])->name('catatan');
-    });
-
-// Cetak dan Ekspor Rapor
-Route::prefix('cetak-rapor')
-    ->name('cetak-rapor.')
-    ->group(function () {
-        Route::get('/', [CetakRaporController::class, 'index'])->name('index');
-        Route::post('/kelas/unduh', [CetakRaporController::class, 'unduhKelas'])->name('kelas');
-        Route::post('/siswa/{siswa}/unduh', [CetakRaporController::class, 'unduhSiswa'])->name('siswa');
-        Route::get('/riwayat/{riwayat}/unduh', [CetakRaporController::class, 'unduhUlang'])->name('ulang');
-    });
-
-// Placeholder Akademik
-Route::get('/rekap-nilai/export/{scope}', function ($scope) {
-    return 'Export ' . $scope . ' belum dibuat';
-})->name('rekap-nilai.export');
-
-Route::get('/rekap-nilai/rombel/{rombel}', function ($rombel) {
-    return 'Detail rombel ' . $rombel . ' belum dibuat';
-})->name('rekap-nilai.show');
-
-Route::get('/kelola-tp', function () {
-    return 'Halaman Kelola TP belum dibuat';
-})->name('tp.index');
 
 // ==========================================
 // A3 - BK (BIMBINGAN DAN KONSELING)

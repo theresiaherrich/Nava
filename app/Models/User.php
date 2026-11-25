@@ -43,6 +43,19 @@ class User extends Authenticatable
     /** Cache kode peran per instance agar middleware tidak query berulang. */
     private ?array $kodeRolesCache = null;
 
+    private bool $punyaRolePivotCache = false;
+
+    protected static function booted(): void
+    {
+        // Kode A1 (pendaftaran orang tua, tambah siswa) membuat akun tanpa nama,
+        // sedangkan kolom user.nama di skema A2 wajib diisi.
+        static::creating(function (User $user) {
+            if (blank($user->nama)) {
+                $user->nama = $user->username;
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -94,35 +107,50 @@ class User extends Authenticatable
     }
 
     /**
-     * Peran tunggal versi modul A1 ($user->role). Bila kolom user.role kosong (akun dibuat
-     * lewat modul A2), nilainya diturunkan dari peran aktif / peran prioritas di role_user.
+     * Peran tunggal versi modul A1 ($user->role).
+     * - Akun A2 (punya baris role_user): diturunkan dari peran aktif / peran prioritas,
+     *   jadi kode A1 mengikuti peran yang sedang dipakai (mis. WALI_KELAS → GURU).
+     * - Akun A1 murni (tanpa role_user): nilai kolom user.role.
      */
     protected function role(): Attribute
     {
         return Attribute::get(function (?string $value) {
-            if ($value !== null) {
+            if (! $this->punyaRolePivot()) {
                 return $value;
             }
 
             $kode = Auth::id() === $this->id_user ? AcademicAccess::peranAktif() : null;
             $kode ??= $this->kodeRoles()[0] ?? null;
 
-            return $kode === null ? null : (self::PERAN_KE_ROLE_A1[$kode] ?? $kode);
+            return self::keRoleA1($kode);
         });
     }
 
+    /** Kode peran A2 → nilai enum user.role A1 (null bila tidak ada padanannya). */
+    public static function keRoleA1(?string $kode): ?string
+    {
+        $role = $kode === null ? null : (self::PERAN_KE_ROLE_A1[$kode] ?? $kode);
+
+        return in_array($role, self::ROLE_A1, true) ? $role : null;
+    }
+
+    /** Nilai enum kolom user.role (migrasi kompatibilitas A1/A4). */
+    public const ROLE_A1 = ['SISWA', 'GURU', 'ORANG_TUA', 'AKADEMIK', 'KURIKULUM', 'BUDAYA_POSITIF', 'KESISWAAN', 'ADMIN'];
+
     /**
      * @return list<string> mis. ['GURU', 'WALI_KELAS'], diurutkan sesuai config('siakad.roles').
-     * Akun yang dibuat modul A1 (tanpa baris role_user) memakai kolom user.role.
+     * Sumbernya role_user. Hanya akun A1 murni (tanpa baris role_user) yang memakai kolom user.role,
+     * agar nilai hasil pemetaan (mis. SUPERADMIN → ADMIN) tidak menambah peran A2.
      */
     public function kodeRoles(): array
     {
         if ($this->kodeRolesCache === null) {
             $kode = $this->roles()->pluck('kode')->all();
+            $this->punyaRolePivotCache = $kode !== [];
 
             $roleA1 = $this->attributes['role'] ?? null;
-            if ($roleA1 !== null && ! in_array($roleA1, $kode, true)) {
-                $kode[] = $roleA1;
+            if ($kode === [] && $roleA1 !== null) {
+                $kode = [$roleA1];
             }
 
             $urutan = array_keys(config('siakad.roles'));
@@ -134,9 +162,32 @@ class User extends Authenticatable
         return $this->kodeRolesCache;
     }
 
+    private function punyaRolePivot(): bool
+    {
+        $this->kodeRoles();
+
+        return $this->punyaRolePivotCache;
+    }
+
+    /**
+     * Isi kolom user.role dari peran A2 prioritas, agar query mentah modul A1
+     * (mis. pendaftaran orang tua: WHERE user.role = 'SISWA') ikut mengenali akun A2.
+     * Panggil setiap kali role_user berubah. Akun tanpa role_user tidak diubah.
+     */
+    public function sinkronkanRoleA1(): void
+    {
+        $this->lupakanCacheRoles();
+        if (! $this->punyaRolePivot()) {
+            return;
+        }
+
+        $this->forceFill(['role' => self::keRoleA1($this->kodeRoles()[0] ?? null)])->saveQuietly();
+    }
+
     public function lupakanCacheRoles(): void
     {
         $this->kodeRolesCache = null;
+        $this->punyaRolePivotCache = false;
         $this->unsetRelation('roles');
     }
 

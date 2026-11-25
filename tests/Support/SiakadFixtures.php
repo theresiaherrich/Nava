@@ -28,6 +28,7 @@ trait SiakadFixtures
     {
         $user = User::factory()->create($attr);
         $user->roles()->attach(Role::whereIn('kode', $roles)->pluck('id_role'), ['created_at' => now()]);
+        $user->sinkronkanRoleA1(); // sama dengan AccountService
 
         return $user->fresh();
     }

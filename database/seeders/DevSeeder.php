@@ -126,6 +126,7 @@ class DevSeeder extends Seeder
     private function beriPeran(User $user, string $kode): void
     {
         $user->roles()->syncWithoutDetaching([Role::where('kode', $kode)->value('id_role') => ['created_at' => now()]]);
+        $user->sinkronkanRoleA1();
     }
 
     private function guru(?string $nip, string $status, string $nama, string $jk, ?int $agama, string $username): Guru

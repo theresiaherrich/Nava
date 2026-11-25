@@ -71,6 +71,7 @@ class CreateSuperadmin extends Command
                 'must_change_password' => false,
             ]);
             $user->roles()->attach($role->id_role, ['created_at' => now()]);
+            $user->sinkronkanRoleA1();
             $audit->catat('buat_superadmin', 'user', $user->id_user, null, ['username' => $user->username, 'via' => 'artisan'], null, $user->id_user);
 
             return $user;

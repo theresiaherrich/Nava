@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -10,8 +12,8 @@ use Illuminate\Support\Facades\Schema;
  * Skema tabel bersama (user, siswa, guru, kelas, semester, orang_tua, dst.) mengikuti
  * migrasi A2. Migrasi ini hanya MENAMBAH kolom yang masih dibaca/ditulis kode A1/A4,
  * tanpa mengubah kolom A2:
- * - user.role            : peran tunggal versi A1. Bila kosong, App\Models\User::role
- *                          diturunkan dari pivot role_user (sumber kebenaran A2).
+ * - user.role            : peran tunggal versi A1. Untuk akun A2, diisi dari peran prioritas
+ *                          role_user (sumber kebenaran A2) lewat User::sinkronkanRoleA1().
  * - siswa.urutan_masuk   : dipakai tambah/impor siswa A1.
  *                          (siswa.agama TIDAK ditambah: A2 memakai relasi agama()/id_agama;
  *                          nilai string dari A1 dipetakan di mutator Siswa::setAgamaAttribute.)
@@ -28,6 +30,17 @@ return new class extends Migration
                 'SISWA', 'GURU', 'ORANG_TUA', 'AKADEMIK', 'KURIKULUM', 'BUDAYA_POSITIF', 'KESISWAAN', 'ADMIN',
             ])->nullable()->after('nama');
         });
+
+        // Akun A2 yang sudah ada: isi user.role dari peran prioritas (sama dengan User::sinkronkanRoleA1()).
+        $urutan = array_keys(config('siakad.roles'));
+        $posisi = fn (string $k) => ($i = array_search($k, $urutan, true)) === false ? PHP_INT_MAX : $i;
+        DB::table('role_user')->join('roles', 'roles.id_role', '=', 'role_user.id_role')
+            ->select('role_user.id_user', 'roles.kode')->get()
+            ->groupBy('id_user')
+            ->each(function ($baris, $idUser) use ($posisi) {
+                $kode = $baris->pluck('kode')->sortBy($posisi)->first();
+                DB::table('user')->where('id_user', $idUser)->update(['role' => User::keRoleA1($kode)]);
+            });
 
         Schema::table('siswa', function (Blueprint $table) {
             $table->unsignedInteger('urutan_masuk')->nullable()->after('tahun_masuk');

@@ -40,17 +40,7 @@ return new class extends Migration
         string $table,
         string $indexName
     ): bool {
-        $indexes = DB::select(
-            "SHOW INDEX FROM `{$table}` WHERE Key_name = ?",
-            [$indexName]
-        );
-
-        foreach ($indexes as $index) {
-            if ((int) $index->Non_unique === 0) {
-                return true;
-            }
-        }
-
-        return false;
+        // Sama dengan SHOW INDEX ... Non_unique = 0, tetapi portabel (MySQL & SQLite untuk tes).
+        return Schema::hasIndex($table, $indexName, 'unique');
     }
 };

@@ -221,13 +221,37 @@ class RaporTest extends TestCase
         $this->sebagai($this->userWali, 'WALI_KELAS');
         $q = "id_kelas={$this->kelasXA->id_kelas}&id_periode={$this->sts->id_periode}";
 
-        $this->getJson("/api/wali/pelengkap?{$q}")->assertOk()->assertJsonPath('data.status_presensi_a1', 'belum_tersedia');
+        // Modul A1 (Presensi) sudah terintegrasi: tabel presensi tersedia.
+        $this->getJson("/api/wali/pelengkap?{$q}")->assertOk()->assertJsonPath('data.status_presensi_a1', 'tersedia');
         $this->putJson('/api/wali/pelengkap', [
             'id_periode' => $this->sts->id_periode, 'id_kelas' => $this->kelasXA->id_kelas,
             'items' => [['id_riwayat_kelas' => $this->peserta[0]->id_riwayat_kelas, 'sakit' => 1, 'izin' => 0, 'alpha' => 0, 'catatan_wali' => 'Pertahankan.']],
         ])->assertOk();
         $this->assertDatabaseHas('pelengkap_rapor', ['id_riwayat_kelas' => $this->peserta[0]->id_riwayat_kelas, 'sakit' => 1, 'sumber_presensi' => 'manual']);
 
+        // Tarik rekap dari tabel presensi A1; data di luar rentang tanggal tidak dihitung.
+        $idSiswa = \App\Models\RiwayatKelas::findOrFail($this->peserta[0]->id_riwayat_kelas)->id_siswa;
+        foreach ([['2026-08-03', 'Sakit'], ['2026-08-04', 'Sakit'], ['2026-08-05', 'Izin'], ['2026-08-06', 'Alpa'], ['2026-08-07', 'Hadir'], ['2026-10-01', 'Sakit']] as [$tanggal, $status]) {
+            \Illuminate\Support\Facades\DB::table('presensi')->insert(['id_siswa' => $idSiswa, 'tanggal' => $tanggal, 'status' => $status, 'metode' => 'QR']);
+        }
+        $this->postJson('/api/wali/pelengkap/tarik-presensi', ['id_periode' => $this->sts->id_periode, 'id_kelas' => $this->kelasXA->id_kelas, 'dari' => '2026-07-01', 'sampai' => '2026-09-30'])
+            ->assertOk();
+        $this->assertDatabaseHas('pelengkap_rapor', [
+            'id_riwayat_kelas' => $this->peserta[0]->id_riwayat_kelas, 'sakit' => 2, 'izin' => 1, 'alpha' => 1, 'sumber_presensi' => 'a1',
+        ]);
+    }
+
+    public function test_tarik_presensi_ditolak_bila_modul_a1_tidak_ada(): void
+    {
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        foreach (['riwayat_perubahan_presensi', 'sakit', 'izin', 'presensi'] as $tabel) {
+            \Illuminate\Support\Facades\Schema::dropIfExists($tabel);
+        }
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+
+        $this->sebagai($this->userWali, 'WALI_KELAS');
+        $this->getJson("/api/wali/pelengkap?id_kelas={$this->kelasXA->id_kelas}&id_periode={$this->sts->id_periode}")
+            ->assertOk()->assertJsonPath('data.status_presensi_a1', 'belum_tersedia');
         $this->postJson('/api/wali/pelengkap/tarik-presensi', ['id_periode' => $this->sts->id_periode, 'id_kelas' => $this->kelasXA->id_kelas, 'dari' => '2026-07-01', 'sampai' => '2026-09-30'])
             ->assertStatus(409)->assertJsonPath('code', 'PRESENSI_A1_UNAVAILABLE');
     }

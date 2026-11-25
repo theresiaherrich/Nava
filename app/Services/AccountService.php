@@ -239,6 +239,7 @@ class AccountService
                     'must_change_password' => true,
                 ]);
                 $user->roles()->attach($idRole, ['created_at' => now()]);
+                $user->sinkronkanRoleA1();
                 $p->forceFill(['id_user' => $user->id_user])->save();
 
                 $hasil[] = ['username' => $user->username, 'password' => $plain, 'nama' => $p->nama, 'profil_id' => (int) $p->getKey()];
@@ -274,7 +275,7 @@ class AccountService
         $masihWali
             ? $user->roles()->syncWithoutDetaching([$idRole => ['created_at' => now()]])
             : $user->roles()->detach($idRole);
-        $user->lupakanCacheRoles();
+        $user->sinkronkanRoleA1();
 
         $this->audit->catat($masihWali ? 'beri_peran_wali' : 'cabut_peran_wali', 'user', $user->id_user,
             ['peran' => $punya ? ['WALI_KELAS'] : []], ['peran' => $masihWali ? ['WALI_KELAS'] : []]);
@@ -305,7 +306,7 @@ class AccountService
         }
 
         $user->roles()->sync($id->mapWithKeys(fn ($i) => [$i => ['created_at' => now()]])->all());
-        $user->lupakanCacheRoles();
+        $user->sinkronkanRoleA1();
     }
 
     /** Tautkan profil untuk peran yang mensyaratkannya. Satu profil hanya untuk satu akun. */

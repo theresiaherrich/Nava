@@ -34,7 +34,8 @@ class AuthTest extends TestCase
         $this->buatUser(['GURU'], ['username' => 'budi']);
 
         $this->postJson('/api/auth/login', ['username' => 'budi', 'password' => 'salah'])
-            ->assertStatus(401)->assertJsonPath('code', 'INVALID_CREDENTIALS');
+            ->assertStatus(401)->assertJsonPath('code', 'INVALID_CREDENTIALS')
+            ->assertJsonPath('message', 'Nama pengguna atau kata sandi salah.');
         $this->postJson('/api/auth/login', ['username' => 'tidakada', 'password' => 'salah'])
             ->assertStatus(401);
         $this->assertGuest();
@@ -139,29 +140,12 @@ class AuthTest extends TestCase
         $this->getJson('/api/auth/me')->assertForbidden()->assertJsonPath('code', 'ACCOUNT_INACTIVE');
     }
 
-    public function test_registrasi_akun_a2_tidak_tersedia(): void
+    public function test_registrasi_mandiri_tidak_tersedia(): void
     {
+        // Akun dibuat Superadmin/Operator; tidak ada pendaftaran mandiri (A2 maupun A1/A4).
         $this->postJson('/api/auth/register', ['username' => 'x'])->assertNotFound();
-    }
-
-    /** Pendaftaran mandiri orang tua milik modul A1/A4 (POST /api/register): akun baru belum aktif. */
-    public function test_pendaftaran_orang_tua_a1_untuk_siswa_a2_belum_bisa_login(): void
-    {
-        $akunSiswa = $this->buatUser(['SISWA'], ['username' => 'siswa.ani']);
-        $siswa = $this->siswa($akunSiswa, ['nisn' => '0012345678']);
-
-        $this->postJson('/api/register', [
-            'username' => 'ortu.ani', 'password' => 'Rahasia-Ortu-123', 'password_confirmation' => 'Rahasia-Ortu-123',
-            'nama' => 'Ibu Ani', 'jenis_kelamin' => 'P', 'telepon' => '081234567890', 'alamat' => 'Malang',
-            'hubungan' => 'Ibu', 'username_siswa' => 'siswa.ani', 'nisn' => '0012345678',
-        ])->assertSuccessful();
-
-        $ortu = \App\Models\User::where('username', 'ortu.ani')->firstOrFail();
-        $this->assertSame('ORANG_TUA', $ortu->role);
-        $this->assertSame([$siswa->id_siswa], $ortu->anak()->pluck('siswa.id_siswa')->all());
-
-        $this->postJson('/api/auth/login', ['username' => 'ortu.ani', 'password' => 'Rahasia-Ortu-123'])
-            ->assertForbidden()->assertJsonPath('code', 'ACCOUNT_NOT_ACTIVATED');
-        $this->assertGuest();
+        $this->postJson('/api/register', ['username' => 'x'])->assertNotFound();
+        $this->get('/register')->assertNotFound();
+        $this->get('/login')->assertOk()->assertDontSee('Register')->assertSee('Lupa kata sandi? Hubungi Operator sekolah.');
     }
 }

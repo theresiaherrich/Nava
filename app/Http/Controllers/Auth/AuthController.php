@@ -52,7 +52,7 @@ class AuthController extends Controller
         $cocok = Hash::check($request->string('password'), $user?->password ?? '$2y$12$'.str_repeat('x', 53));
 
         if (! $user || ! $cocok) {
-            return response()->json(['message' => 'Username atau kata sandi salah.', 'code' => 'INVALID_CREDENTIALS'], 401);
+            return response()->json(['message' => 'Nama pengguna atau kata sandi salah.', 'code' => 'INVALID_CREDENTIALS'], 401);
         }
 
         if ($user->status_akun !== 'aktif') {

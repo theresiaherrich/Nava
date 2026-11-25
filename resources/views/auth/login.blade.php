@@ -63,10 +63,8 @@
                             class="absolute top-1/2 right-3 -translate-y-1/2 rounded-md px-1.5 py-1 text-xs font-semibold text-link hover:bg-primary-faint"
                             x-text="lihat ? 'Sembunyikan' : 'Lihat'">Lihat</button>
                 </div>
-                {{-- Lupa password (modul A1) --}}
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="mt-2 inline-block text-[13px] font-semibold text-link hover:underline">Lupa password?</a>
-                @endif
+                {{-- Akun & sandi dikelola Operator; reset mandiri belum tersedia. --}}
+                <p class="mt-2 text-[13px] text-muted">Lupa kata sandi? Hubungi Operator sekolah.</p>
                 <p data-error role="alert" class="mt-4 text-sm text-danger"></p>
 
                 <button type="submit"
@@ -74,11 +72,6 @@
                     <span>Masuk</span><x-ui.icon name="arrow-right" :size="16" />
                 </button>
             </form>
-
-            {{-- Pendaftaran akun orang tua (modul A1/A4) --}}
-            @if (Route::has('register'))
-                <p class="mt-5 text-center text-sm text-muted">Belum punya akun? <a href="{{ route('register') }}" class="font-semibold text-link hover:underline">Register Sekarang</a></p>
-            @endif
 
         </div>
 

@@ -30,7 +30,7 @@ Route::view('/test-sidebar', 'test-sidebar');
 // Middleware "role.a1" = App\Http\Middleware\CheckRole (kolom user.role).
 // ==========================================
 
-// FE - Halaman Login & Register (GET /login ada di routes/frontend.php)
+// FE - Halaman Login (GET /login ada di routes/frontend.php); akun dibuat Operator, tanpa register mandiri
 Route::post('/login', [AuthController::class, 'loginWeb'])
     ->name('login.submit');
 
@@ -44,7 +44,6 @@ Route::post('/logout', [AuthController::class, 'logoutWeb'])
     ->middleware('auth')
     ->name('logout');
 
-Route::view('/register', 'auth.register')->name('register');
 
 Route::view('/ganti-password', 'auth.ganti-password')
     ->middleware('auth')

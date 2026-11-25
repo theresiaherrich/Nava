@@ -1,5 +1,7 @@
 # Akun dummy A2
 
+> **Untuk mencoba semua peran, pakai akun demo di [`docs/TESTING_LOKAL.md`](../TESTING_LOKAL.md)** (`DemoAccountSeeder`, sandi `NAVA_DEMO_PASSWORD`). Akun `superadmin`, `operator`, `kurikulum`, dan `kesiswaan` kini dibuat oleh seeder itu, bukan `DevSeeder`. Setelah `DemoAccountSeeder` dijalankan, wali X-B adalah `wali_kelas`, sehingga `sari` tinggal berperan Guru Mapel.
+
 Semua profil orang di bawah adalah fiktif. Dataset memakai tahun ajaran 2026/2027 Semester Ganjil. Seeder hanya berjalan di lingkungan `local` atau `testing` dan membaca `SEED_DEFAULT_PASSWORD`. Gunakan sandi uji lokal dengan minimal 10 karakter, huruf besar, huruf kecil, angka, dan simbol. Simpan di variabel proses seperti di panduan setup, atau di `.env` lokal yang diabaikan Git.
 
 | Username | Peran | Data terkait |

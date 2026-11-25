@@ -1,114 +1,76 @@
-
-/* ==========================================================
-   TOPBAR SIAKAD
-   Dropdown, pencarian, dan interaksi menu.
-   ========================================================== */
-
+// Topbar (<x-topbar>): dropdown, pencarian, dan pintasan Ctrl/⌘ + K.
 document.addEventListener('DOMContentLoaded', () => {
-    const topbar = document.querySelector('[data-topbar]');
+    const bar = document.querySelector('[data-topbar]');
+    if (!bar) return;
 
-    if (!topbar) return;
+    /* ---------- Dropdown (tahun ajaran, notifikasi, profil) ---------- */
+    const dropdowns = [...bar.querySelectorAll('[data-tb-dd]')];
 
-    // Dropdown tahun ajaran, notifikasi, dan profil
-    const dropdowns = topbar.querySelectorAll('[data-tb-dd]');
+    const setOpen = (dd, open) => {
+        const btn = dd.querySelector('[data-tb-dd-toggle]');
+        const menu = dd.querySelector('[data-tb-dd-menu]');
+        menu.hidden = !open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+    const closeAll = (except) => dropdowns.forEach((dd) => dd !== except && setOpen(dd, false));
 
-    const closeDropdowns = (except = null) => {
-        dropdowns.forEach((dropdown) => {
-            if (dropdown === except) return;
-
-            const button = dropdown.querySelector('[data-tb-dd-toggle]');
-            const menu = dropdown.querySelector('[data-tb-dd-menu]');
-
-            if (menu) menu.hidden = true;
-            if (button) button.setAttribute('aria-expanded', 'false');
+    dropdowns.forEach((dd) => {
+        dd.querySelector('[data-tb-dd-toggle]').addEventListener('click', () => {
+            const open = dd.querySelector('[data-tb-dd-menu]').hidden;
+            closeAll(dd);
+            setOpen(dd, open);
         });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('[data-tb-dd]')) closeAll();
+    });
+
+    /* ---------- Pilih tahun ajaran (dummy: hanya ganti label) ---------- */
+    const yearLabel = bar.querySelector('[data-tb-year-label]');
+    bar.querySelectorAll('[data-tb-year]').forEach((opt) => {
+        opt.addEventListener('click', () => {
+            bar.querySelectorAll('[data-tb-year]').forEach((o) => {
+                o.classList.toggle('is-selected', o === opt);
+                o.setAttribute('aria-selected', o === opt ? 'true' : 'false');
+            });
+            yearLabel.textContent = opt.dataset.tbYear;
+            closeAll();
+            // TODO (backend): kirim tahun ajaran terpilih ke server, lalu muat ulang data halaman
+        });
+    });
+
+    /* ---------- Pencarian ---------- */
+    const searchForm = bar.querySelector('[data-tb-search]');
+    const searchInput = bar.querySelector('[data-tb-search-input]');
+    const searchToggle = bar.querySelector('[data-tb-search-toggle]');
+    const kbd = bar.querySelector('[data-tb-kbd]');
+
+    const isMac = /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent);
+    if (kbd && !isMac) kbd.textContent = 'Ctrl K';
+
+    const openSearch = () => {
+        searchForm.classList.add('is-open');
+        searchInput.focus();
+        searchInput.select();
     };
 
-    dropdowns.forEach((dropdown) => {
-        const button = dropdown.querySelector('[data-tb-dd-toggle]');
-        const menu = dropdown.querySelector('[data-tb-dd-menu]');
-
-        if (!button || !menu) return;
-
-        button.addEventListener('click', (event) => {
-            event.stopPropagation();
-
-            const willOpen = menu.hidden;
-
-            closeDropdowns(dropdown);
-
-            menu.hidden = !willOpen;
-            button.setAttribute('aria-expanded', String(willOpen));
-        });
+    searchToggle?.addEventListener('click', openSearch);
+    searchInput.addEventListener('blur', () => {
+        if (!searchInput.value) searchForm.classList.remove('is-open');
     });
 
-    document.addEventListener('click', (event) => {
-        if (!topbar.contains(event.target)) {
-            closeDropdowns();
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            closeAll();
+            openSearch();
         }
-    });
-
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-            closeDropdowns();
-        }
-    });
-
-    // Pemilihan tahun ajaran
-    topbar.querySelectorAll('[data-tb-year]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const label = topbar.querySelector('[data-tb-year-label]');
-
-            if (label) {
-                label.textContent = button.dataset.tbYear;
+        if (e.key === 'Escape') {
+            closeAll();
+            if (document.activeElement === searchInput) {
+                searchInput.blur();
             }
-
-            topbar.querySelectorAll('[data-tb-year]').forEach((item) => {
-                item.classList.remove('is-selected');
-                item.setAttribute('aria-selected', 'false');
-            });
-
-            button.classList.add('is-selected');
-            button.setAttribute('aria-selected', 'true');
-
-            closeDropdowns();
-        });
-    });
-
-    // Tombol pencarian pada layar kecil
-    const search = topbar.querySelector('[data-tb-search]');
-    const searchToggle = topbar.querySelector('[data-tb-search-toggle]');
-    const searchInput = topbar.querySelector('[data-tb-search-input]');
-
-    if (searchToggle && search && searchInput) {
-        searchToggle.addEventListener('click', () => {
-            search.classList.toggle('is-search-open');
-
-            if (search.classList.contains('is-search-open')) {
-                searchInput.focus();
-            }
-        });
-    }
-
-    // Pintasan Ctrl + K / Cmd + K
-    document.addEventListener('keydown', (event) => {
-        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-            event.preventDefault();
-            searchInput?.focus();
         }
     });
-
-    // Tandai semua notifikasi sebagai dibaca (tampilan)
-    const readAll = topbar.querySelector('[data-tb-read-all]');
-
-    if (readAll) {
-        readAll.addEventListener('click', () => {
-            topbar.querySelectorAll('.tb-notif__item.is-new').forEach((item) => {
-                item.classList.remove('is-new');
-            });
-
-            topbar.querySelector('[data-tb-dot]')?.remove();
-            readAll.remove();
-        });
-    }
 });

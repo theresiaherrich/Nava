@@ -37,7 +37,7 @@
 
                 <ul class="gw-legend">
                     <li><i class="gw-dot gw-dot--hadir"></i>Hadir</li>
-                    <li><i class="gw-dot gw-dot--telat"></i>Terlambat</li>
+                    <li><i class="gw-dot gw-dot--telat"></i>Izin</li>
                     <li><i class="gw-dot gw-dot--alpa"></i>Alpa</li>
                 </ul>
             </div>

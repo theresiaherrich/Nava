@@ -7,7 +7,7 @@
 <style>
     .manual-page {
         font-family: 'Poppins', sans-serif;
-        padding: 10px;
+        padding: 20px 24px 32px;
         background: #f3f5f9;
         min-height: 100vh;
         color: #252538;
@@ -217,7 +217,7 @@
 
     @media (max-width: 768px) {
         .manual-page {
-            padding: 10px;
+            padding: 20px 12px 32px;
         }
 
         .camera-container {

@@ -37,35 +37,23 @@ if (root) {
     const statusInput = $('#paStatus');
     const nisnInput = $('#paNisn');
 
-    // Token login dari public/auth/auth.js
-    function getToken() {
-        return localStorage.getItem('siakad_token');
-    }
-
-    function getUser() {
-        try {
-            return JSON.parse(localStorage.getItem('siakad_user') || '{}');
-        } catch {
-            return {};
-        }
-    }
-
+    
+    // Autentikasi menggunakan session login Laravel
     function getHeaders() {
-        const token = getToken();
+        const csrfToken = document.querySelector(
+            'meta[name="csrf-token"]'
+        )?.content;
 
         return {
             Accept: 'application/json',
-            Authorization: `Bearer ${token}`,
+            ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
         };
     }
 
     async function apiRequest(url, options = {}) {
-        if (!getToken()) {
-            throw new Error('Token login tidak ditemukan. Silakan login kembali.');
-        }
-
         const response = await fetch(url, {
             ...options,
+            credentials: 'same-origin',
             headers: {
                 ...getHeaders(),
                 ...(options.headers || {}),
@@ -88,6 +76,7 @@ if (root) {
 
         return result;
     }
+
 
     function norm(value) {
         return String(value ?? '')

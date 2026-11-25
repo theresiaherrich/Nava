@@ -404,7 +404,6 @@ class PresensiController extends Controller
                 $siswa->id_siswa
             )
                 ->where('id_semester', $semesterAktif->id_semester)
-                ->where('id_kelas', $validated['id_kelas'])
                 ->exists();
 
             if (!$kelasSiswa) {
@@ -424,79 +423,11 @@ class PresensiController extends Controller
 
             if (
                 $presensiTerakhir &&
-                $presensiTerakhir->status === $validated['status']
+                $presensiTerakhir->status === $status
             ) {
                 return [
                     'error' => true,
                     'message' => 'Presensi dengan status tersebut sudah tercatat sebagai status terakhir siswa hari ini.',
-                    'status_code' => 409,
-                ];
-            }
-
-            $semesterAktif = \App\Models\Semester::where('aktif', true)
-                ->whereHas('tahunAjaran', function ($query) {
-                    $query->where('aktif', true);
-                })
-                ->first();
-
-            if (!$semesterAktif) {
-                return [
-                    'error' => true,
-                    'message' => 'Semester dan tahun ajaran aktif belum dikonfigurasi.',
-                    'status_code' => 409,
-                ];
-            }
-
-            $kelasSiswa = \App\Models\RiwayatKelas::where(
-                'id_siswa',
-                $siswa->id_siswa
-            )
-                ->where('id_semester', $semesterAktif->id_semester)
-                ->where('id_kelas', $validated['id_kelas'])
-                ->exists();
-
-            if (!$kelasSiswa) {
-                return [
-                    'error' => true,
-                    'message' => 'Kelas yang dipilih tidak sesuai dengan kelas aktif siswa.',
-                    'status_code' => 422,
-                ];
-            }
-
-            $presensiTerakhir = Presensi::where('id_siswa', $siswa->id_siswa)
-                ->whereDate('tanggal', $tanggal)
-                ->orderByDesc('waktu_presensi')
-                ->orderByDesc('id_presensi')
-                ->first();
-
-            if (
-                $presensiTerakhir &&
-                $presensiTerakhir->status === $validated['status']
-            ) {
-                return [
-                    'error' => true,
-                    'message' => 'Presensi dengan status tersebut sudah tercatat sebagai status terakhir siswa hari ini.',
-                    'status_code' => 422,
-                ];
-            }
-
-            $presensiTerakhir = Presensi::where(
-                'id_siswa',
-                $siswa->id_siswa
-            )
-                ->whereDate('tanggal', $tanggal)
-                ->orderByDesc('waktu_presensi')
-                ->orderByDesc('id_presensi')
-                ->lockForUpdate()
-                ->first();
-
-            if (
-                $presensiTerakhir &&
-                strtolower($presensiTerakhir->status) === strtolower($status)
-            ) {
-                return [
-                    'error' => true,
-                    'message' => 'Kamu sudah presensi dengan status ' . $status . ' hari ini.',
                     'status_code' => 409,
                 ];
             }
@@ -560,9 +491,18 @@ class PresensiController extends Controller
         $tanggal = $waktuSekarang->toDateString();
         $fileBukti = null;
 
+        $statusPresensi = $validated['status'];
+
+        if ($statusPresensi === 'Hadir') {
+            $statusPresensi = $validated['waktu_presensi'] <= '07:00'
+                ? 'Hadir'
+                : 'Terlambat';
+        }
+
         try {
             $hasil = DB::transaction(function () use (
                 $validated,
+                $statusPresensi,
                 $user,
                 $waktuSekarang,
                 $tanggal,
@@ -597,7 +537,6 @@ class PresensiController extends Controller
 
                 $kelasSiswa = \App\Models\RiwayatKelas::where('id_siswa', $siswa->id_siswa)
                     ->where('id_semester', $semesterAktif->id_semester)
-                    ->where('id_kelas', $validated['id_kelas'])
                     ->exists();
 
                 if (!$kelasSiswa) {
@@ -617,7 +556,7 @@ class PresensiController extends Controller
 
                 if (
                     $presensiTerakhir &&
-                    $presensiTerakhir->status === $validated['status']
+                    $presensiTerakhir->status === $statusPresensi
                 ) {
                     return [
                         'error' => true,
@@ -628,8 +567,8 @@ class PresensiController extends Controller
 
                 $presensi = Presensi::create([
                     'id_siswa' => $siswa->id_siswa,
-                    'metode' => 'Manual',
-                    'status' => $validated['status'],
+                    'metode' => 'Geofencing',
+                    'status' => $statusPresensi,
                     'tanggal' => $tanggal,
                     'waktu_presensi' => $validated['waktu_presensi'] . ':00',
                     'file_bukti' => $fileBukti,
@@ -1084,7 +1023,7 @@ class PresensiController extends Controller
 
         if (!empty($validated['id_kelas'])) {
             $query->whereHas('riwayatKelas', function ($riwayatQuery) use ($validated) {
-                $riwayatQuery->where('id_kelas', $validated['id_kelas']);
+                $riwayatQuery;
             });
         }
 

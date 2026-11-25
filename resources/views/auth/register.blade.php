@@ -6,13 +6,21 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>SIAKAD – Register</title>
 <link rel="icon" href="{{ asset('favicon.ico') }}">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ asset('auth/auth.css') }}">
 </head>
 <body class="auth-body">
 <main class="shell">
   <section class="hero">
-    <div class="logo"><img src="{{ asset('images/logo-siakad.png') }}" alt="">SIAKAD<small>SMA Negeri 1 Malang</small></div>
+    <div class="logo">
+        <img src="{{ asset('images/logo-siakad.png') }}" alt="Logo SIAKAD">
+        <div class="logo-text">
+            <span>SIAKAD</span>
+            <small>SMA Negeri 1 Malang</small>
+        </div>
+    </div>
+
+    <div class="hero-label">SISTEM INFORMASI AKADEMIK</div>
     <h1>Kelola sistem sekolahmu dengan satu kali klik</h1>
     <p>Sistem terpadu untuk siswa, guru, bahkan orang tua untuk memantau perkembangan sekolah dengan transparan dan mudah.</p>
   </section>

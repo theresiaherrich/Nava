@@ -144,44 +144,129 @@
 
         </div>
 
-        {{-- RIWAYAT PRESENSI --}}
-        <section class="ps-card ps-history-card">
+        
+        {{-- RIWAYAT DAN ATURAN PRESENSI --}}
+        <div class="ps-bottom-grid">
 
-            <div class="ps-history-heading">
+            {{-- KARTU RIWAYAT PRESENSI --}}
+            <section class="ps-card ps-history-card">
 
-                <h3>Riwayat Presensi</h3>
+                <div class="ps-history-heading">
+                    <h3>Riwayat Presensi</h3>
 
-                <div class="ps-search">
+                    <div class="ps-search">
+                        <input
+                            type="date"
+                            id="psSearch"
+                            aria-label="Cari tanggal presensi"
+                            title="Cari tanggal presensi"
+                        >
 
-                    <input
-                        type="date"
-                        id="psSearch"
-                        aria-label="Cari tanggal presensi"
-                        title="Cari tanggal presensi"
+                        <button
+                            type="button"
+                            class="ps-search-reset"
+                            id="psSearchReset"
+                            hidden
+                        >
+                            Semua
+                        </button>
+                    </div>
+                </div>
+
+                <div id="psHistory" class="ps-history">
+                    <p class="ps-empty">
+                        Memuat riwayat...
+                    </p>
+                </div>
+
+            </section>
+
+            {{-- KARTU ATURAN --}}
+            <section class="ps-card ps-rules-card">
+
+                <div class="ps-rules-heading">
+                    <h3 id="psRulesTitle">Aturan Presensi</h3>
+                    <span id="psRulesPageLabel">Halaman 1 dari 2</span>
+                </div>
+
+                {{-- HALAMAN 1: ATURAN PRESENSI --}}
+                <div
+                    class="ps-panel"
+                    id="psPanelPresensi"
+                    data-rules-page="1"
+                >
+                    <ol class="ps-steps">
+                        @foreach ($aturanPresensi as $i => $teks)
+                            <li>
+                                <span class="ps-num">
+                                    {{ $i + 1 }}
+                                </span>
+                                <p>{{ $teks }}</p>
+                            </li>
+                        @endforeach
+                    </ol>
+                </div>
+
+                {{-- HALAMAN 2: ATURAN IZIN --}}
+                <div
+                    class="ps-panel"
+                    id="psPanelIzin"
+                    data-rules-page="2"
+                    hidden
+                >
+                    <h4 class="ps-rules-subheading">Izin dari Rumah</h4>
+
+                    <ol class="ps-steps">
+                        @foreach ($izinRumah as $i => $teks)
+                            <li>
+                                <span class="ps-num">
+                                    {{ $i + 1 }}
+                                </span>
+                                <p>{{ $teks }}</p>
+                            </li>
+                        @endforeach
+                    </ol>
+
+                    <hr class="ps-divider">
+
+                    <h4 class="ps-rules-subheading">Izin dari Sekolah</h4>
+
+                    <ol class="ps-steps">
+                        @foreach ($izinSekolah as $i => $teks)
+                            <li>
+                                <span class="ps-num">
+                                    {{ $i + 1 }}
+                                </span>
+                                <p>{{ $teks }}</p>
+                            </li>
+                        @endforeach
+                    </ol>
+                </div>
+
+                {{-- NAVIGASI HALAMAN --}}
+                <div class="ps-rules-navigation">
+                    <button
+                        type="button"
+                        id="psRulesPrev"
+                        disabled
                     >
+                        Sebelumnya
+                    </button>
 
                     <button
                         type="button"
-                        class="ps-search-reset"
-                        id="psSearchReset"
-                        hidden
+                        id="psRulesNext"
                     >
-                        Semua
+                        Berikutnya
                     </button>
-
                 </div>
 
-            </div>
+            </section>
 
-            <div id="psHistory" class="ps-history">
-                <p class="ps-empty">
-                    Memuat riwayat...
-                </p>
-            </div>
-
-        </section>
+        </div>
 
     </main>
+
 
 </div>
 
@@ -216,114 +301,13 @@
     </div>
 </div>
 
-{{-- MODAL ATURAN PRESENSI DAN IZIN --}}
-<div
-    class="ps-modal"
-    id="psRulesModal"
-    aria-hidden="true"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Panduan presensi"
->
-    <div class="ps-modal-box ps-modal-box--rules">
+<div id="data-siswa" data-siswa="{{ json_encode($dataSiswa) }}" hidden></div>
 
-        <button
-            type="button"
-            class="ps-close"
-            data-close-modal="psRulesModal"
-            aria-label="Tutup"
-        >
-            &times;
-        </button>
+<script>
+    const dataSiswaElement = document.getElementById('data-siswa');
 
-        {{-- TAB --}}
-        <div class="ps-tabs" role="tablist">
-
-            <button
-                type="button"
-                class="ps-tab"
-                role="tab"
-                data-tab="psPanelPresensi"
-                aria-selected="false"
-            >
-                Aturan Presensi
-            </button>
-
-            <button
-                type="button"
-                class="ps-tab is-active"
-                role="tab"
-                data-tab="psPanelIzin"
-                aria-selected="true"
-            >
-                Aturan Izin
-            </button>
-
-        </div>
-
-        {{-- PANEL ATURAN PRESENSI --}}
-        <div
-            class="ps-panel"
-            id="psPanelPresensi"
-            role="tabpanel"
-            hidden
-        >
-            <ol class="ps-steps">
-
-                @foreach ($aturanPresensi as $i => $teks)
-                    <li>
-                        <span class="ps-num">
-                            {{ $i + 1 }}
-                        </span>
-
-                        <p>{{ $teks }}</p>
-                    </li>
-                @endforeach
-
-            </ol>
-        </div>
-
-        {{-- PANEL ATURAN IZIN --}}
-        <div
-            class="ps-panel"
-            id="psPanelIzin"
-            role="tabpanel"
-        >
-
-            <ol class="ps-steps">
-
-                @foreach ($izinRumah as $i => $teks)
-                    <li>
-                        <span class="ps-num">
-                            {{ $i + 1 }}
-                        </span>
-
-                        <p>{{ $teks }}</p>
-                    </li>
-                @endforeach
-
-            </ol>
-
-            <hr class="ps-divider">
-
-            <ol class="ps-steps">
-
-                @foreach ($izinSekolah as $i => $teks)
-                    <li>
-                        <span class="ps-num">
-                            {{ $i + 1 }}
-                        </span>
-
-                        <p>{{ $teks }}</p>
-                    </li>
-                @endforeach
-
-            </ol>
-
-        </div>
-
-    </div>
-</div>
+    window.DATA_SISWA = JSON.parse(dataSiswaElement.dataset.siswa);
+</script>
 
 @vite('resources/js/presensi/siswa.js')
 

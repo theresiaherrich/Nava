@@ -1,471 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 /* ==========================================================
-   TOPBAR SIAKAD
+   Topbar (header) SIAKAD SMAN 1 — komponen <x-topbar>
    ========================================================== */
-
 .tb {
-    --tb-primary: #168fc2;
-    --tb-text: #243447;
-    --tb-muted: #718096;
-    --tb-border: #e5eaf0;
+    --tb-h: 60px;
+    --tb-line: #e8edf3;
+    --tb-text: #0f172a;
+    --tb-soft: #64748b;
+    --tb-muted: #94a3b8;
+    --tb-blue: #1b6fd0;
+    --tb-blue-soft: #eff6ff;
+    --tb-red: #ef4444;
 
-    width: 100%;
-    min-height: 58px;
-    padding: 8px 24px;
-    box-sizing: border-box;
-
+    position: sticky;
+    top: 0;
+    z-index: 30;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-
-    position: relative;
-    z-index: 30;
-
+    gap: 12px;
+    height: var(--tb-h);
+    padding: 0 28px;
     background: #fff;
-    border-bottom: 1px solid var(--tb-border);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    border-bottom: 1px solid var(--tb-line);
+    font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
     color: var(--tb-text);
-}
-
-.tb *,
-.tb *::before,
-.tb *::after {
     box-sizing: border-box;
 }
+.tb *, .tb *::before, .tb *::after { box-sizing: border-box; }
+.tb p { margin: 0; }
+.tb [hidden] { display: none !important; }
 
-.tb [hidden] {
-    display: none !important;
+.tb-icon { width: 16px; height: 16px; flex: 0 0 auto; }
+.tb-sr {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
 }
 
-.tb button,
-.tb input {
-    font: inherit;
-}
-
-.tb button {
-    cursor: pointer;
-}
-
-.tb svg.tb-icon {
-    display: block;
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
-    flex: 0 0 20px;
-    stroke: currentColor;
-}
-
-/* Tombol umum dan menu */
+/* Tombol ikon */
 .tb-icon-btn {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    flex: 0 0 40px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 0;
-    border-radius: 9px;
-    background: transparent;
-    color: var(--tb-muted);
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px;
+    border: 0; border-radius: 8px; background: transparent;
+    color: #334155; cursor: pointer;
 }
-
-.tb-icon-btn:hover {
-    background: #f1f6f9;
-    color: var(--tb-primary);
-}
-
-.tb-menu {
-    display: none;
-}
+.tb-icon-btn:hover { background: #f1f5f9; }
+.tb-icon-btn .tb-icon { width: 18px; height: 18px; }
+.tb-menu { display: none; }
 
 /* Pencarian */
-.tb-search {
-    flex: 1 1 auto;
-    min-width: 120px;
-    max-width: 440px;
-    margin: 0;
-}
-
-.tb-search__toggle {
-    display: none;
-}
-
+.tb-search { flex: 0 1 300px; min-width: 0; margin: 0; }
+.tb-search__toggle { display: none; }
 .tb-search__field {
-    width: 100%;
-    height: 36px;
-    padding: 0 13px;
-
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    border: 1px solid var(--tb-border);
-    border-radius: 9px;
-    background: #f8fafc;
+    display: flex; align-items: center; gap: 8px;
+    height: 34px; padding: 0 6px 0 10px;
+    border: 1px solid var(--tb-line); border-radius: 8px; background: #fff;
+    cursor: text;
+    transition: border-color .15s, box-shadow .15s;
 }
-
-.tb-search__icon {
-    color: #94a3b8;
-}
-
+.tb-search__field:focus-within { border-color: #7dd3fc; box-shadow: 0 0 0 3px rgba(14, 165, 233, .15); }
+.tb-search__icon { color: var(--tb-muted); }
 .tb-search__input {
-    width: 100%;
-    min-width: 0;
-    height: 100%;
-    padding: 0;
-
-    border: 0;
-    outline: 0;
-    background: transparent;
-
-    color: var(--tb-text);
-    font-size: 12px;
+    flex: 1; min-width: 0;
+    border: 0; outline: 0; background: transparent;
+    font: inherit; font-size: 12px; color: var(--tb-text);
 }
-
-.tb-search__input::placeholder {
-    color: #9aa6b2;
-}
-
+.tb-search__input::placeholder { color: var(--tb-muted); }
+.tb-search__input::-webkit-search-cancel-button { cursor: pointer; }
 .tb-kbd {
-    flex: 0 0 auto;
-    padding: 2px 6px;
-    border: 1px solid var(--tb-border);
-    border-radius: 4px;
-    color: var(--tb-muted);
-    font-size: 10px;
+    font-family: inherit; font-size: 10px; font-weight: 600; color: var(--tb-soft);
+    padding: 2px 6px; border: 1px solid var(--tb-line); border-radius: 5px; background: #f8fafc;
+    white-space: nowrap;
 }
 
 /* Area kanan */
-.tb-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 16px;
-    flex: 0 0 auto;
-}
+.tb-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.tb-dd { position: relative; }
 
-.tb-dd {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-}
-
-/* Tahun ajaran */
 .tb-year {
-    min-height: 40px;
-    padding: 0 10px;
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 34px; padding: 0 10px;
+    border: 1px solid var(--tb-line); border-radius: 8px; background: #fff;
+    font: inherit; font-size: 12px; font-weight: 500; color: var(--tb-text);
+    cursor: pointer; white-space: nowrap;
+}
+.tb-year:hover { background: #f8fafc; }
+.tb-chev { width: 14px; height: 14px; color: var(--tb-soft); transition: transform .15s; }
+[aria-expanded="true"] > .tb-chev { transform: rotate(180deg); }
 
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-
-    border: 1px solid var(--tb-border);
-    border-radius: 8px;
-    background: #fff;
-    color: var(--tb-text);
-    font-size: 12px;
-    white-space: nowrap;
+.tb-dot {
+    position: absolute; top: 7px; right: 8px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--tb-red); box-shadow: 0 0 0 2px #fff;
 }
 
-.tb-chev {
-    width: 15px !important;
-    height: 15px !important;
-    min-width: 15px !important;
-    flex-basis: 15px !important;
-    color: var(--tb-muted);
-}
-
-/* Profil */
 .tb-profile {
-    min-height: 44px;
-    padding: 3px 5px;
-
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-
-    border: 0;
-    border-radius: 9px;
-    background: transparent;
-    color: var(--tb-text);
-    text-align: left;
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 4px 6px 4px 4px;
+    border: 0; border-radius: 10px; background: transparent;
+    font: inherit; text-align: left; color: inherit; cursor: pointer;
 }
-
-.tb-profile:hover {
-    background: #f8fafc;
-}
-
+.tb-profile:hover { background: #f8fafc; }
 .tb-avatar {
-    width: 36px;
-    height: 36px;
-    flex: 0 0 36px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-    background: #e5f3fa;
-    color: var(--tb-primary);
-    font-size: 12px;
-    font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--tb-blue); color: #fff;
+    font-size: 11px; font-weight: 700; letter-spacing: .02em;
 }
-
-.tb-profile__text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.tb-profile__name {
-    display: block;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.tb-profile__role {
-    display: block;
-    color: var(--tb-muted);
-    font-size: 10px;
-    font-weight: 400;
-}
+.tb-profile__text { display: flex; flex-direction: column; line-height: 1.25; }
+.tb-profile__name { font-size: 12px; font-weight: 600; color: var(--tb-text); white-space: nowrap; }
+.tb-profile__role { font-size: 10px; color: var(--tb-soft); white-space: nowrap; }
+.tb-profile__mobile { display: none; }
 
 /* Dropdown */
 .tb-menu-list {
-    position: absolute;
-    top: calc(100% + 10px);
-    right: 0;
-    z-index: 50;
-
-    min-width: 190px;
-    margin: 0;
-    padding: 8px;
-
-    border: 1px solid var(--tb-border);
-    border-radius: 10px;
-    background: #fff;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
-
+    position: absolute; right: 0; top: calc(100% + 6px);
+    min-width: 200px; margin: 0; padding: 6px;
     list-style: none;
+    background: #fff; border: 1px solid var(--tb-line); border-radius: 10px;
+    box-shadow: 0 12px 28px -8px rgba(15, 23, 42, .18);
+    z-index: 40;
 }
-
-.tb-menu-list--year {
-    min-width: 170px;
-}
-
-.tb-menu-list--profile {
-    min-width: 210px;
-}
-
+.tb-menu-list--year { min-width: 180px; }
 .tb-menu-item {
-    width: 100%;
-    min-height: 38px;
-    padding: 8px 10px;
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 8px 10px; border: 0; border-radius: 7px; background: transparent;
+    font: inherit; font-size: 12px; color: var(--tb-text); text-decoration: none; text-align: left;
+    cursor: pointer;
+}
+.tb-menu-item:hover, .tb-menu-item:focus-visible { background: #f1f5f9; outline: none; }
+.tb-menu-item > span { flex: 1; }
+.tb-menu-item .tb-icon { color: var(--tb-soft); }
+.tb-menu-item.is-danger, .tb-menu-item.is-danger .tb-icon { color: #dc2626; }
+.tb-tick { visibility: hidden; color: var(--tb-blue) !important; }
+.tb-menu-item.is-selected { color: var(--tb-blue); font-weight: 600; }
+.tb-menu-item.is-selected .tb-tick { visibility: visible; }
+.tb-sep { border: 0; border-top: 1px solid var(--tb-line); margin: 6px 0; }
+.tb-menu-list form { margin: 0; }
 
-    display: flex;
-    align-items: center;
-    gap: 9px;
 
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: var(--tb-text);
-    text-decoration: none;
-    text-align: left;
-    font-size: 12px;
+/* ==========================================================
+   Responsif
+   ========================================================== */
+@media (max-width: 1024px) {
+    .tb { padding: 0 20px; }
+    .tb-kbd { display: none; }
+
+    /* Nama & peran disembunyikan, pindah ke dalam dropdown */
+    .tb-profile__text { display: none; }
+    .tb-profile { padding: 2px; }
+    .tb-profile__mobile { display: block; padding: 6px 10px 8px; border-bottom: 1px solid var(--tb-line); margin-bottom: 6px; }
 }
 
-.tb-menu-item:hover,
-.tb-menu-item.is-selected {
-    background: #f0f7fb;
-}
+@media (max-width: 768px) {
+    .tb { padding: 0 12px; gap: 6px; }
+    .tb-menu { display: inline-flex; }
+    .tb-profile > .tb-chev { display: none; }
 
-.tb-menu-item.is-danger {
-    color: #dc3545;
-}
-
-.tb-tick {
-    width: 15px !important;
-    height: 15px !important;
-    margin-left: auto;
-}
-
-.tb-sep {
-    border: 0;
-    border-top: 1px solid var(--tb-border);
-    margin: 6px 0;
-}
-
-/* Notifikasi */
-.tb-notif {
-    width: 340px;
-    max-width: calc(100vw - 30px);
-    padding: 0;
-}
-
-.tb-notif__head {
-    padding: 13px 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--tb-border);
-}
-
-.tb-notif__title {
-    margin: 0;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.tb-link {
-    border: 0;
-    background: transparent;
-    color: var(--tb-primary);
-    font-size: 11px;
-}
-
-.tb-notif__item {
-    padding: 12px 14px;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    color: inherit;
-    text-decoration: none;
-}
-
-.tb-notif__item:hover,
-.tb-notif__item.is-new {
-    background: #f8fafc;
-}
-
-.tb-notif__mark,
-.tb-dot {
-    width: 7px;
-    height: 7px;
-    flex: 0 0 7px;
-    border-radius: 50%;
-    background: #e84b76;
-}
-
-.tb-notif__mark {
-    margin-top: 5px;
-}
-
-.tb-dot {
-    position: absolute;
-    top: 7px;
-    right: 7px;
-}
-
-.tb-notif__body {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.tb-notif__judul {
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.tb-notif__ket,
-.tb-notif__waktu {
-    color: var(--tb-muted);
-    font-size: 10px;
-}
-
-.tb-notif__empty {
-    margin: 0;
-    padding: 18px;
-    color: var(--tb-muted);
-    text-align: center;
-    font-size: 12px;
-}
-
-.tb-profile__mobile {
-    display: none;
-}
-
-.tb-sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
-/* Responsif */
-@media (max-width: 900px) {
-    .tb {
-        padding: 10px 16px;
-        gap: 12px;
-    }
-
-    .tb-menu {
-        display: inline-flex;
-    }
-
-    .tb-search {
-        max-width: none;
-    }
-
-    .tb-actions {
-        gap: 8px;
-    }
-}
-
-@media (max-width: 600px) {
-    .tb {
-        min-height: 64px;
-        padding: 9px 12px;
-    }
-
-    .tb-search {
-        flex: 0 0 auto;
-        width: 40px;
-    }
-
-    .tb-search__field {
-        display: none;
-    }
-
+    /* Pencarian menjadi ikon, terbuka sebagai baris penuh */
+    .tb-search { flex: 0 0 auto; }
     .tb-search__toggle {
-        width: 40px;
-        height: 40px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 0;
-        border-radius: 8px;
-        background: transparent;
-        color: var(--tb-muted);
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; border: 0; border-radius: 8px;
+        background: transparent; color: #334155; cursor: pointer;
+    }
+    .tb-search__toggle .tb-icon { width: 18px; height: 18px; }
+    .tb-search__field { display: none; }
+    .tb-search.is-open .tb-search__field {
+        display: flex;
+        position: absolute; left: 8px; right: 8px; top: 12px;
+        background: #fff; z-index: 2;
+        box-shadow: 0 6px 18px -6px rgba(15, 23, 42, .2);
     }
 
-    .tb-year {
-        padding: 0 7px;
-        font-size: 10px;
-    }
+    .tb-actions { gap: 4px; }
+    .tb-year { padding: 0 8px; font-size: 11px; }
+    .tb-notif { position: fixed; left: 8px; right: 8px; top: calc(var(--tb-h) - 2px); width: auto; }
+}
 
-    .tb-profile__text {
-        display: none;
-    }
-
-    .tb-actions {
-        gap: 5px;
-    }
+@media (max-width: 420px) {
+    .tb-year .tb-chev { display: none; }
+    .tb-year { padding: 0 6px; font-size: 10px; }
 }

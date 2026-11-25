@@ -24,17 +24,13 @@ const BATAS_MULAI = '06.00';
 const BATAS_TEPAT_WAKTU = '07.00';
 const BATAS_TERLAMBAT = '07.30';
 
-// Aturan langsung muncul saat halaman dibuka
-const ATURAN_OTOMATIS = false;
-
 /*
  * TODO API:
  * Ganti data contoh ini dengan data siswa yang sedang login.
  */
 const SISWA = {
-    id: '245150600',
-    nama: 'Mutiara Bintang',
-    kelas: 'XI MIPA 2'
+    nama: window.DATA_SISWA?.nama ?? '',
+    kelas: window.DATA_SISWA?.kelas ?? ''
 };
 
 /*
@@ -108,7 +104,11 @@ const elemenWajib = [
     'psSearch',
     'psSearchReset',
     'psHistory',
-    'psRulesModal'
+    'psPanelPresensi',
+    'psPanelIzin',
+    'psRulesPageLabel',
+    'psRulesPrev',
+    'psRulesNext'
 ];
 
 const elemenTidakAda = elemenWajib.filter((id) => !$(id));
@@ -192,19 +192,88 @@ document.addEventListener('keydown', (event) => {
 
 /* ============ TAB ATURAN ============ */
 
-document.querySelectorAll('.ps-tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.ps-tab').forEach((item) => {
-            const aktif = item === tab;
-            const panel = $(item.dataset.tab);
 
-            item.classList.toggle('is-active', aktif);
-            item.setAttribute('aria-selected', aktif ? 'true' : 'false');
+/* ============ NAVIGASI ATURAN ============ */
 
-            if (panel) panel.hidden = !aktif;
-        });
-    });
+const panelPresensi = $('psPanelPresensi');
+const panelIzin = $('psPanelIzin');
+const labelHalaman = $('psRulesPageLabel');
+const judulAturan = $('psRulesTitle');
+const tombolSebelumnya = $('psRulesPrev');
+const tombolBerikutnya = $('psRulesNext');
+const kartuAturan = document.querySelector('.ps-rules-card');
+
+let halamanAturan = 1;
+
+function tampilkanHalamanAturan(halaman) {
+    halamanAturan = Math.max(1, Math.min(2, halaman));
+
+    if (panelPresensi) {
+        panelPresensi.hidden = halamanAturan !== 1;
+    }
+
+    if (panelIzin) {
+        panelIzin.hidden = halamanAturan !== 2;
+    }
+
+    if (labelHalaman) {
+        labelHalaman.textContent =
+            `Halaman ${halamanAturan} dari 2`;
+    }
+
+    if (judulAturan) {
+        judulAturan.textContent =
+            halamanAturan === 1 ? 'Aturan Presensi' : 'Aturan Izin';
+    }
+
+    if (tombolSebelumnya) {
+        tombolSebelumnya.disabled = halamanAturan === 1;
+    }
+
+    if (tombolBerikutnya) {
+        tombolBerikutnya.disabled = halamanAturan === 2;
+    }
+}
+
+tombolSebelumnya?.addEventListener('click', () => {
+    tampilkanHalamanAturan(halamanAturan - 1);
 });
+
+tombolBerikutnya?.addEventListener('click', () => {
+    tampilkanHalamanAturan(halamanAturan + 1);
+});
+
+// Navigasi dengan swipe pada layar sentuh
+let posisiAwalX = 0;
+let posisiAwalY = 0;
+
+kartuAturan?.addEventListener('touchstart', (event) => {
+    posisiAwalX = event.changedTouches[0].screenX;
+    posisiAwalY = event.changedTouches[0].screenY;
+}, { passive: true });
+
+kartuAturan?.addEventListener('touchend', (event) => {
+    const posisiAkhirX = event.changedTouches[0].screenX;
+    const posisiAkhirY = event.changedTouches[0].screenY;
+
+    const selisihX = posisiAkhirX - posisiAwalX;
+    const selisihY = posisiAkhirY - posisiAwalY;
+
+    // Abaikan gerakan vertikal atau swipe terlalu pendek
+    if (Math.abs(selisihX) < 50 || Math.abs(selisihX) < Math.abs(selisihY)) {
+        return;
+    }
+
+    if (selisihX < 0) {
+        tampilkanHalamanAturan(halamanAturan + 1);
+    } else {
+        tampilkanHalamanAturan(halamanAturan - 1);
+    }
+}, { passive: true });
+
+// Halaman pertama ditampilkan saat halaman dibuka
+tampilkanHalamanAturan(1);
+
 
 /* ============ QR CODE ============ */
 
@@ -482,6 +551,7 @@ function tentukanStatus(jam) {
 
 /* ============ RIWAYAT ============ */
 
+
 async function ambilRiwayat() {
     const box = $('psHistory');
 
@@ -503,17 +573,30 @@ async function ambilRiwayat() {
         }
 
         const hasil = await response.json();
+        const dataRiwayat = hasil.data.riwayat || [];
 
-        riwayat = (hasil.data.riwayat || []).map((item) => ({
-            tanggal: String(item.tanggal).slice(0, 10),
-            items: [{
+        const kelompokTanggal = new Map();
+
+        dataRiwayat.forEach((item) => {
+            const tanggal = String(item.tanggal).slice(0, 10);
+
+            if (!kelompokTanggal.has(tanggal)) {
+                kelompokTanggal.set(tanggal, {
+                    tanggal,
+                    items: []
+                });
+            }
+
+            kelompokTanggal.get(tanggal).items.push({
                 status: String(item.status || '').toLowerCase(),
                 jam: item.waktu_presensi
                     ? String(item.waktu_presensi).slice(0, 5).replace(':', '.')
                     : '-',
                 metode: item.metode || ''
-            }]
-        }));
+            });
+        });
+
+        riwayat = [...kelompokTanggal.values()];
 
         renderRiwayat();
     } catch (error) {
@@ -521,6 +604,7 @@ async function ambilRiwayat() {
         box.innerHTML = '<p class="ps-empty">Riwayat presensi gagal dimuat.</p>';
     }
 }
+
 
 function barisHTML(item, terbaru) {
     const status = String(item.status || '').toLowerCase();
@@ -616,17 +700,8 @@ if ($('psAttendanceForm')) {
             return;
         }
 
-        const nama = $('psNama');
-        const kelas = $('psKelas');
-
-        const namaOk = norm(nama.value) === norm(SISWA.nama);
-        const kelasOk = norm(kelas.value) === norm(SISWA.kelas);
-
-        nama.setAttribute('aria-invalid', namaOk ? 'false' : 'true');
-        kelas.setAttribute('aria-invalid', kelasOk ? 'false' : 'true');
-
-        if (!namaOk || !kelasOk) {
-            feedback('Data nama atau kelas tidak sesuai akun siswa.', false);
+        if (!SISWA.nama || !SISWA.kelas) {
+            feedback('Data siswa atau kelas aktif belum tersedia.', false);
             return;
         }
 
@@ -669,28 +744,56 @@ if ($('psAttendanceForm')) {
                 return;
             }
 
-            /*
-             * TODO API:
-             *
-             * Hubungkan ke endpoint backend setelah route tersedia.
-             * Data yang perlu dikirim:
-             * - token/identitas autentikasi dari sesi login
-             * - latitude
-             * - longitude
-             * - accuracy
-             * - metode presensi
-             *
-             * Backend wajib memvalidasi ulang lokasi, radius,
-             * waktu, role, dan duplikasi presensi.
-             *
-             * Jangan menganggap penyimpanan lokal ini sebagai
-             * presensi resmi sebelum API backend terhubung.
-             */
+                        const csrfToken = document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content');
+
+            if (!csrfToken) {
+                feedback('Token keamanan tidak ditemukan. Muat ulang halaman.', false);
+                return;
+            }
+
+            let response;
+
+            try {
+                response = await fetch('/api/presensi', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        metode: 'Geofencing',
+                        latitude: posisiTerakhir.lat,
+                        longitude: posisiTerakhir.lng,
+                        accuracy: posisiTerakhir.akurasi,
+                    }),
+                });
+            } catch (error) {
+                console.error('[Presensi] Gagal menghubungi server:', error);
+                feedback('Tidak dapat terhubung ke server. Periksa koneksi internet.', false);
+                return;
+            }
+
+            const hasil = await response.json();
+
+            if (!response.ok) {
+                feedback(
+                    hasil.message || 'Presensi gagal dicatat.',
+                    false
+                );
+                return;
+            }
 
             feedback(
-                'Tampilan frontend siap. Presensi belum tersimpan ke database karena API backend belum dihubungkan.',
-                false
+                hasil.message || 'Presensi berhasil dicatat.',
+                true
             );
+
+            // Perbarui riwayat dari database
+            ambilRiwayat();
 
         } catch (error) {
             galatLokasi(error);
@@ -721,8 +824,3 @@ mulaiLokasi();
 
 // Ambil riwayat presensi dari database
 ambilRiwayat();
-
-// Aturan otomatis muncul saat halaman Presensi dibuka
-if (ATURAN_OTOMATIS) {
-    openModal($('psRulesModal'));
-}

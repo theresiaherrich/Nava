@@ -246,9 +246,9 @@ if (formReg) {
 
             setError(
                 f.nisn,
-                /^\d{10}$/.test(f.nisn.value.trim())
+                /^[a-zA-Z0-9]{1,30}$/.test(f.nisn.value.trim())
                     ? ''
-                    : 'NISN harus terdiri dari 10 digit angka'
+                    : 'NISN atau NIP harus terdiri dari maksimal 30 karakter alfanumerik'
             )
         ];
 
@@ -325,17 +325,10 @@ if (formLupa) {
             wajib(f.username, 'Username'),
 
             setError(
-                f.telepon,
-                telpOk(f.telepon.value)
-                    ? ''
-                    : 'Nomor telepon tidak valid'
-            ),
-
-            setError(
                 f.nisn,
-                /^\d{10}$/.test(f.nisn.value.trim())
+                /^[a-zA-Z0-9]{1,30}$/.test(f.nisn.value.trim())
                     ? ''
-                    : 'NISN harus terdiri dari 10 digit angka'
+                    : 'NISN atau NIP harus terdiri dari maksimal 30 karakter alfanumerik'
             )
         ].every(Boolean);
 
@@ -350,15 +343,18 @@ if (formLupa) {
                 '/api/lupa-password',
                 {
                     username: f.username.value.trim(),
-                    telepon: f.telepon.value.trim(),
                     nisn: f.nisn.value.trim()
                 }
             );
 
+            if (result.reset_url) {
+                window.location.href = result.reset_url;
+                return;
+            }
+
             status(
                 document.getElementById('f-status'),
-                result.message ||
-                'Permintaan berhasil dikirim.'
+                result.message || 'Data berhasil diverifikasi.'
             );
 
         } catch (err) {

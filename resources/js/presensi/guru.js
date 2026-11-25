@@ -158,7 +158,7 @@ const HARI_INI = [
     ['Hadir', '06.56 WIB', 'QR Code'],
     ['Hadir', '06.56 WIB', 'QR Code'],
     ['Hadir', '06.56 WIB', 'QR Code'],
-    ['Sakit', '-', 'Manual', 'Surat sakit dari orang tua'],
+    ['Sakit', '-', 'Geofencing', 'Surat sakit dari orang tua'],
     ['Alpa', '-', '-', 'Tanpa keterangan']
 ];
 
@@ -182,7 +182,7 @@ const jamKeApi = (jam) => {
 // Mengubah metode tampilan menjadi nilai metode API.
 const metodeKeApi = (metode) => {
     if (metode === 'QR Code') return 'QR';
-    if (metode === 'Manual') return 'Manual';
+    if (metode === 'Geofencing') return 'Geofencing';
 
     return null;
 };
@@ -215,7 +215,7 @@ function buatRiwayatDummy() {
             } else if (angka < PERSEN_ALPA[i] + PERSEN_IZIN[i]) {
                 status = 'Izin';
                 jam = '-';
-                metode = 'Manual';
+                metode = 'Geofencing';
                 keterangan = 'Surat izin dari orang tua';
             } else if (
                 angka < PERSEN_ALPA[i] + PERSEN_IZIN[i] + 12

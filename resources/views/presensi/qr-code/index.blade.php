@@ -264,18 +264,19 @@
     border: 1px solid #5da9e9;
     background: white;
     border-radius: 7px;
-    width: 100%;
-    max-width: 230px;
-    min-height: 190px;
+    width: 300px !important;
+    height: 300px;
+    max-width: 100%;
     display: grid;
     place-items: center;
     cursor: pointer;
     padding: 15px;
+    box-sizing: border-box;
 }
 
 .qr-placeholder {
-    width: 150px;
-    height: 150px;
+    width: 400px !important;
+    height: 400px !important;
     display: grid;
     place-items: center;
 }

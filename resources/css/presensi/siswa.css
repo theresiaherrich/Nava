@@ -18,7 +18,7 @@
         -apple-system, "Segoe UI", Roboto, sans-serif;
 
     min-height: 100%;
-    padding: 12px 16px 24px;
+    padding: 24px 32px ;
     background: var(--ps-bg);
     color: var(--ps-text);
     font-family: var(--ps-font);
@@ -91,7 +91,7 @@
 /* ---------- Layout ---------- */
 
 .ps-container {
-    max-width: 1100px;
+    max-width: 1260px;
     margin: 0 auto;
 }
 
@@ -128,7 +128,7 @@
     display: grid;
     place-items: center;
     width: 100%;
-    max-width: 170px;
+    max-width: 200px;
     aspect-ratio: 1;
     margin-top: 14px;
     padding: 10px;
@@ -602,5 +602,87 @@
     .ps-page *,
     .ps-modal * {
         transition: none !important;
+    }
+}
+
+
+/* ---------- Grid Riwayat dan Aturan ---------- */
+
+.ps-bottom-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 12px;
+    align-items: stretch;
+    margin-top: 12px;
+}
+
+.ps-history-card,
+.ps-rules-card {
+    min-width: 0;
+    margin-top: 0;
+}
+
+.ps-rules-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.ps-rules-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.ps-rules-heading h3 {
+    font-size: 18px;
+}
+
+#psRulesPageLabel {
+    flex-shrink: 0;
+    color: var(--ps-muted);
+    font-size: 12px;
+}
+
+.ps-rules-subheading {
+    margin: 14px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ps-text);
+}
+
+.ps-rules-navigation {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 18px;
+}
+
+.ps-rules-navigation button {
+    min-height: 34px;
+    padding: 7px 14px;
+    border: 1px solid var(--ps-blue);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--ps-blue);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.ps-rules-navigation button:last-child {
+    background: var(--ps-blue);
+    color: #fff;
+}
+
+.ps-rules-navigation button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+    .ps-bottom-grid {
+        grid-template-columns: 1fr;
     }
 }

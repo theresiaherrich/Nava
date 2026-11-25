@@ -11,47 +11,63 @@
         $role ?? auth()->user()?->role ?? request('role', 'wali_kelas')
     ));
     $presensiMenus = [
-        'siswa' => [
-            [
-
-                'label' => 'Presensi',
-                'icon' => 'calendar',
-                'href' => route('presensi.siswa'),
-                'pattern' => 'presensi.siswa',
-            ],
+    'siswa' => [
+        [
+            'label' => 'Presensi',
+            'icon' => 'presensi',
+            'href' => route('presensi.siswa'),
+            'pattern' => 'presensi.siswa',
         ],
+    ],
 
-        
-        'admin' => [
-            [
-                'label' => 'Presensi',
-                'icon' => 'calendar',
-                'href' => route('presensi.admin'),
-                'pattern' => 'presensi.admin',
-            ],
-            [
-                'label' => 'Riwayat Presensi',
-                'icon' => 'history',
-                'href' => route('presensi.riwayat'),
-                'pattern' => 'presensi.riwayat',
-            ],
+    'admin' => [
+        [
+            'label' => 'Presensi',
+            'icon' => 'presensi',
+            'href' => route('presensi.admin.riwayat'),
+            'pattern' => 'presensi.admin.riwayat',
         ],
+        [
+            'label' => 'Admin Presensi',
+            'icon' => 'scan',
+            'href' => route('presensi.admin'),
+            'pattern' => 'presensi.admin',
+        ],
+    ],
 
-        'budaya_positif' => [
-            [
-                'label' => 'Presensi',
-                'icon' => 'calendar',
-                'href' => route('presensi.budaya-positif'),
-                'pattern' => 'presensi.budaya-positif',
-            ],
-            [
-                'label' => 'Admin Presensi',
-                'icon' => 'scan',
-                'href' => route('presensi.budaya-positif.admin-presensi'),
-                'pattern' => 'presensi.budaya-positif.admin-presensi',
-            ],
+    'budaya_positif' => [
+        [
+            'label' => 'Presensi',
+            'icon' => 'presensi',
+            'href' => route('presensi.budaya-positif'),
+            'pattern' => 'presensi.budaya-positif',
         ],
-    ];
+        [
+            'label' => 'Admin Presensi',
+            'icon' => 'scan',
+            'href' => route('presensi.budaya-positif.admin-presensi'),
+            'pattern' => 'presensi.budaya-positif.admin-presensi',
+        ],
+    ],
+
+    'guru' => [
+        [
+            'label' => 'Presensi',
+            'icon' => 'presensi',
+            'href' => route('presensi.guru'),
+            'pattern' => 'presensi.guru',
+        ],
+    ],
+
+    'kurikulum' => [
+        [
+            'label' => 'Presensi',
+            'icon' => 'presensi',
+            'href' => route('presensi.kurikulum'),
+            'pattern' => 'presensi.kurikulum',
+        ],
+    ],
+];
 
     $presensiItems = $presensiMenus[$role] ?? [];
 
@@ -79,13 +95,17 @@
         ],
     ];
 
-    $menu = $menu ?? ($presensiMenus[$role] ?? $defaultMenu);
+    $menu = $menu ?? array_merge(
+        $presensiItems,
+        array_slice($defaultMenu, 1)
+    );
 
     $resolve  = fn (?string $route) => ($route && \Illuminate\Support\Facades\Route::has($route)) ? route($route) : '#';
     $isActive = fn (?string $pattern) => $pattern && request()->routeIs($pattern);
 
     $icons = [
         'calendar' => '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+        'presensi' => '<g transform="translate(2 2) scale(1.4286)" fill="none" stroke="currentColor" stroke-width="0.85" stroke-linecap="round" stroke-linejoin="round"><path d="M5.39 2.41c-.87.04-1.722.134-2.553.23a2.094 2.094 0 0 0-1.835 1.84C.882 5.558.766 6.673.766 7.813s.116 2.256.236 3.335c.108.96.875 1.727 1.835 1.838c1.084.125 2.204.25 3.35.25c1.147 0 2.267-.125 3.351-.25a2.094 2.094 0 0 0 1.834-1.838a39 39 0 0 0 .212-2.38"/><path d="m10.108 1.303l-3.685 4.18l-.504 2.375c-.082.382.317.744.69.626l2.362-.742l3.806-4.005c.633-.665.522-1.778-.243-2.455c-.747-.66-1.833-.652-2.426.02Z"/></g>',
         'file'     => '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
         'shield'   => '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
         'home'     => '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',

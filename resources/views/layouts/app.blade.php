@@ -15,7 +15,7 @@
 
     <x-sidebar />
 
-    <main style="flex:1; min-width:0;">
+    <main style="flex:1; min-width:0; margin-left:220px;">
         <x-topbar />
         @yield('content')
     </main>

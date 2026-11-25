@@ -109,7 +109,7 @@
     .kelola-page {
         font-family: 'Poppins', sans-serif;
         color: #292d38;
-        padding: 14px;
+        padding: 20px 24px 32px;
         background: #f3f5f9;
         min-height: 100vh;
     }
@@ -429,23 +429,65 @@
 
     .kelola-table {
         width: 100%;
-        min-width: 720px;
+        min-width: 900px;
+        table-layout: fixed;
         border-collapse: collapse;
     }
 
+   /* Lebar setiap kolom */
+    .kelola-table th:nth-child(1),
+    .kelola-table td:nth-child(1) {
+        width: 5%;
+    }
+
+    .kelola-table th:nth-child(2),
+    .kelola-table td:nth-child(2) {
+        width: 30%;
+    }
+
+    .kelola-table th:nth-child(3),
+    .kelola-table td:nth-child(3) {
+        width: 15%;
+    }
+
+    .kelola-table th:nth-child(4),
+    .kelola-table td:nth-child(4) {
+        width: 9%;
+    }
+
+    .kelola-table th:nth-child(5),
+    .kelola-table td:nth-child(5) {
+        width: 13%;
+    }
+
+    .kelola-table th:nth-child(6),
+    .kelola-table td:nth-child(6) {
+        width: 8%;
+    }
+
+    .kelola-table th:nth-child(7),
+    .kelola-table td:nth-child(7) {
+        width: 10%;
+    }
+
+    .kelola-table th:nth-child(8),
+    .kelola-table td:nth-child(8) {
+        width: 10%;
+    }
+
     .kelola-table th {
-        padding: 10px 8px;
+        padding: 11px 10px;
         text-align: left;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         border-bottom: 1px solid #dce0e6;
         white-space: nowrap;
     }
 
     .kelola-table td {
-        padding: 6px 8px;
+        padding: 9px 10px;
         border-bottom: 1px solid #e5e7eb;
-        font-size: 10px;
+        font-size: 13px;
         color: #666;
         white-space: nowrap;
     }
@@ -456,6 +498,8 @@
 
     .student-name {
         cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
     }
 
     .student-name:hover {
@@ -738,7 +782,7 @@
 
     @media(max-width: 650px) {
         .kelola-page {
-            padding: 10px;
+            padding: 12px 20px 32px;
         }
 
         .statistik-layout {
@@ -771,6 +815,11 @@
             flex-wrap: wrap;
         }
     }
+
+    .kelola-table th:nth-child(2),
+    .kelola-table td:nth-child(2) {
+        background: yellow !important;
+}
 </style>
 @endpush
 
@@ -1141,8 +1190,8 @@
         <div class="form-group">
             <label>Metode</label>
             <select id="editMetode">
-                <option value="QR Code">QR Code</option>
-                <option value="Manual">Manual</option>
+                <option value="QR">QR</option>
+                <option value="Geofencing">Geofencing</option>
             </select>
         </div>
 

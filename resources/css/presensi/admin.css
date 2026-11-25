@@ -15,7 +15,7 @@
     box-sizing: border-box;
     width: 100%;
     min-height: calc(100vh - 60px);
-    padding: 15px 20px 30px;
+    padding: 20px 24px 32px;
     background: #f4f7fb;
     color: var(--pa-ink);
     font-family: 'Poppins', sans-serif;
@@ -36,7 +36,7 @@
 
 #presensiAdmin .pa-content {
     width: 100%;
-    max-width: 1150px;
+    max-width: 1260px;
     margin: 0 auto;
 }
 
@@ -445,7 +445,7 @@
 @media (max-width: 700px) {
 
     #presensiAdmin {
-        padding: 10px;
+        padding: 20px 12px 32px;
     }
 
     #presensiAdmin .pa-reader-wrap {

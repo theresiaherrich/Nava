@@ -13,8 +13,8 @@ return new class extends Migration
 
             $table->unsignedInteger('id_siswa');
 
-            $table->enum('metode', ['QR', 'Geofencing', 'Manual'])->nullable();
-
+            $table->enum('metode', ['QR', 'Geofencing'])->nullable();
+            
             $table->enum('status', [
                 'Hadir',
                 'Alpa',

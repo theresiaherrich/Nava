@@ -3,7 +3,10 @@
    Menyesuaikan elemen baru: ikon SVG, avatar, donat dinamis, area kamera.
    ========================================================== */
 
-.bp-container { font-family: 'Poppins', 'Plus Jakarta Sans', system-ui, sans-serif; }
+.bp-container {
+    font-family: 'Poppins', 'Plus Jakarta Sans', system-ui, sans-serif;
+    padding: 20px 24px 32px;
+}
 .bp-container [hidden] { display: none !important; }
 
 /* ikon SVG menggantikan Font Awesome */
@@ -151,3 +154,9 @@
 }
 .bp-validation { color: #e20a7a; }
 .bp-manual-footer span { color: #157a46; }
+
+@media (max-width: 700px) {
+    .bp-container {
+        padding: 20px 12px 32px;
+    }
+}

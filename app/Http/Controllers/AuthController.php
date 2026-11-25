@@ -88,7 +88,7 @@ class AuthController extends Controller
         $halamanRole = [
             'SISWA' => '/presensi/siswa',
             'GURU' => '/presensi/guru',
-            'ADMIN' => '/presensi/admin',
+            'ADMIN' => '/presensi/admin/riwayat',
             'BUDAYA_POSITIF' => '/presensi/budaya-positif',
             'KURIKULUM' => '/presensi/kurikulum',
             'ORANG_TUA' => '/',
@@ -283,6 +283,130 @@ class AuthController extends Controller
         ], 201);
     }
 
+    // ==========================================
+    // PENGAJUAN LUPA PASSWORD
+    // ==========================================
+
+    public function lupaPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'username' => ['required', 'string', 'max:50'],
+            'nisn' => ['required', 'string', 'max:30'],
+        ]);
+
+        $user = User::where(
+            'username',
+            trim($validated['username'])
+        )->first();
+
+        if (!$user || !in_array($user->role, ['SISWA', 'GURU', 'ORANG_TUA'])) {
+            return response()->json([
+                'message' => 'Data akun tidak cocok. Periksa kembali informasi yang dimasukkan.',
+            ], 422);
+        }
+
+        // Verifikasi identitas sesuai role.
+        if ($user->role === 'SISWA') {
+            $profil = $user->siswa;
+
+            $identitasCocok = $profil &&
+                $profil->nisn === trim($validated['nisn']);
+
+        } elseif ($user->role === 'GURU') {
+            $profil = $user->guru;
+
+            $identitasCocok = $profil &&
+                $profil->nip === trim($validated['nisn']);
+
+        } else {
+            $identitasCocok = \App\Models\OrangTua::where(
+                'id_user',
+                $user->id_user
+            )
+                ->whereHas('siswa', function ($query) use ($validated) {
+                    $query->where(
+                        'nisn',
+                        trim($validated['nisn'])
+                    );
+                })
+                ->exists();
+        }
+
+        // Buat token reset password.
+        $token = bin2hex(random_bytes(32));
+
+        // Hapus token lama milik akun tersebut.
+        DB::table('reset_password_tokens')
+            ->where('id_user', $user->id_user)
+            ->delete();
+
+        // Simpan hash token dengan masa berlaku 15 menit.
+        DB::table('reset_password_tokens')->insert([
+            'id_user' => $user->id_user,
+            'token' => Hash::make($token),
+            'expires_at' => now()->addMinutes(15),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Data berhasil diverifikasi.',
+            'reset_url' => url('/reset-password/' . $token),
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => ['required', 'string'],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
+        ], [
+            'password.min' => 'Password baru minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password baru tidak cocok.',
+        ]);
+
+        // Cari token berdasarkan seluruh token yang masih aktif.
+        $resetToken = DB::table('reset_password_tokens')
+            ->where('expires_at', '>', now())
+            ->get()
+            ->first(function ($item) use ($validated) {
+                return Hash::check($validated['token'], $item->token);
+            });
+
+        if (!$resetToken) {
+            return response()->json([
+                'message' => 'Link reset password tidak valid atau sudah kedaluwarsa. Silakan ajukan ulang.',
+            ], 422);
+        }
+
+        $user = User::find($resetToken->id_user);
+
+        if (!$user || !in_array($user->role, ['SISWA', 'GURU'])) {
+            return response()->json([
+                'message' => 'Akun tidak ditemukan atau tidak dapat direset.',
+            ], 422);
+        }
+
+        // Perbarui password.
+        $user->password = $validated['password'];
+        $user->must_change_password = false;
+        $user->save();
+
+        // Hapus token agar tidak dapat digunakan kembali.
+        DB::table('reset_password_tokens')
+            ->where('id_user', $user->id_user)
+            ->delete();
+
+        return response()->json([
+            'message' => 'Password berhasil diperbarui. Silakan login kembali.',
+        ]);
+    }
+
 
     // ==========================================
     // GANTI PASSWORD
@@ -360,5 +484,16 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Logout berhasil.',
         ]);
+    }
+
+    public function logoutWeb(Request $request)
+    {
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')
+            ->with('success', 'Anda berhasil logout.');
     }
 }

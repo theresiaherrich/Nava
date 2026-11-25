@@ -77,37 +77,6 @@
             </ul>
         </div>
 
-        {{-- Notifikasi --}}
-        <div class="tb-dd" data-tb-dd>
-            <button type="button" class="tb-icon-btn tb-bell" data-tb-dd-toggle aria-haspopup="true" aria-expanded="false"
-                    aria-label="Notifikasi{{ $unread ? ' ('.$unread.' belum dibaca)' : '' }}">
-                {!! $svg('bell') !!}
-                @if ($unread)
-                    <span class="tb-dot" data-tb-dot></span>
-                @endif
-            </button>
-            <div class="tb-menu-list tb-notif" hidden data-tb-dd-menu>
-                <div class="tb-notif__head">
-                    <p class="tb-notif__title">Notifikasi</p>
-                    @if ($unread)
-                        <button type="button" class="tb-link" data-tb-read-all>Tandai dibaca</button>
-                    @endif
-                </div>
-                @forelse ($notifications as $n)
-                    <a href="{{ $n['url'] ?? '#' }}" class="tb-notif__item {{ ! empty($n['baru']) ? 'is-new' : '' }}">
-                        <span class="tb-notif__mark" aria-hidden="true"></span>
-                        <span class="tb-notif__body">
-                            <span class="tb-notif__judul">{{ $n['judul'] }}</span>
-                            <span class="tb-notif__ket">{{ $n['keterangan'] ?? '' }}</span>
-                        </span>
-                        <span class="tb-notif__waktu">{{ $n['waktu'] ?? '' }}</span>
-                    </a>
-                @empty
-                    <p class="tb-notif__empty">Belum ada notifikasi.</p>
-                @endforelse
-            </div>
-        </div>
-
         {{-- Profil --}}
         <div class="tb-dd" data-tb-dd>
             <button type="button" class="tb-profile" data-tb-dd-toggle aria-haspopup="menu" aria-expanded="false">

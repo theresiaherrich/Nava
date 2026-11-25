@@ -22,7 +22,7 @@ use App\Http\Controllers\QrSiswaController;
 // ==========================================
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::view('/test-sidebar', 'test-sidebar');
@@ -37,9 +37,20 @@ Route::view('/login', 'auth.login')->name('login');
 Route::post('/login', [AuthController::class, 'loginWeb'])
     ->name('login.submit');
 
+Route::view('/lupa-password', 'auth.lupa-password')
+    ->name('password.request');
+
+Route::view('/reset-password/{token}', 'auth.reset-password')
+    ->name('password.reset');
+
+Route::post('/logout', [AuthController::class, 'logoutWeb'])
+    ->middleware('auth')
+    ->name('logout');
+
 Route::view('/register', 'auth.register')->name('register');
 
 Route::view('/ganti-password', 'auth.ganti-password')
+    ->middleware('auth')
     ->name('password.change');
 
 Route::prefix('presensi')
@@ -83,8 +94,33 @@ Route::prefix('presensi')
     })->middleware('auth')->name('siswa.riwayat');
 
     // ROLE SISWA
-    Route::view('/siswa', 'presensi.siswa.index')
-        ->name('siswa');
+    Route::get('/siswa', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+
+        if (!$user || $user->role !== 'SISWA' || !$user->siswa) {
+            abort(403);
+        }
+
+        $semesterAktif = \App\Models\Semester::where('aktif', true)
+            ->whereHas('tahunAjaran', function ($query) {
+                $query->where('aktif', true);
+            })
+            ->first();
+
+        $riwayatKelas = $semesterAktif
+            ? $user->siswa->riwayatKelas()
+                ->with('kelas')
+                ->where('id_semester', $semesterAktif->id_semester)
+                ->first()
+            : null;
+
+        return view('presensi.siswa.index', [
+            'dataSiswa' => [
+                'nama' => $user->siswa->nama,
+                'kelas' => $riwayatKelas?->kelas?->nama ?? '',
+            ],
+        ]);
+    })->name('siswa');
 
     // ROLE GURU / WALI KELAS
     Route::view('/guru', 'presensi.guru.index', [
@@ -105,8 +141,17 @@ Route::prefix('presensi')
     ])->name('kurikulum');
 
     // ROLE ADMIN
+    Route::view('/admin/riwayat', 'presensi.guru.index', [
+        'pageTitle' => 'Riwayat Presensi',
+        'rolePresensi' => 'admin',
+        'namaProfil' => 'Admin',
+        'labelProfil' => 'Administrator',
+        'detailProfil' => 'SMAN 1 Malang',
+    ])->middleware('role:ADMIN')->name('admin.riwayat');
+    
     Route::view('/admin', 'presensi.admin.index')
         ->name('admin');
+
 
     // ROLE BUDAYA POSITIF
     Route::view('/budaya-positif', 'presensi.guru.index', [

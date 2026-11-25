@@ -42,6 +42,10 @@ return [
     // Dipakai seeder development saja. Jangan isi di produksi.
     'seed_default_password' => env('SEED_DEFAULT_PASSWORD'),
 
+    // Sandi akun demo per peran (DemoAccountSeeder, APP_ENV=local saja). Min. 12 karakter.
+    'demo_password' => env('NAVA_DEMO_PASSWORD'),
+    'demo_password_min' => 12,
+
     'kktp_default' => 75,
 
     // :tp diganti daftar deskripsi TP. Bisa ditimpa per mapel (mapel.deskripsi_kuat / deskripsi_penguatan).

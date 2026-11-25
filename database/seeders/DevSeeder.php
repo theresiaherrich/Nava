@@ -18,8 +18,9 @@ use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /**
- * Data contoh untuk development. Hanya jalan di APP_ENV local/testing dan
- * membaca kata sandi dari SEED_DEFAULT_PASSWORD (tidak ada sandi di kode).
+ * Data contoh untuk development (kelas, guru, siswa, nilai). Hanya jalan di APP_ENV local/testing dan
+ * membaca kata sandi dari SEED_DEFAULT_PASSWORD, atau NAVA_DEMO_PASSWORD bila kosong (tidak ada sandi di kode).
+ * Akun per peran (superadmin, operator, kurikulum, ...) ada di DemoAccountSeeder.
  */
 class DevSeeder extends Seeder
 {
@@ -33,9 +34,9 @@ class DevSeeder extends Seeder
             return;
         }
 
-        $this->password = (string) config('siakad.seed_default_password');
+        $this->password = (string) (config('siakad.seed_default_password') ?: config('siakad.demo_password'));
         if (strlen($this->password) < (int) config('siakad.password.min')) {
-            throw new RuntimeException('Isi SEED_DEFAULT_PASSWORD di .env (min. '.config('siakad.password.min').' karakter) sebelum seeding.');
+            throw new RuntimeException('Isi NAVA_DEMO_PASSWORD (atau SEED_DEFAULT_PASSWORD) di .env (min. '.config('siakad.password.min').' karakter) sebelum seeding.');
         }
 
         $islam = Agama::where('nama', 'Islam')->value('id_agama');
@@ -58,10 +59,7 @@ class DevSeeder extends Seeder
             );
         }
 
-        $this->akun('superadmin', 'Super Admin', ['SUPERADMIN']);
-        $this->akun('operator', 'Operator Sekolah', ['ADMIN']);
-        $this->akun('kurikulum', 'Admin Kurikulum', ['KURIKULUM']);
-        $this->akun('kesiswaan', 'Admin Kesiswaan', ['KESISWAAN']);
+        // Akun superadmin/operator/kurikulum/kesiswaan dibuat oleh DemoAccountSeeder (satu akun per peran).
 
         $guru1 = $this->guru('198001012005011001', 'ASN', 'Budi Santoso', 'L', $islam, 'budi');
         $guru2 = $this->guru(null, 'GTT', 'Sari Wulandari', 'P', $kristen, 'sari');

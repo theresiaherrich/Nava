@@ -48,8 +48,27 @@ class AuthTest extends TestCase
         $this->postJson('/api/auth/login', ['username' => 'mati', 'password' => 'Rahasia-Uji-123'])
             ->assertForbidden()->assertJsonPath('code', 'ACCOUNT_DISABLED');
         $this->postJson('/api/auth/login', ['username' => 'baru', 'password' => 'Rahasia-Uji-123'])
-            ->assertForbidden()->assertJsonPath('code', 'ACCOUNT_NOT_ACTIVATED');
+            ->assertForbidden()->assertJsonPath('code', 'ACCOUNT_NOT_ACTIVATED')
+            ->assertJsonPath('message', 'Akun belum aktif. Hubungi operator sekolah untuk aktivasi.');
         $this->assertGuest();
+    }
+
+    public function test_error_database_saat_login_tidak_ditampilkan_ke_pengguna(): void
+    {
+        $this->buatUser(['GURU'], ['username' => 'budi']);
+        // Gagal SETELAH Auth::login() (audit login), mis. tabel belum dimigrasi.
+        \Illuminate\Support\Facades\Schema::drop('log_aktivitas');
+        \Illuminate\Support\Facades\Log::spy();
+
+        $respons = $this->postJson('/api/auth/login', ['username' => 'budi', 'password' => 'Rahasia-Uji-123'])
+            ->assertStatus(500)
+            ->assertJsonPath('code', 'SERVER_ERROR')
+            ->assertJsonPath('message', 'Terjadi gangguan pada server. Coba lagi beberapa saat lagi.');
+
+        $this->assertStringNotContainsString('SQLSTATE', $respons->getContent());
+        $this->assertStringNotContainsString('log_aktivitas', $respons->getContent());
+        $this->assertGuest();
+        \Illuminate\Support\Facades\Log::shouldHaveReceived('error')->once();
     }
 
     public function test_login_dibatasi_lima_kali_per_menit(): void

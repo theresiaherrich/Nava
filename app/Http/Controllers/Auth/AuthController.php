@@ -13,13 +13,38 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 class AuthController extends Controller
 {
     public function __construct(private AuditService $audit) {}
 
+    public const PESAN_GANGGUAN_SERVER = 'Terjadi gangguan pada server. Coba lagi beberapa saat lagi.';
+
     public function login(LoginRequest $request): JsonResponse
+    {
+        try {
+            return $this->prosesLogin($request);
+        } catch (Throwable $e) {
+            // Detail (mis. SQLSTATE, nama tabel, query) hanya ke log, tidak pernah ke halaman login.
+            Log::error('Login gagal karena kesalahan server.', [
+                'username' => Str::lower(trim($request->string('username'))),
+                'ip' => $request->ip(),
+                'exception' => $e,
+            ]);
+
+            // Jangan tinggalkan sesi setengah jadi bila gagal setelah Auth::login().
+            if (Auth::guard('web')->check()) {
+                Auth::guard('web')->logout();
+            }
+
+            return response()->json(['message' => self::PESAN_GANGGUAN_SERVER, 'code' => 'SERVER_ERROR'], 500);
+        }
+    }
+
+    private function prosesLogin(LoginRequest $request): JsonResponse
     {
         $user = User::where('username', Str::lower(trim($request->string('username'))))->first();
 
@@ -35,7 +60,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => $belum
-                    ? 'Akun Anda belum diaktifkan. Hubungi operator sekolah.'
+                    ? 'Akun belum aktif. Hubungi operator sekolah untuk aktivasi.'
                     : 'Akun Anda dinonaktifkan. Hubungi operator sekolah.',
                 'code' => $belum ? 'ACCOUNT_NOT_ACTIVATED' : 'ACCOUNT_DISABLED',
             ], 403);

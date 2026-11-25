@@ -87,6 +87,14 @@
             ->values()->all()
         : [];
 
+    // Peran A2 lain milik pengguna (mis. Guru Mapel + Wali Kelas): pindah peran aktif lewat
+    // POST /api/auth/switch-role (ditangani resources/js/siakad-api.js, form[data-auth]).
+    $peranLain = $akademikItems
+        ? collect(auth()->user()->kodeRoles())
+            ->filter(fn ($k) => $k !== $peranAktif && array_key_exists($k, config('siakad.roles')))
+            ->mapWithKeys(fn ($k) => [$k => config('siakad.roles')[$k]])->all()
+        : [];
+
     // Menu default (Wali Kelas). Backend bisa mengirim $menu sendiri lewat <x-sidebar :menu="$menu" />
     $defaultMenu = [
 
@@ -190,6 +198,20 @@
                                         <span class="sb-item__text">{{ $item['label'] }}</span>
                                     </a>
                                 @endforeach
+
+                                @if ($m['label'] === 'Akademik')
+                                    @foreach ($peranLain as $kode => $labelPeran)
+                                        <form method="POST" action="/api/auth/switch-role" data-auth="switch-role">
+                                            @csrf
+                                            <input type="hidden" name="peran" value="{{ $kode }}">
+                                            <button type="submit" class="sb-sub">
+                                                {!! $svg('history') !!}
+                                                <span class="sb-item__text">Masuk sebagai {{ $labelPeran }}</span>
+                                            </button>
+                                            <span data-error role="alert" class="sb-label"></span>
+                                        </form>
+                                    @endforeach
+                                @endif
                             </nav>
                         </div>
                     @else

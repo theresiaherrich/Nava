@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\DashboardWaliKelasController;
 use App\Http\Controllers\Web\GuruPageController;
 use App\Support\WebNavigation;
 use Illuminate\Support\Facades\Route;
@@ -20,7 +21,7 @@ Route::middleware(['auth', 'account.active'])->group(function () {
         });
 
         Route::middleware('role:WALI_KELAS')->prefix('wali-kelas')->group(function () {
-            Route::view('/dashboard', 'academic.dashboard', ['title' => 'Dashboard Wali Kelas', 'endpoint' => '/wali/dashboard']);
+            Route::get('/dashboard', DashboardWaliKelasController::class);
             Route::view('/verifikasi-nilai', 'academic.penilaian', ['mode' => 'verifikasi', 'title' => 'Verifikasi Nilai']);
             Route::view('/cetak-rapor', 'academic.rapor', ['prefix' => 'wali', 'title' => 'Cetak dan Arsip Rapor']);
             Route::view('/rekap-nilai', 'academic.rapor', ['prefix' => 'wali', 'title' => 'Rekap Nilai', 'dkn' => true]);
